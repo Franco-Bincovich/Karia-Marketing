@@ -1,7 +1,8 @@
-"""Utilidades de seguridad: hashing, JWT, HMAC."""
+"""Utilidades de seguridad: hashing, JWT, HMAC y cifrado Fernet."""
 
 import hashlib
 import hmac
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
@@ -9,6 +10,8 @@ import bcrypt
 import jwt
 
 from config.settings import get_settings
+
+logger = logging.getLogger(__name__)
 
 
 def hash_password(password: str) -> str:
@@ -50,3 +53,29 @@ def sign_hmac(data: str) -> str:
         data.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
+
+
+def encrypt_token(plaintext: str) -> str:
+    """
+    Encripta un access token con Fernet usando ENCRYPTION_KEY del .env.
+    Si ENCRYPTION_KEY no está configurada, retorna el texto sin encriptar
+    (solo válido para desarrollo — en producción ENCRYPTION_KEY es obligatoria).
+    """
+    key = get_settings().ENCRYPTION_KEY
+    if not key:
+        logger.warning("[security] ENCRYPTION_KEY no configurada — token guardado sin encriptar")
+        return plaintext
+    from cryptography.fernet import Fernet
+    return Fernet(key.encode()).encrypt(plaintext.encode()).decode()
+
+
+def decrypt_token(ciphertext: str) -> str:
+    """
+    Desencripta un token Fernet. Si ENCRYPTION_KEY no está configurada,
+    retorna el ciphertext tal cual (consistente con encrypt_token en dev).
+    """
+    key = get_settings().ENCRYPTION_KEY
+    if not key:
+        return ciphertext
+    from cryptography.fernet import Fernet
+    return Fernet(key.encode()).decrypt(ciphertext.encode()).decode()
