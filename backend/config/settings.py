@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     JWT_SECRET: str = "change-me-in-production"
     JWT_EXPIRATION_HOURS: int = 24
     SECRET_KEY: str = "change-me-in-production"
+    ANTHROPIC_API_KEY: str = ""
     KARIA_API_KEY: str = ""
     ENCRYPTION_KEY: str = ""
     CORS_ORIGINS: List[str] = [
