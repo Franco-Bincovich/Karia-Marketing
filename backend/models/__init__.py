@@ -6,3 +6,5 @@ from models.permisos_models import PermisoMkt, FeatureFlagMkt, OnboardingMkt, Au
 from models.contacto_models import ContactoMkt  # noqa: F401
 from models.contenido_models import ContenidoMkt, VersionesContenidoMkt, AprendizajeMkt, TemplatesMkt  # noqa: F401
 from models.social_models import CalendarioEditorialMkt, PublicacionesMkt, CuentasSocialesMkt  # noqa: F401
+from models.ads_models import CampanaAdsMkt, AdMkt, MetricasAdsMkt, UmbralesAdsMkt  # noqa: F401
+from models.seo_models import KeywordMkt, AuditoriaSeoMkt, BriefSeoMkt, ConfigSeoMkt  # noqa: F401

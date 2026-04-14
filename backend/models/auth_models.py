@@ -1,6 +1,8 @@
 """Modelos SQLAlchemy para usuarios_mkt, sesiones_mkt y usuarios_marcas_mkt."""
+from __future__ import annotations
 
 import uuid
+from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -36,8 +38,8 @@ class SesionMkt(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     usuario_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios_mkt.id", ondelete="CASCADE"), nullable=False)
     token_hash: Mapped[str] = mapped_column(Text, nullable=False)
-    ip: Mapped[str | None] = mapped_column(Text)
-    user_agent: Mapped[str | None] = mapped_column(Text)
+    ip: Mapped[Optional[str]] = mapped_column(Text)
+    user_agent: Mapped[Optional[str]] = mapped_column(Text)
     activa: Mapped[bool] = mapped_column(Boolean, default=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

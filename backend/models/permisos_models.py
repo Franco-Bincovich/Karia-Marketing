@@ -1,6 +1,8 @@
 """Modelos SQLAlchemy para permisos_mkt, feature_flags_mkt, onboarding_mkt y auditoria_mkt."""
+from __future__ import annotations
 
 import uuid
+from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -30,7 +32,7 @@ class FeatureFlagMkt(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cliente_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clientes_mkt.id", ondelete="CASCADE"), nullable=False)
-    marca_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("marcas_mkt.id", ondelete="CASCADE"))
+    marca_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("marcas_mkt.id", ondelete="CASCADE"))
     feature: Mapped[str] = mapped_column(Text, nullable=False)
     habilitado: Mapped[bool] = mapped_column(Boolean, default=True)
     modo: Mapped[str] = mapped_column(String(20), default="copilot")
@@ -61,12 +63,12 @@ class AuditoriaMkt(Base):
     __tablename__ = "auditoria_mkt"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    usuario_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios_mkt.id"))
-    cliente_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("clientes_mkt.id"))
-    marca_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("marcas_mkt.id"))
+    usuario_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("usuarios_mkt.id"))
+    cliente_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("clientes_mkt.id"))
+    marca_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("marcas_mkt.id"))
     accion: Mapped[str] = mapped_column(Text, nullable=False)
     modulo: Mapped[str] = mapped_column(Text, nullable=False)
-    recurso_id: Mapped[str | None] = mapped_column(Text)
-    detalle: Mapped[dict | None] = mapped_column(JSONB)
-    ip: Mapped[str | None] = mapped_column(Text)
+    recurso_id: Mapped[Optional[str]] = mapped_column(Text)
+    detalle: Mapped[Optional[dict]] = mapped_column(JSONB)
+    ip: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

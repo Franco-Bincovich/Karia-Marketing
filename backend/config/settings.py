@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "http://localhost:5173"
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_KEY: str = ""
+    SEMRUSH_API_KEY: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

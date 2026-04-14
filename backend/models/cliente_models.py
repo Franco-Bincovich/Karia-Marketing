@@ -1,6 +1,8 @@
 """Modelos SQLAlchemy para clientes_mkt y marcas_mkt."""
+from __future__ import annotations
 
 import uuid
+from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -33,9 +35,9 @@ class MarcaMkt(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cliente_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clientes_mkt.id", ondelete="CASCADE"), nullable=False)
     nombre: Mapped[str] = mapped_column(Text, nullable=False)
-    industria: Mapped[str | None] = mapped_column(Text)
-    descripcion: Mapped[str | None] = mapped_column(Text)
-    sitio_web: Mapped[str | None] = mapped_column(Text)
+    industria: Mapped[Optional[str]] = mapped_column(Text)
+    descripcion: Mapped[Optional[str]] = mapped_column(Text)
+    sitio_web: Mapped[Optional[str]] = mapped_column(Text)
     activa: Mapped[bool] = mapped_column(Boolean, default=True)
     onboarding_completitud: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
