@@ -49,7 +49,7 @@ class OnboardingController:
         """Completa un paso del onboarding."""
         return onboarding_service.completar_paso(
             self.db, _marca(x_marca_id), numero,
-            body.datos, UUID(current_user["id"]),
+            body.datos, UUID(current_user["sub"]),
         )
 
     def obtener_memoria(self, x_marca_id: Optional[str], current_user: dict) -> dict:

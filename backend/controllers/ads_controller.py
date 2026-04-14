@@ -63,7 +63,7 @@ class AdsController:
         marca_id = _marca(x_marca_id)
         return campanas_service.crear_campana(
             self.db, marca_id, UUID(current_user["cliente_id"]),
-            body.model_dump(), UUID(current_user["id"]),
+            body.model_dump(), UUID(current_user["sub"]),
         )
 
     def obtener_campana(self, campana_id: UUID, x_marca_id: Optional[str],
@@ -75,14 +75,14 @@ class AdsController:
                         current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return campanas_service.aprobar_campana(
-            self.db, campana_id, marca_id, UUID(current_user["id"]), access_token="mock",
+            self.db, campana_id, marca_id, UUID(current_user["sub"]), access_token="mock",
         )
 
     def pausar_campana(self, campana_id: UUID, body: PausarRequest,
                        x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return campanas_service.pausar_campana(
-            self.db, campana_id, marca_id, UUID(current_user["id"]),
+            self.db, campana_id, marca_id, UUID(current_user["sub"]),
             access_token="mock", motivo=body.motivo,
         )
 
@@ -100,7 +100,7 @@ class AdsController:
                            x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         alertas = monitoreo_ads_service.verificar_umbrales(
-            self.db, marca_id, UUID(current_user["id"]),
+            self.db, marca_id, UUID(current_user["sub"]),
             body.access_token, body.modo,
         )
         return {"alertas": alertas, "count": len(alertas)}

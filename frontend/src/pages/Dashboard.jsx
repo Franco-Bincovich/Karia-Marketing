@@ -1,74 +1,75 @@
-/**
- * Dashboard principal post-login con navegación lateral.
- */
+import { useEffect, useState } from "react";
+import Layout from "../components/Layout";
+import { useApi } from "../hooks/useApi";
+import { ENDPOINTS } from "../constants/endpoints";
 
-import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+const card = {
+  background: "#fff", border: "1px solid #E2E8F0", borderRadius: 14, padding: 20,
+};
+const metricVal = { fontSize: 26, fontWeight: 800, color: "#0F172A" };
+const metricLabel = { fontSize: 13, color: "#94A3B8", marginTop: 4 };
+const grid4 = { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 };
+const grid2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 };
 
-const navItems = [
-  { path: "/dashboard", label: "Dashboard", roles: ["superadmin", "admin", "subusuario"] },
-  { path: "/clientes", label: "Clientes", roles: ["superadmin"] },
-  { path: "/marcas", label: "Marcas", roles: ["superadmin", "admin"] },
-  { path: "/usuarios", label: "Usuarios", roles: ["superadmin", "admin"] },
-  { path: "/feature-flags", label: "Feature Flags", roles: ["superadmin", "admin"] },
+const metricas = [
+  { label: "Alcance Total", key: "alcance", icon: "👁️", color: "#DBEAFE" },
+  { label: "Leads Generados", key: "leads", icon: "🎯", color: "#DCFCE7" },
+  { label: "Engagement Rate", key: "engagement", icon: "💬", color: "#EDE9FE", suffix: "%" },
+  { label: "Gasto Ads", key: "gasto", icon: "📣", color: "#FEF3C7", prefix: "$" },
 ];
 
-const s = {
-  layout: { display: "flex", minHeight: "100vh", fontFamily: "var(--font-sans)" },
-  sidebar: {
-    width: "var(--sidebar-width)", background: "var(--sidebar-bg)", color: "var(--sidebar-text)",
-    padding: "var(--spacing-6)", display: "flex", flexDirection: "column",
-  },
-  logo: { fontSize: "var(--font-size-lg)", fontWeight: 700, color: "#fff", marginBottom: "var(--spacing-8)" },
-  navLink: (active) => ({
-    display: "block", padding: "10px var(--spacing-3)", borderRadius: "var(--radius-md)",
-    color: active ? "#fff" : "var(--sidebar-text)", textDecoration: "none",
-    background: active ? "var(--sidebar-active)" : "transparent",
-    marginBottom: "var(--spacing-1)", fontSize: "var(--font-size-sm)",
-  }),
-  main: { flex: 1, padding: "var(--spacing-8)", background: "var(--color-bg)" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-8)" },
-  title: { fontSize: "var(--font-size-2xl)", fontWeight: 700, color: "var(--color-text)" },
-  badge: {
-    background: "var(--color-primary-light)", color: "var(--color-primary)",
-    padding: "4px 12px", borderRadius: "var(--radius-full)", fontSize: "var(--font-size-xs)", fontWeight: 600,
-  },
-  logoutBtn: {
-    background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "var(--sidebar-text)",
-    padding: "8px 16px", borderRadius: "var(--radius-md)", cursor: "pointer",
-    fontSize: "var(--font-size-sm)", marginTop: "auto",
-  },
-};
-
 export default function Dashboard() {
-  const { user, logout, isSuperadmin } = useAuth();
-  const location = useLocation();
+  const { get } = useApi();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const visibleNav = navItems.filter((item) => item.roles.includes(user?.rol));
+  useEffect(() => {
+    get(ENDPOINTS.ANALYTICS_DASHBOARD).then(r => setData(r.data)).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  const vals = { alcance: data?.metricas_30d?.alcance || 0, leads: 0, engagement: 0, gasto: 0 };
 
   return (
-    <div style={s.layout}>
-      <aside style={s.sidebar}>
-        <div style={s.logo}>KarIA</div>
-        <nav>
-          {visibleNav.map((item) => (
-            <Link key={item.path} to={item.path} style={s.navLink(location.pathname === item.path)}>
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <button style={s.logoutBtn} onClick={logout}>Cerrar sesión</button>
-      </aside>
-      <main style={s.main}>
-        <div style={s.header}>
-          <h1 style={s.title}>Bienvenido, {user?.nombre}</h1>
-          <span style={s.badge}>{user?.rol}</span>
-        </div>
-        <p style={{ color: "var(--color-text-muted)" }}>
-          Seleccioná una sección del menú para comenzar.
-          {isSuperadmin && " Tenés acceso completo como superadmin."}
-        </p>
-      </main>
-    </div>
+    <Layout title="Dashboard">
+      {loading ? <p style={{ color: "#94A3B8" }}>Cargando...</p> : (
+        <>
+          <div style={grid4}>
+            {metricas.map(m => (
+              <div key={m.key} style={card}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <span style={{ width: 36, height: 36, borderRadius: 10, background: m.color,
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{m.icon}</span>
+                  <span style={metricLabel}>{m.label}</span>
+                </div>
+                <div style={metricVal}>
+                  {m.prefix || ""}{(vals[m.key] || 0).toLocaleString()}{m.suffix || ""}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={grid2}>
+            <div style={card}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Actividad Reciente</h3>
+              {["Campaña Meta creada", "Brief SEO generado", "3 leads detectados", "Contenido aprobado"].map((t, i) => (
+                <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid #F1F5F9", fontSize: 13, color: "#475569" }}>
+                  <span style={{ marginRight: 8 }}>•</span>{t}
+                </div>
+              ))}
+            </div>
+            <div style={card}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Agentes Activos</h3>
+              {["Contenido IA", "Prospección", "SEO", "Comunidad", "Ads", "Analytics"].map((a, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0",
+                  borderBottom: "1px solid #F1F5F9", fontSize: 13 }}>
+                  <span style={{ color: "#475569" }}>{a}</span>
+                  <span style={{ background: "#DCFCE7", color: "#15803D", padding: "2px 8px",
+                    borderRadius: 6, fontSize: 11, fontWeight: 600 }}>Activo</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </Layout>
   );
 }

@@ -38,7 +38,7 @@ class ClientesService:
         return [_serialize_cliente(c) for c in self.repo.list_clientes()]
 
     def crear_marca(self, cliente_id: UUID, data: dict, actor_id: UUID) -> dict:
-        """Crea una marca asociada a un cliente."""
+        """Crea una marca asociada a un cliente e inicia onboarding + memoria."""
         if not self.repo.get_cliente_by_id(cliente_id):
             raise AppError("Cliente no encontrado", "CLIENT_NOT_FOUND", 404)
         data["cliente_id"] = cliente_id
@@ -47,6 +47,10 @@ class ClientesService:
             self.db, "crear_marca", "marcas",
             usuario_id=actor_id, cliente_id=cliente_id, recurso_id=str(marca.id),
         )
+        self.db.flush()
+        # Iniciar onboarding y memoria de marca automáticamente
+        from services.onboarding_service import iniciar_onboarding
+        iniciar_onboarding(self.db, marca.id)
         self.db.commit()
         self.db.refresh(marca)
         return _serialize_marca(marca)

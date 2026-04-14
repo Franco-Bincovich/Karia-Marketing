@@ -1,24 +1,18 @@
-/**
- * Hook de Axios con interceptors para JWT y manejo de 401.
- */
-
 import axios from "axios";
 import { useCallback } from "react";
 
 const api = axios.create({ baseURL: "/" });
 
-// Interceptor de request: adjunta JWT si existe
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const marca = localStorage.getItem("marca_activa_id");
+  if (marca) config.headers["X-Marca-ID"] = marca;
   return config;
 });
 
-// Interceptor de response: limpia sesión en 401
 api.interceptors.response.use(
-  (response) => response,
+  (r) => r,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token");
@@ -33,7 +27,6 @@ export function useApi() {
   const post = useCallback((url, data) => api.post(url, data), []);
   const patch = useCallback((url, data) => api.patch(url, data), []);
   const del = useCallback((url) => api.delete(url), []);
-
   return { get, post, patch, delete: del, api };
 }
 

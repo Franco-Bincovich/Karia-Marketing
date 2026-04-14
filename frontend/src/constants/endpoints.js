@@ -1,25 +1,60 @@
-/**
- * Centraliza todas las URLs de la API.
- * Cambiar BASE_URL aquí afecta toda la app.
- */
-
 export const BASE_URL = "/api";
 
 export const ENDPOINTS = {
-  // Auth
   LOGIN: `${BASE_URL}/auth/login`,
   LOGOUT: `${BASE_URL}/auth/logout`,
   ME: `${BASE_URL}/auth/me`,
-
-  // Clientes
   CLIENTES: `${BASE_URL}/clientes`,
-  CLIENTE_MARCAS: (clienteId) => `${BASE_URL}/clientes/${clienteId}/marcas`,
-
-  // Usuarios
+  CLIENTE_MARCAS: (id) => `${BASE_URL}/clientes/${id}/marcas`,
   USUARIOS: `${BASE_URL}/usuarios`,
-  USUARIO_PERMISOS: (usuarioId) => `${BASE_URL}/usuarios/${usuarioId}/permisos`,
-
-  // Feature Flags
+  USUARIO_PERMISOS: (id) => `${BASE_URL}/usuarios/${id}/permisos`,
   FEATURE_FLAGS: `${BASE_URL}/feature-flags`,
-  FEATURE_FLAG: (feature) => `${BASE_URL}/feature-flags/${feature}`,
+  FEATURE_FLAG: (f) => `${BASE_URL}/feature-flags/${f}`,
+  CONTACTOS: `${BASE_URL}/contactos`,
+  CONTACTOS_BUSCAR: `${BASE_URL}/contactos/buscar`,
+  CONTACTOS_GUARDAR: `${BASE_URL}/contactos/guardar`,
+  CONTENIDO: `${BASE_URL}/contenido`,
+  CONTENIDO_GENERAR: `${BASE_URL}/contenido/generar`,
+  CONTENIDO_APROBAR: (id) => `${BASE_URL}/contenido/${id}/aprobar`,
+  CONTENIDO_RECHAZAR: (id) => `${BASE_URL}/contenido/${id}/rechazar`,
+  TEMPLATES: `${BASE_URL}/contenido/templates`,
+  CALENDARIO: `${BASE_URL}/calendario`,
+  SOCIAL_CUENTAS: `${BASE_URL}/social/cuentas`,
+  SOCIAL_PUBLICACIONES: `${BASE_URL}/social/publicaciones`,
+  ADS_CAMPANAS: `${BASE_URL}/ads/campanas`,
+  ADS_APROBAR: (id) => `${BASE_URL}/ads/campanas/${id}/aprobar`,
+  ADS_PAUSAR: (id) => `${BASE_URL}/ads/campanas/${id}/pausar`,
+  ADS_UMBRALES: `${BASE_URL}/ads/umbrales`,
+  ADS_VERIFICAR: `${BASE_URL}/ads/verificar-umbrales`,
+  SEO_KEYWORDS: `${BASE_URL}/seo/keywords`,
+  SEO_INVESTIGAR: `${BASE_URL}/seo/keywords/investigar`,
+  SEO_MONITOREAR: `${BASE_URL}/seo/keywords/monitorear`,
+  SEO_AUDITORIA: `${BASE_URL}/seo/auditoria`,
+  SEO_BRIEFS: `${BASE_URL}/seo/briefs`,
+  SEO_CONFIG: `${BASE_URL}/seo/config`,
+  SEO_COMPETIDOR: `${BASE_URL}/seo/competidor`,
+  ANALYTICS_DASHBOARD: `${BASE_URL}/analytics/dashboard`,
+  ANALYTICS_METRICAS: `${BASE_URL}/analytics/metricas`,
+  ANALYTICS_CONSOLIDAR: `${BASE_URL}/analytics/consolidar`,
+  ANALYTICS_KPIS: `${BASE_URL}/analytics/kpis`,
+  ANALYTICS_REPORTES: `${BASE_URL}/analytics/reportes`,
+  ANALYTICS_GENERAR_REPORTE: `${BASE_URL}/analytics/reportes/generar`,
+  ANALYTICS_ALERTAS: `${BASE_URL}/analytics/alertas`,
+  ANALYTICS_CONFIG: `${BASE_URL}/analytics/config`,
+  COMUNIDAD_MENSAJES: `${BASE_URL}/comunidad/mensajes`,
+  COMUNIDAD_PENDIENTES: `${BASE_URL}/comunidad/mensajes/pendientes`,
+  COMUNIDAD_RESPONDER: (id) => `${BASE_URL}/comunidad/mensajes/${id}/responder`,
+  COMUNIDAD_LEADS: `${BASE_URL}/comunidad/leads`,
+  COMUNIDAD_MENCIONES: `${BASE_URL}/comunidad/menciones`,
+  COMUNIDAD_URGENTES: `${BASE_URL}/comunidad/menciones/urgentes`,
+  COMUNIDAD_MONITOREAR: `${BASE_URL}/comunidad/monitorear`,
+  COMUNIDAD_SENTIMIENTO: `${BASE_URL}/comunidad/sentimiento`,
+  COMUNIDAD_CONFIG: `${BASE_URL}/comunidad/config`,
+  COMUNIDAD_LISTENING: `${BASE_URL}/comunidad/config/listening`,
+  ONBOARDING_ESTADO: `${BASE_URL}/onboarding/estado`,
+  ONBOARDING_INICIAR: `${BASE_URL}/onboarding/iniciar`,
+  ONBOARDING_PASO: (n) => `${BASE_URL}/onboarding/paso/${n}`,
+  ONBOARDING_MEMORIA: `${BASE_URL}/onboarding/memoria`,
+  ONBOARDING_AGENTE: (a) => `${BASE_URL}/onboarding/memoria/agente/${a}`,
+  ONBOARDING_REGENERAR: `${BASE_URL}/onboarding/memoria/regenerar`,
 };
