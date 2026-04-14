@@ -7,7 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
-from routes import ads, auth, calendario, clientes, contactos, contenido, feature_flags, seo, social, usuarios
+from routes import (
+    ads, analytics, auth, calendario, clientes, comunidad, contactos,
+    contenido, feature_flags, onboarding, seo, social, usuarios,
+)
 
 
 @asynccontextmanager
@@ -46,6 +49,9 @@ def create_app() -> FastAPI:
     app.include_router(social.router)
     app.include_router(ads.router)
     app.include_router(seo.router)
+    app.include_router(analytics.router)
+    app.include_router(comunidad.router)
+    app.include_router(onboarding.router)
 
     @app.get("/health", tags=["system"])
     def health():

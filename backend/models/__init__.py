@@ -8,3 +8,6 @@ from models.contenido_models import ContenidoMkt, VersionesContenidoMkt, Aprendi
 from models.social_models import CalendarioEditorialMkt, PublicacionesMkt, CuentasSocialesMkt  # noqa: F401
 from models.ads_models import CampanaAdsMkt, AdMkt, MetricasAdsMkt, UmbralesAdsMkt  # noqa: F401
 from models.seo_models import KeywordMkt, AuditoriaSeoMkt, BriefSeoMkt, ConfigSeoMkt  # noqa: F401
+from models.analytics_models import MetricasSocialesMkt, KpiClienteMkt, ReporteMkt, AlertaMkt, ConfigReportesMkt  # noqa: F401
+from models.comunidad_models import MensajeComunidadMkt, ConfigComunidadMkt, MencionMkt, ConfigListeningMkt  # noqa: F401
+from models.onboarding_models import MemoriaMarcaMkt, HistorialOnboardingMkt  # noqa: F401

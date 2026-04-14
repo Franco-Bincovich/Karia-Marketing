@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_KEY: str = ""
     SEMRUSH_API_KEY: str = ""
+    MENTION_API_KEY: str = ""
+    MANYCHAT_API_KEY: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
