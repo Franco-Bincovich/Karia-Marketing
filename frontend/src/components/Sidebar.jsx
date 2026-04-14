@@ -5,9 +5,12 @@ const sections = [
   { title: "PRINCIPAL", items: [
     { path: "/dashboard", label: "Dashboard", icon: "📊" },
     { path: "/prospeccion", label: "Prospección", icon: "🎯", badge: true },
+    { path: "/estrategia", label: "Estrategia", icon: "🧠" },
+    { path: "/agentes-ia", label: "Agentes IA", icon: "🤖" },
   ]},
   { title: "CONTENIDO", items: [
     { path: "/contenido", label: "Generar Contenido", icon: "✍️" },
+    { path: "/creativo", label: "Creativo", icon: "🎨" },
     { path: "/calendario", label: "Calendario", icon: "📅" },
     { path: "/social-media", label: "Redes Sociales", icon: "📱" },
   ]},
@@ -18,6 +21,8 @@ const sections = [
   { title: "ANÁLISIS", items: [
     { path: "/analytics", label: "Analytics", icon: "📈" },
     { path: "/comunidad", label: "Comunidad", icon: "💬", badge: true },
+    { path: "/social-listening", label: "Social Listening", icon: "👂" },
+    { path: "/reporting", label: "Reporting", icon: "📋" },
   ]},
   { title: "SISTEMA", items: [
     { path: "/onboarding", label: "Configuración", icon: "⚙️" },

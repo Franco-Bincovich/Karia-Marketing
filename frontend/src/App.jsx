@@ -15,6 +15,11 @@ import SEO from "./pages/SEO";
 import Analytics from "./pages/Analytics";
 import Comunidad from "./pages/Comunidad";
 import Onboarding from "./pages/Onboarding";
+import Estrategia from "./pages/Estrategia";
+import Creativo from "./pages/Creativo";
+import Reporting from "./pages/Reporting";
+import SocialListening from "./pages/SocialListening";
+import AgentesIA from "./pages/AgentesIA";
 import CrearMarca from "./components/CrearMarca";
 
 function ProtectedRoute({ children, requireSuperadmin = false, allowNoMarca = false }) {
@@ -54,6 +59,11 @@ export default function App() {
       <Route path="/analytics" element={<P><Analytics /></P>} />
       <Route path="/comunidad" element={<P><Comunidad /></P>} />
       <Route path="/onboarding" element={<P><Onboarding /></P>} />
+      <Route path="/estrategia" element={<P><Estrategia /></P>} />
+      <Route path="/creativo" element={<P><Creativo /></P>} />
+      <Route path="/reporting" element={<P><Reporting /></P>} />
+      <Route path="/social-listening" element={<P><SocialListening /></P>} />
+      <Route path="/agentes-ia" element={<P><AgentesIA /></P>} />
       <Route path="*" element={<Navigate to={user ? (marcaActiva ? "/dashboard" : "/crear-marca") : "/login"} replace />} />
     </Routes>
   );
