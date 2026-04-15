@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const sections = [
@@ -26,6 +26,9 @@ const sections = [
   ]},
   { title: "SISTEMA", items: [
     { path: "/onboarding", label: "Configuración", icon: "⚙️" },
+  ]},
+  { title: "ADMIN", superadminOnly: true, items: [
+    { path: "/clientes", label: "Clientes", icon: "🏢" },
   ]},
 ];
 
@@ -75,12 +78,23 @@ const s = {
   },
   userName: { fontSize: 13, color: "#E2E8F0", fontWeight: 500 },
   userRole: { fontSize: 11, color: "#64748B" },
+  logoutBtn: {
+    marginLeft: "auto", background: "none", border: "1px solid rgba(255,255,255,.12)",
+    borderRadius: 6, padding: "6px 10px", color: "#94A3B8", fontSize: 11, fontWeight: 500,
+    cursor: "pointer", transition: "all 150ms",
+  },
 };
 
 export default function Sidebar() {
-  const { user, marcas, marcaActiva, setMarcaActiva, completitud } = useAuth();
+  const { user, marcas, marcaActiva, setMarcaActiva, completitud, logout } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const initials = user?.nombre?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
+
+  async function handleLogout() {
+    await logout();
+    navigate("/login");
+  }
 
   function handleMarcaChange(e) {
     const marca = marcas.find(m => m.id === e.target.value);
@@ -110,7 +124,7 @@ export default function Sidebar() {
         <div style={s.barPct}>{completitud}%</div>
       </div>
       <nav style={{ flex: 1, overflowY: "auto" }}>
-        {sections.map((sec) => (
+        {sections.filter(sec => !sec.superadminOnly || user?.rol === "superadmin").map((sec) => (
           <div key={sec.title}>
             <div style={s.section}>{sec.title}</div>
             {sec.items.map((item) => (
@@ -129,6 +143,7 @@ export default function Sidebar() {
           <div style={s.userName}>{user?.nombre || "Usuario"}</div>
           <div style={s.userRole}>{user?.rol || "—"}</div>
         </div>
+        <button style={s.logoutBtn} onClick={handleLogout}>Salir</button>
       </div>
     </aside>
   );

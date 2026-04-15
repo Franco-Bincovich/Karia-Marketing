@@ -23,8 +23,8 @@ class ClientesRepository:
         return self.db.query(ClienteMkt).filter(ClienteMkt.email_admin == email).first()
 
     def list_clientes(self) -> List[ClienteMkt]:
-        """Lista todos los clientes activos."""
-        return self.db.query(ClienteMkt).filter(ClienteMkt.activo == True).all()  # noqa: E712
+        """Lista todos los clientes (activos y pausados)."""
+        return self.db.query(ClienteMkt).order_by(ClienteMkt.created_at.desc()).all()
 
     def create_cliente(self, data: dict) -> ClienteMkt:
         """Crea un nuevo cliente."""

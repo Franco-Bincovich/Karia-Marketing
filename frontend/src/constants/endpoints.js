@@ -5,6 +5,7 @@ export const ENDPOINTS = {
   LOGOUT: `${BASE_URL}/auth/logout`,
   ME: `${BASE_URL}/auth/me`,
   CLIENTES: `${BASE_URL}/clientes`,
+  CLIENTE_ESTADO: (id) => `${BASE_URL}/clientes/${id}/estado`,
   CLIENTE_MARCAS: (id) => `${BASE_URL}/clientes/${id}/marcas`,
   USUARIOS: `${BASE_URL}/usuarios`,
   USUARIO_PERMISOS: (id) => `${BASE_URL}/usuarios/${id}/permisos`,

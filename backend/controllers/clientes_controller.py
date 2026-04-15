@@ -14,6 +14,11 @@ class CrearClienteRequest(BaseModel):
     nombre: str
     email_admin: EmailStr
     pais: str = "AR"
+    plan: str = "Basic"
+
+
+class CambiarEstadoRequest(BaseModel):
+    activo: bool
 
 
 class CrearMarcaRequest(BaseModel):
@@ -57,6 +62,9 @@ class ClientesController:
 
     def listar_clientes(self) -> List[dict]:
         return self.service.listar_clientes()
+
+    def cambiar_estado(self, cliente_id: UUID, body: CambiarEstadoRequest, actor_id: UUID) -> dict:
+        return self.service.cambiar_estado(cliente_id, body.activo, actor_id)
 
     def crear_marca(self, cliente_id: UUID, body: CrearMarcaRequest, actor_id: UUID) -> dict:
         return self.service.crear_marca(cliente_id, body.model_dump(), actor_id)

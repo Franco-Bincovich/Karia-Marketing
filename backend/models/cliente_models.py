@@ -21,6 +21,7 @@ class ClienteMkt(Base):
     nombre: Mapped[str] = mapped_column(Text, nullable=False)
     email_admin: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     pais: Mapped[str] = mapped_column(String(10), default="AR")
+    plan: Mapped[str] = mapped_column(String(20), default="Basic")
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
