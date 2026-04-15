@@ -58,6 +58,7 @@ class ReporteMkt(Base):
     periodo_inicio: Mapped[date] = mapped_column(Date, nullable=False)
     periodo_fin: Mapped[date] = mapped_column(Date, nullable=False)
     contenido: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    resumen_ejecutivo: Mapped[Optional[str]] = mapped_column(Text)
     formato: Mapped[str] = mapped_column(String(10), nullable=False)
     enviado: Mapped[bool] = mapped_column(Boolean, default=False)
     enviado_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

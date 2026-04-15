@@ -52,9 +52,33 @@ class AnalyticsController:
     def __init__(self, db: Session):
         self.db = db
 
+    def _check_premium(self, current_user: dict, marca_id: UUID):
+        """Analytics solo Premium o superadmin."""
+        if current_user.get("rol") == "superadmin":
+            return
+        from models.cliente_models import ClienteMkt, MarcaMkt
+        marca = self.db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
+        if marca:
+            cliente = self.db.query(ClienteMkt).filter(ClienteMkt.id == marca.cliente_id).first()
+            if cliente and cliente.plan == "Premium":
+                return
+        raise AppError("Analytics solo disponible en Premium", "PLAN_LIMIT", 403)
+
     def dashboard(self, x_marca_id: Optional[str], current_user: dict) -> dict:
-        """Datos del dashboard: KPIs, progreso, métricas 30d."""
-        return analytics_service.obtener_dashboard(self.db, _marca(x_marca_id))
+        marca_id = _marca(x_marca_id)
+        self._check_premium(current_user, marca_id)
+        return analytics_service.obtener_dashboard(self.db, marca_id)
+
+    def tendencias(self, x_marca_id: Optional[str], current_user: dict) -> dict:
+        marca_id = _marca(x_marca_id)
+        self._check_premium(current_user, marca_id)
+        return analytics_service.obtener_tendencias(self.db, marca_id)
+
+    def top_contenido(self, x_marca_id: Optional[str], current_user: dict) -> dict:
+        marca_id = _marca(x_marca_id)
+        self._check_premium(current_user, marca_id)
+        items = analytics_service.obtener_top_contenido(self.db, marca_id)
+        return {"data": items, "count": len(items)}
 
     def metricas(self, fecha_inicio: Optional[date], fecha_fin: Optional[date],
                  x_marca_id: Optional[str], current_user: dict) -> dict:

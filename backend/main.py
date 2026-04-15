@@ -11,8 +11,8 @@ from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
 from routes import (
     ads, agentes, analytics, auth, calendario, clientes, comunidad, contactos,
-    contenido, estrategia, feature_flags, imagenes, listening, onboarding, seo,
-    social, usuarios,
+    contenido, estrategia, feature_flags, imagenes, listening, onboarding,
+    reporting, seo, social, usuarios,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,13 +58,44 @@ async def _listening_loop():
         await asyncio.sleep(LISTENING_CHECK_INTERVAL)
 
 
+REPORTING_WEEKLY_INTERVAL = 86400  # Check daily, generate on Mondays
+
+
+async def _reporting_loop():
+    """Genera reporte semanal automático cada lunes."""
+    await asyncio.sleep(180)
+    while True:
+        try:
+            from datetime import date
+            if date.today().weekday() == 0:  # Monday
+                logger.info("Lunes — generando reportes semanales...")
+                from integrations.database import SessionLocal
+                from services.reporting_service import generar_reporte
+                from models.cliente_models import MarcaMkt
+                db = SessionLocal()
+                try:
+                    marcas = db.query(MarcaMkt).filter(MarcaMkt.activa == True).all()  # noqa: E712
+                    for marca in marcas:
+                        try:
+                            generar_reporte(db, marca.id, "semanal")
+                        except Exception:
+                            logger.exception("Error generando reporte para marca %s", marca.id)
+                finally:
+                    db.close()
+        except Exception:
+            logger.exception("Error en loop de reporting")
+        await asyncio.sleep(REPORTING_WEEKLY_INTERVAL)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     task_venc = asyncio.create_task(_vencimiento_loop())
     task_listen = asyncio.create_task(_listening_loop())
+    task_report = asyncio.create_task(_reporting_loop())
     yield
     task_venc.cancel()
     task_listen.cancel()
+    task_report.cancel()
 
 
 def create_app() -> FastAPI:
@@ -102,6 +133,7 @@ def create_app() -> FastAPI:
     app.include_router(ads.router)
     app.include_router(seo.router)
     app.include_router(analytics.router)
+    app.include_router(reporting.router)
     app.include_router(comunidad.router)
     app.include_router(onboarding.router)
 

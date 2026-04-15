@@ -32,6 +32,26 @@ def dashboard(
     return ctrl.dashboard(x_marca_id, current_user)
 
 
+@router.get("/tendencias")
+def tendencias(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: AnalyticsController = Depends(_ctrl),
+):
+    """Tendencias últimos 30 días. Solo Premium/superadmin."""
+    return ctrl.tendencias(x_marca_id, current_user)
+
+
+@router.get("/top-contenido")
+def top_contenido(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: AnalyticsController = Depends(_ctrl),
+):
+    """Top 5 contenidos. Solo Premium/superadmin."""
+    return ctrl.top_contenido(x_marca_id, current_user)
+
+
 @router.get("/metricas")
 def metricas(
     fecha_inicio: Optional[date] = Query(default=None),

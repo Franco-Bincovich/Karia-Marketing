@@ -78,6 +78,31 @@ def obtener_dashboard(db: Session, marca_id: UUID) -> dict:
     }
 
 
+def obtener_tendencias(db: Session, marca_id: UUID) -> dict:
+    """Evolución de métricas en los últimos 30 días."""
+    hoy = date.today()
+    inicio = hoy - timedelta(days=30)
+    items = metricas_repo.listar(db, marca_id, inicio, hoy)
+    por_fecha = {}
+    for m in items:
+        f = m.get("fecha")
+        if f not in por_fecha:
+            por_fecha[f] = {"fecha": f, "alcance": 0, "engagement": 0, "impresiones": 0, "clicks": 0}
+        por_fecha[f]["alcance"] += m.get("alcance", 0)
+        por_fecha[f]["engagement"] += m.get("engagement", 0)
+        por_fecha[f]["impresiones"] += m.get("impresiones", 0)
+        por_fecha[f]["clicks"] += m.get("clicks", 0)
+    return {"data": sorted(por_fecha.values(), key=lambda x: x["fecha"]), "periodo": f"{inicio.isoformat()} a {hoy.isoformat()}"}
+
+
+def obtener_top_contenido(db: Session, marca_id: UUID) -> list:
+    """Top 5 publicaciones con mejor performance."""
+    from repositories import publicaciones_repository as pub_repo
+    pubs = pub_repo.listar(db, marca_id)
+    sorted_pubs = sorted(pubs, key=lambda p: (p.get("likes_2hs", 0) + p.get("comentarios_2hs", 0)), reverse=True)
+    return sorted_pubs[:5]
+
+
 def verificar_alertas_personalizadas(db: Session, marca_id: UUID) -> list:
     """Evalúa condiciones de alerta y retorna las no leídas."""
     calcular_kpis(db, marca_id)

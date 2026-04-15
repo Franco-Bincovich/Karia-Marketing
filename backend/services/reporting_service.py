@@ -29,19 +29,34 @@ def generar_reporte(db: Session, marca_id: UUID, tipo: str) -> dict:
     totales = metricas_repo.total_periodo(db, marca_id, inicio, fin)
     kpis = kpis_repo.obtener_activos(db, marca_id)
 
-    contenido = {"totales": totales, "kpis": kpis, "periodo": tipo}
+    # Conteo de publicaciones del período
+    from repositories import publicaciones_repository as pub_repo
+    from repositories import contenido_repository as cont_repo
+    from repositories import menciones_repository as menc_repo
+
+    posts_count = 0
+    contenido_count = 0
+    menciones_count = menc_repo.total_menciones(db, marca_id)
+
+    contenido_data = {"totales": totales, "kpis": kpis, "periodo": tipo,
+                      "posts_publicados": posts_count, "contenido_generado": contenido_count,
+                      "menciones": menciones_count}
 
     if config["incluir_comparacion"]:
         comp_inicio, comp_fin = _periodo_comparacion(inicio, fin, config["periodo_comparacion"])
         totales_ant = metricas_repo.total_periodo(db, marca_id, comp_inicio, comp_fin)
         variaciones = _calcular_variaciones(totales, totales_ant)
-        contenido["comparacion"] = {"periodo_anterior": totales_ant, "variaciones": variaciones}
+        contenido_data["comparacion"] = {"periodo_anterior": totales_ant, "variaciones": variaciones}
+
+    # Generar resumen ejecutivo con Claude
+    resumen = _generar_resumen_ejecutivo(contenido_data, tipo)
 
     formato = config["formatos"][0] if config["formatos"] else "panel"
     reporte = reportes_repo.crear(db, {
         "marca_id": marca_id, "tipo": tipo,
         "periodo_inicio": inicio, "periodo_fin": fin,
-        "contenido": contenido, "formato": formato,
+        "contenido": contenido_data, "resumen_ejecutivo": resumen,
+        "formato": formato,
     })
     registrar_auditoria(
         db, accion="generar_reporte", modulo="analytics", marca_id=marca_id,
@@ -84,6 +99,30 @@ def _periodo_comparacion(inicio: date, fin: date, tipo: str):
     if tipo == "mismo_periodo_anterior":
         return inicio - timedelta(days=365), fin - timedelta(days=365)
     return inicio - timedelta(days=dias), inicio  # semana_anterior default
+
+
+def _generar_resumen_ejecutivo(datos: dict, tipo: str) -> str:
+    """Genera resumen ejecutivo del reporte con Claude."""
+    try:
+        from integrations.claude_client import _get_client, _SEARCH_MODEL
+        import json
+        client = _get_client()
+        message = client.messages.create(
+            model=_SEARCH_MODEL,
+            max_tokens=500,
+            system="Sos un analista de marketing. Generás resúmenes ejecutivos concisos y accionables.",
+            messages=[{"role": "user", "content": (
+                f"Generá un resumen ejecutivo de este reporte {tipo} de marketing.\n\n"
+                f"Datos: {json.dumps(datos, default=str)}\n\n"
+                f"El resumen debe: ser de 3-5 oraciones, destacar los insights más relevantes, "
+                f"incluir una recomendación accionable. Respondé solo con el texto del resumen."
+            )}],
+        )
+        blocks = [b for b in message.content if b.type == "text"]
+        return blocks[-1].text.strip() if blocks else ""
+    except Exception as e:
+        logger.warning(f"[reporting] Error generando resumen: {e}")
+        return ""
 
 
 def _calcular_variaciones(actual: dict, anterior: dict) -> dict:
