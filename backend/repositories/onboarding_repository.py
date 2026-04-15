@@ -25,6 +25,8 @@ def _s(o: OnboardingMkt) -> dict:
     return {
         "id": str(o.id), "marca_id": str(o.marca_id),
         "pasos": pasos, "completitud": o.completitud,
+        "respuestas": o.respuestas or {},
+        "completado": o.completado or False,
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
     }
 
@@ -66,6 +68,32 @@ def calcular_completitud_obj(obj: OnboardingMkt) -> int:
     """Calcula completitud desde el objeto sin query extra."""
     completados = sum(1 for p in _PASOS if getattr(obj, p, False))
     return int(completados / len(_PASOS) * 100)
+
+
+def actualizar_respuestas(db: Session, marca_id: UUID, respuestas: dict, completitud: int) -> dict:
+    """Actualiza las respuestas del cuestionario y la completitud."""
+    obj = db.query(OnboardingMkt).filter(OnboardingMkt.marca_id == marca_id).first()
+    if not obj:
+        obj = OnboardingMkt(marca_id=marca_id)
+        db.add(obj)
+        db.flush()
+    obj.respuestas = respuestas
+    obj.completitud = completitud
+    db.flush()
+    return _s(obj)
+
+
+def marcar_completado(db: Session, marca_id: UUID) -> dict:
+    """Marca el onboarding como completado."""
+    obj = db.query(OnboardingMkt).filter(OnboardingMkt.marca_id == marca_id).first()
+    if not obj:
+        obj = OnboardingMkt(marca_id=marca_id)
+        db.add(obj)
+        db.flush()
+    obj.completado = True
+    obj.completitud = 100
+    db.flush()
+    return _s(obj)
 
 
 def registrar_historial(db: Session, marca_id: UUID, paso: int,

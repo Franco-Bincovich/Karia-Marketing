@@ -1,4 +1,4 @@
-"""Rutas del módulo Onboarding y Memoria de Marca."""
+"""Rutas del módulo Onboarding, Memoria de Marca y Perfil."""
 from __future__ import annotations
 
 from typing import Optional
@@ -7,29 +7,32 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from controllers.onboarding_controller import (
-    MemoriaUpdateRequest, OnboardingController, PasoRequest,
+    AutocompletarRequest, GuardarRespuestasRequest, MemoriaUpdateRequest,
+    OnboardingController, PasoRequest, SugerirRequest,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user
 
-router = APIRouter(prefix="/api/onboarding", tags=["onboarding"])
+router = APIRouter(tags=["onboarding"])
 
 
 def _ctrl(db: Session = Depends(get_db)) -> OnboardingController:
     return OnboardingController(db)
 
 
-@router.get("/estado")
+# --- Onboarding cuestionario ---
+
+@router.get("/api/onboarding/estado")
 def estado(
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),
     ctrl: OnboardingController = Depends(_ctrl),
 ):
-    """Estado del onboarding con pasos, completitud y memoria."""
+    """Estado del onboarding con preguntas según plan."""
     return ctrl.estado(x_marca_id, current_user)
 
 
-@router.post("/iniciar")
+@router.post("/api/onboarding/iniciar")
 def iniciar(
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),
@@ -39,18 +42,79 @@ def iniciar(
     return ctrl.iniciar(x_marca_id, current_user)
 
 
-@router.post("/paso/{numero}")
+@router.post("/api/onboarding/guardar")
+def guardar(
+    body: GuardarRespuestasRequest,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: OnboardingController = Depends(_ctrl),
+):
+    """Guarda progreso parcial del cuestionario."""
+    return ctrl.guardar(body, x_marca_id, current_user)
+
+
+@router.post("/api/onboarding/completar")
+def completar(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: OnboardingController = Depends(_ctrl),
+):
+    """Marca el onboarding como completo y genera perfil de marca consolidado."""
+    return ctrl.completar(x_marca_id, current_user)
+
+
+# --- IA Premium ---
+
+@router.post("/api/onboarding/sugerir")
+def sugerir(
+    body: SugerirRequest,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: OnboardingController = Depends(_ctrl),
+):
+    """Sugiere respuesta via IA para una pregunta del onboarding. Solo Premium."""
+    return ctrl.sugerir(body, x_marca_id, current_user)
+
+
+@router.post("/api/onboarding/autocompletar")
+def autocompletar(
+    body: AutocompletarRequest,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: OnboardingController = Depends(_ctrl),
+):
+    """Autocompleta perfil buscando info pública de la marca. Solo Premium."""
+    return ctrl.autocompletar(body, x_marca_id, current_user)
+
+
+# --- Perfil de marca ---
+
+@router.get("/api/marca/perfil")
+def perfil_marca(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: OnboardingController = Depends(_ctrl),
+):
+    """Perfil de marca consolidado — usado por los agentes de IA."""
+    return ctrl.perfil(x_marca_id, current_user)
+
+
+# --- Legacy: pasos individuales ---
+
+@router.post("/api/onboarding/paso/{numero}")
 def completar_paso(
     numero: int, body: PasoRequest,
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),
     ctrl: OnboardingController = Depends(_ctrl),
 ):
-    """Completa un paso del onboarding (1-10)."""
+    """Completa un paso del onboarding legacy (1-10)."""
     return ctrl.completar_paso(numero, body, x_marca_id, current_user)
 
 
-@router.get("/memoria")
+# --- Memoria de marca ---
+
+@router.get("/api/onboarding/memoria")
 def obtener_memoria(
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),
@@ -60,7 +124,7 @@ def obtener_memoria(
     return ctrl.obtener_memoria(x_marca_id, current_user)
 
 
-@router.patch("/memoria")
+@router.patch("/api/onboarding/memoria")
 def actualizar_memoria(
     body: MemoriaUpdateRequest,
     x_marca_id: Optional[str] = Header(default=None),
@@ -71,7 +135,7 @@ def actualizar_memoria(
     return ctrl.actualizar_memoria(body, x_marca_id, current_user)
 
 
-@router.get("/memoria/agente/{agente}")
+@router.get("/api/onboarding/memoria/agente/{agente}")
 def memoria_agente(
     agente: str,
     x_marca_id: Optional[str] = Header(default=None),
@@ -82,7 +146,7 @@ def memoria_agente(
     return ctrl.memoria_agente(agente, x_marca_id, current_user)
 
 
-@router.post("/memoria/regenerar")
+@router.post("/api/onboarding/memoria/regenerar")
 def regenerar_memoria(
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),

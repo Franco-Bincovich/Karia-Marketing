@@ -54,6 +54,8 @@ class OnboardingMkt(Base):
     paso_9_notificaciones: Mapped[bool] = mapped_column(Boolean, default=False)
     paso_10_subusuarios: Mapped[bool] = mapped_column(Boolean, default=False)
     completitud: Mapped[int] = mapped_column(Integer, default=0)
+    respuestas: Mapped[Optional[dict]] = mapped_column(JSONB, default=dict)
+    completado: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
     marca = relationship("MarcaMkt", back_populates="onboarding")

@@ -209,3 +209,94 @@ def generar_contenido_ia(
     resultado = _parse_json_object(text_blocks[-1].text)
     logger.debug(f"[claude_client] contenido generado — variable_testeada: {resultado.get('variable_testeada')!r}")
     return resultado
+
+
+def sugerir_respuesta_onboarding(
+    pregunta: str,
+    contexto_respuestas: dict,
+    preguntas: list,
+    memoria: dict,
+) -> str:
+    """
+    Sugiere una respuesta para una pregunta del onboarding basándose en el contexto.
+
+    Args:
+        pregunta: Texto de la pregunta a responder
+        contexto_respuestas: Dict {id: respuesta} de lo ya respondido
+        preguntas: Lista completa de preguntas para mapear IDs a textos
+        memoria: Memoria de marca actual
+
+    Returns:
+        Texto de sugerencia para la respuesta
+    """
+    logger.debug("[claude_client] sugerir_respuesta_onboarding")
+
+    # Build context from answered questions
+    contexto_lines = []
+    id_to_pregunta = {str(p["id"]): p["pregunta"] for p in preguntas}
+    for pid, resp in contexto_respuestas.items():
+        if resp and pid in id_to_pregunta:
+            contexto_lines.append(f"- {id_to_pregunta[pid]}: {resp}")
+
+    nombre = memoria.get("nombre_marca", "la marca")
+    contexto_texto = "\n".join(contexto_lines) if contexto_lines else "No hay respuestas previas."
+
+    message = _get_client().messages.create(
+        model=_SEARCH_MODEL,
+        max_tokens=500,
+        system=(
+            "Sos un asistente de onboarding para marcas. "
+            "Sugerí una respuesta concreta y útil basándote en el contexto de la marca. "
+            "Respondé solo con el texto de la sugerencia, sin explicaciones ni prefijos."
+        ),
+        messages=[{"role": "user", "content": (
+            f"Marca: {nombre}\n\n"
+            f"Lo que ya sabemos de la marca:\n{contexto_texto}\n\n"
+            f"Pregunta a responder: {pregunta}\n\n"
+            f"Sugerí una respuesta apropiada:"
+        )}],
+    )
+
+    text_blocks = [b for b in message.content if b.type == "text"]
+    return text_blocks[-1].text.strip() if text_blocks else ""
+
+
+def autocompletar_perfil_marca(nombre_marca: str) -> dict:
+    """
+    Busca información pública de una marca e intenta autocompletar respuestas del onboarding.
+
+    Returns:
+        Dict {pregunta_id: respuesta_sugerida} para las preguntas que pudo completar
+    """
+    logger.debug(f"[claude_client] autocompletar_perfil_marca — {nombre_marca!r}")
+
+    message = _get_client().messages.create(
+        model=_SEARCH_MODEL,
+        max_tokens=2048,
+        tools=_WEB_SEARCH_TOOL,
+        messages=[{"role": "user", "content": (
+            f"Investigá la marca '{nombre_marca}' en internet y completá la mayor cantidad "
+            f"posible de estos campos basándote en información pública.\n\n"
+            f"Campos a completar (usá el ID numérico como clave):\n"
+            f'1: Nombre de la marca y a qué se dedica\n'
+            f'2: Público objetivo\n'
+            f'3: Problema que resuelve\n'
+            f'5: Principales competidores\n'
+            f'6: Propuesta de valor diferencial\n'
+            f'8: Productos o servicios principales\n'
+            f'10: Canales digitales donde tiene presencia\n\n'
+            f"Respondé SOLO con un JSON con los IDs como clave y las respuestas como valor. "
+            f"Solo incluí los campos donde encontraste información confiable.\n"
+            f'Ejemplo: {{"1": "Nike es una marca de...", "2": "Deportistas..."}}'
+        )}],
+    )
+
+    text_blocks = [b for b in message.content if b.type == "text"]
+    if not text_blocks:
+        return {}
+
+    try:
+        return _parse_json_object(text_blocks[-1].text)
+    except (ValueError, json.JSONDecodeError):
+        logger.warning("[claude_client] No se pudo parsear respuesta de autocompletado")
+        return {}
