@@ -34,8 +34,8 @@ def aprobar(db: Session, contenido_id: UUID, marca_id: UUID, variante: str) -> d
         AppError 404 si no existe
         AppError 400 si la variante es inválida
     """
-    if variante not in ("a", "b"):
-        raise AppError("La variante debe ser 'a' o 'b'", "INVALID_VARIANTE", 400)
+    if variante not in ("a", "b", "c"):
+        raise AppError("La variante debe ser 'a', 'b' o 'c'", "INVALID_VARIANTE", 400)
 
     obj = repo.obtener(db, contenido_id, marca_id)
     if not obj:
@@ -125,8 +125,8 @@ def editar(db: Session, contenido_id: UUID, marca_id: UUID, copy_editado: str, v
     Returns:
         Pieza de contenido actualizada
     """
-    if variante not in ("a", "b"):
-        raise AppError("La variante debe ser 'a' o 'b'", "INVALID_VARIANTE", 400)
+    if variante not in ("a", "b", "c"):
+        raise AppError("La variante debe ser 'a', 'b' o 'c'", "INVALID_VARIANTE", 400)
 
     obj = repo.obtener(db, contenido_id, marca_id)
     if not obj:

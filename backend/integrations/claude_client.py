@@ -137,6 +137,15 @@ FORMATO:
     return contactos
 
 
+_NETWORK_RULES = {
+    "instagram": "Máximo 2200 caracteres. Hashtags al final del copy (6-10 hashtags). Hook fuerte en la primera línea.",
+    "facebook": "Texto conversacional y más largo. Sin límite estricto de hashtags. Invitá a interactuar.",
+    "linkedin": "Tono profesional. Primera línea como gancho. Usá line breaks para legibilidad. 1-3 hashtags.",
+    "tiktok": "Copy breve y directo. Máx 150 caracteres. Enfocado en el hook visual.",
+    "twitter": "Máx 280 caracteres. Conciso e impactante. 1-2 hashtags como máximo.",
+}
+
+
 def generar_contenido_ia(
     red_social: str,
     formato: str,
@@ -145,43 +154,43 @@ def generar_contenido_ia(
     tema: str,
     memoria_marca: str,
     feedback_previo: Optional[str] = None,
+    custom_api_key: Optional[str] = None,
 ) -> dict:
     """
-    Genera variantes A/B de contenido para redes sociales usando Claude.
+    Genera 3 variantes (A/B/C) de contenido optimizado por red social.
 
-    Siempre produce dos variantes genuinamente diferentes (ángulo narrativo,
-    estructura, tono o tipo de apertura). Sin web search — generación pura.
+    Cada variante incluye: copy, hashtags, call to action.
+    Las variantes difieren en ángulo narrativo, estructura o tipo de apertura.
 
     Args:
-        red_social: Canal destino (instagram, linkedin, etc.)
-        formato: Tipo de pieza (post, reel, email, etc.)
-        objetivo: Propósito del contenido (venta, awareness, etc.)
-        tono: Estilo de escritura (profesional, cercano, etc.)
-        tema: Tema o producto a comunicar
-        memoria_marca: Contexto de la marca (descripción, voz, audiencia)
-        feedback_previo: Comentario de rechazo a incorporar en la regeneración
+        custom_api_key: Si se provee, usa esta key en vez de la default de Nexo
 
     Returns:
-        Dict con: copy_a, copy_b, hashtags_a, hashtags_b, variable_testeada
-
-    Raises:
-        ValueError: Si Claude no retorna JSON válido
+        Dict con: copy_a/b/c, hashtags_a/b/c, cta_a/b/c, variable_testeada
     """
     logger.debug(f"[claude_client] generar_contenido_ia — {red_social}/{formato}")
 
+    network_rule = _NETWORK_RULES.get(red_social, "Adaptá la longitud al canal.")
+
     system_prompt = (
-        f"Sos el Agente Contenido de KarIA Marketing. Generás copies de alta calidad para redes sociales.\n"
-        f"Siempre generás DOS variantes (A y B) genuinamente diferentes — no levemente distintas.\n"
+        f"Sos el Agente Contenido de Nexo Marketing. Generás copies de alta calidad para redes sociales.\n"
+        f"Siempre generás TRES variantes (A, B y C) genuinamente diferentes — no levemente distintas.\n"
         f"Las variantes deben diferir en: ángulo narrativo, estructura, tono o tipo de apertura.\n"
-        f"Cada variante tiene que ser tan buena como para publicarse sola.\n"
-        f"Conocés la marca: {memoria_marca}\n"
+        f"Cada variante tiene que ser tan buena como para publicarse sola.\n\n"
+        f"REGLAS PARA {red_social.upper()}:\n{network_rule}\n\n"
+        f"PERFIL DE MARCA:\n{memoria_marca}\n\n"
         f'Respondé SOLO con JSON válido con esta estructura exacta:\n'
         f'{{\n'
         f'  "copy_a": "texto completo de la variante A",\n'
         f'  "copy_b": "texto completo de la variante B",\n'
-        f'  "hashtags_a": "hashtags para variante A separados por espacio",\n'
-        f'  "hashtags_b": "hashtags para variante B separados por espacio",\n'
-        f'  "variable_testeada": "qué variable diferencia A de B"\n'
+        f'  "copy_c": "texto completo de la variante C",\n'
+        f'  "hashtags_a": "hashtags variante A",\n'
+        f'  "hashtags_b": "hashtags variante B",\n'
+        f'  "hashtags_c": "hashtags variante C",\n'
+        f'  "cta_a": "call to action variante A",\n'
+        f'  "cta_b": "call to action variante B",\n'
+        f'  "cta_c": "call to action variante C",\n'
+        f'  "variable_testeada": "qué variable diferencia las 3 variantes"\n'
         f"}}"
     )
 
@@ -195,9 +204,13 @@ def generar_contenido_ia(
         f"- Tema: {tema}{feedback_line}"
     )
 
-    message = _get_client().messages.create(
+    client = _get_client()
+    if custom_api_key:
+        client = anthropic.Anthropic(api_key=custom_api_key)
+
+    message = client.messages.create(
         model=_SEARCH_MODEL,
-        max_tokens=2048,
+        max_tokens=3000,
         system=system_prompt,
         messages=[{"role": "user", "content": user_prompt}],
     )

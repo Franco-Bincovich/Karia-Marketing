@@ -1,6 +1,7 @@
 """Repositorio CRUD para contenido_mkt y versiones_contenido_mkt."""
 
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -16,8 +17,10 @@ def _s(c: ContenidoMkt) -> dict:
     return {
         "id": str(c.id), "marca_id": str(c.marca_id), "cliente_id": str(c.cliente_id),
         "red_social": c.red_social, "formato": c.formato, "objetivo": c.objetivo,
-        "tono": c.tono, "tema": c.tema, "copy_a": c.copy_a, "copy_b": c.copy_b,
-        "hashtags_a": c.hashtags_a, "hashtags_b": c.hashtags_b,
+        "tono": c.tono, "tema": c.tema,
+        "copy_a": c.copy_a, "copy_b": c.copy_b, "copy_c": c.copy_c,
+        "hashtags_a": c.hashtags_a, "hashtags_b": c.hashtags_b, "hashtags_c": c.hashtags_c,
+        "cta_a": c.cta_a, "cta_b": c.cta_b, "cta_c": c.cta_c,
         "variante_seleccionada": c.variante_seleccionada,
         "estado": c.estado, "modo": c.modo,
         "created_at": c.created_at.isoformat() if c.created_at else None,
@@ -43,10 +46,24 @@ def crear(db: Session, data: dict) -> dict:
     return _s(obj)
 
 
-def listar(db: Session, marca_id: UUID) -> list[dict]:
-    """Lista todo el contenido de una marca ordenado por fecha descendente."""
-    rows = db.query(ContenidoMkt).filter(ContenidoMkt.marca_id == marca_id).order_by(ContenidoMkt.created_at.desc()).all()
+def listar(db: Session, marca_id: UUID, estado: Optional[str] = None) -> list[dict]:
+    """Lista contenido de una marca con filtro opcional de estado."""
+    q = db.query(ContenidoMkt).filter(ContenidoMkt.marca_id == marca_id)
+    if estado:
+        q = q.filter(ContenidoMkt.estado == estado)
+    rows = q.order_by(ContenidoMkt.created_at.desc()).all()
     return [_s(r) for r in rows]
+
+
+def contar_mes_actual(db: Session, marca_id: UUID) -> int:
+    """Cuenta contenido aprobado + publicado del mes actual."""
+    ahora = datetime.now(timezone.utc)
+    inicio_mes = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return db.query(func.count(ContenidoMkt.id)).filter(
+        ContenidoMkt.marca_id == marca_id,
+        ContenidoMkt.created_at >= inicio_mes,
+        ContenidoMkt.estado.in_(["aprobado", "publicado"]),
+    ).scalar() or 0
 
 
 def obtener(db: Session, contenido_id: UUID, marca_id: UUID) -> Optional[ContenidoMkt]:

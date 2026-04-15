@@ -26,6 +26,7 @@ class ClienteMkt(Base):
     fecha_vencimiento: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     fecha_ultimo_pago: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     notificacion_enviada: Mapped[bool] = mapped_column(Boolean, default=False)
+    anthropic_api_key_encrypted: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
