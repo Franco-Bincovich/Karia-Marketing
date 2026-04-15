@@ -36,6 +36,7 @@ class ContenidoMkt(Base):
     cta_a: Mapped[Optional[str]] = mapped_column(Text)
     cta_b: Mapped[Optional[str]] = mapped_column(Text)
     cta_c: Mapped[Optional[str]] = mapped_column(Text)
+    imagen_url: Mapped[Optional[str]] = mapped_column(Text)
     variante_seleccionada: Mapped[Optional[str]] = mapped_column(String(1))
     estado: Mapped[str] = mapped_column(String(30), default="borrador")
     modo: Mapped[str] = mapped_column(String(20), default="copilot")

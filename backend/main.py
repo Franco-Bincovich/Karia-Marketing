@@ -11,7 +11,7 @@ from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
 from routes import (
     ads, analytics, auth, calendario, clientes, comunidad, contactos,
-    contenido, feature_flags, onboarding, seo, social, usuarios,
+    contenido, feature_flags, imagenes, onboarding, seo, social, usuarios,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(feature_flags.router)
     app.include_router(contactos.router)
     app.include_router(contenido.router)
+    app.include_router(imagenes.router)
     app.include_router(calendario.router)
     app.include_router(social.router)
     app.include_router(ads.router)

@@ -123,6 +123,16 @@ export default function Contenido() {
     finally { setActionId(null); }
   }
 
+  async function generarImagen(c) {
+    setActionId(c.id + "_img");
+    try {
+      await post(ENDPOINTS.IMAGENES_PARA_CONTENIDO(c.id), { tamano: "1024x1024", estilo: "vivid" });
+      setPubMsg("Imagen generada para el contenido");
+      loadData();
+    } catch (e) { setPubMsg(e.response?.data?.message || "Error al generar imagen"); }
+    finally { setActionId(null); }
+  }
+
   async function guardarApiKey() {
     if (!apiKey) return;
     setSavingKey(true);
@@ -242,8 +252,13 @@ export default function Contenido() {
             <p style={{ fontSize: 12, color: "#94A3B8", marginBottom: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 500 }}>
               {c[`copy_${c.variante_seleccionada || "a"}`] || c.copy_a || ""}
             </p>
+            {c.imagen_url && (
+              <div style={{ marginBottom: 6 }}>
+                <img src={c.imagen_url} alt="" style={{ height: 48, borderRadius: 6, objectFit: "cover" }} onError={e => { e.target.style.display = "none"; }} />
+              </div>
+            )}
             {c.estado === "aprobado" && (
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                 <button style={{ ...btnSmall, borderColor: "#10B981", color: "#15803D" }} onClick={() => publicarAhora(c)} disabled={actionId === c.id + "_pub"}>
                   {actionId === c.id + "_pub" ? "..." : "Publicar ahora"}
                 </button>
@@ -251,6 +266,15 @@ export default function Contenido() {
                 <button style={{ ...btnSmall, borderColor: "#3B82F6", color: "#1D4ED8" }} onClick={() => programar(c)} disabled={actionId === c.id + "_sched"}>
                   {actionId === c.id + "_sched" ? "..." : "Programar"}
                 </button>
+                {!c.imagen_url && (
+                  <button
+                    style={{ ...btnSmall, borderColor: "#EC4899", color: "#BE185D" }}
+                    onClick={() => generarImagen(c)}
+                    disabled={actionId === c.id + "_img"}
+                  >
+                    {actionId === c.id + "_img" ? "Generando..." : "Generar imagen"}
+                  </button>
+                )}
               </div>
             )}
           </div>

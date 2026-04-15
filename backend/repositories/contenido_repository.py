@@ -21,6 +21,7 @@ def _s(c: ContenidoMkt) -> dict:
         "copy_a": c.copy_a, "copy_b": c.copy_b, "copy_c": c.copy_c,
         "hashtags_a": c.hashtags_a, "hashtags_b": c.hashtags_b, "hashtags_c": c.hashtags_c,
         "cta_a": c.cta_a, "cta_b": c.cta_b, "cta_c": c.cta_c,
+        "imagen_url": c.imagen_url,
         "variante_seleccionada": c.variante_seleccionada,
         "estado": c.estado, "modo": c.modo,
         "created_at": c.created_at.isoformat() if c.created_at else None,
