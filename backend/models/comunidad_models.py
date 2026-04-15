@@ -64,6 +64,8 @@ class MencionMkt(Base):
     alcance_estimado: Mapped[int] = mapped_column(Integer, default=0)
     urgente: Mapped[bool] = mapped_column(Boolean, default=False)
     procesado: Mapped[bool] = mapped_column(Boolean, default=False)
+    score_sentimiento: Mapped[int] = mapped_column(Integer, default=50)
+    alerta_generada: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 

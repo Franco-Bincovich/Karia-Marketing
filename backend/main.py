@@ -11,18 +11,19 @@ from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
 from routes import (
     ads, agentes, analytics, auth, calendario, clientes, comunidad, contactos,
-    contenido, estrategia, feature_flags, imagenes, onboarding, seo, social, usuarios,
+    contenido, estrategia, feature_flags, imagenes, listening, onboarding, seo,
+    social, usuarios,
 )
 
 logger = logging.getLogger(__name__)
 
-VENCIMIENTO_CHECK_INTERVAL = 86400  # 24 horas en segundos
+VENCIMIENTO_CHECK_INTERVAL = 86400  # 24 horas
+LISTENING_CHECK_INTERVAL = 21600    # 6 horas
 
 
 async def _vencimiento_loop():
-    """Loop que ejecuta la verificación de vencimientos cada 24 horas."""
+    """Loop de verificación de vencimientos cada 24 horas."""
     from services.vencimiento_job import ejecutar_verificacion_vencimientos
-    # Espera inicial de 60s para que la app termine de arrancar
     await asyncio.sleep(60)
     while True:
         try:
@@ -33,12 +34,37 @@ async def _vencimiento_loop():
         await asyncio.sleep(VENCIMIENTO_CHECK_INTERVAL)
 
 
+async def _listening_loop():
+    """Loop de escaneo de menciones cada 6 horas."""
+    await asyncio.sleep(120)
+    while True:
+        try:
+            logger.info("Ejecutando escaneo de listening...")
+            from integrations.database import SessionLocal
+            from services.listening_service import buscar_menciones
+            from models.cliente_models import MarcaMkt
+            db = SessionLocal()
+            try:
+                marcas = db.query(MarcaMkt).filter(MarcaMkt.activa == True).all()  # noqa: E712
+                for marca in marcas:
+                    try:
+                        buscar_menciones(db, marca.id)
+                    except Exception:
+                        logger.exception("Error scanning marca %s", marca.id)
+            finally:
+                db.close()
+        except Exception:
+            logger.exception("Error en loop de listening")
+        await asyncio.sleep(LISTENING_CHECK_INTERVAL)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Las tablas se gestionan via migraciones en Supabase — no crear aquí.
-    task = asyncio.create_task(_vencimiento_loop())
+    task_venc = asyncio.create_task(_vencimiento_loop())
+    task_listen = asyncio.create_task(_listening_loop())
     yield
-    task.cancel()
+    task_venc.cancel()
+    task_listen.cancel()
 
 
 def create_app() -> FastAPI:
@@ -70,6 +96,7 @@ def create_app() -> FastAPI:
     app.include_router(contenido.router)
     app.include_router(estrategia.router)
     app.include_router(imagenes.router)
+    app.include_router(listening.router)
     app.include_router(calendario.router)
     app.include_router(social.router)
     app.include_router(ads.router)

@@ -50,6 +50,14 @@ def marcar_leida(db: Session, alerta_id: UUID, marca_id: UUID) -> dict:
     return _s(obj)
 
 
+def listar_por_tipo(db: Session, marca_id: UUID, tipo: str) -> list:
+    """Lista alertas de un tipo específico, no leídas primero."""
+    rows = db.query(AlertaMkt).filter(
+        AlertaMkt.marca_id == marca_id, AlertaMkt.tipo == tipo,
+    ).order_by(AlertaMkt.leida, AlertaMkt.created_at.desc()).limit(20).all()
+    return [_s(r) for r in rows]
+
+
 def listar_no_leidas(db: Session, marca_id: UUID) -> list:
     """Lista alertas no leídas de una marca."""
     rows = db.query(AlertaMkt).filter(
