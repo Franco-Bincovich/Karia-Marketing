@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
 from routes import (
-    ads, analytics, auth, calendario, clientes, comunidad, contactos,
+    ads, agentes, analytics, auth, calendario, clientes, comunidad, contactos,
     contenido, feature_flags, imagenes, onboarding, seo, social, usuarios,
 )
 
@@ -62,6 +62,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
 
     app.include_router(auth.router)
+    app.include_router(agentes.router)
     app.include_router(clientes.router)
     app.include_router(usuarios.router)
     app.include_router(feature_flags.router)
