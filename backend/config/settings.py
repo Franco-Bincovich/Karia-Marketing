@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: str = ""
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
+        "http://localhost:1706",
         "http://localhost:3002",
     ]
     PORT: int = 3002

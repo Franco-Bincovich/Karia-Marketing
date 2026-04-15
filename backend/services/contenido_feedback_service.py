@@ -88,22 +88,30 @@ def rechazar(db: Session, contenido_id: UUID, marca_id: UUID, comentario: str) -
 
     logger.info(f"[feedback_service] rechazado — id={contenido_id}, regenerando con feedback")
 
+    from repositories import memoria_marca_repository as memoria_repo
+    memoria_text = memoria_repo.obtener_para_agente(db, marca_id)
+
     nuevo = claude_client.generar_contenido_ia(
         red_social=obj.red_social, formato=obj.formato,
         objetivo=obj.objetivo or "", tono=obj.tono or "",
-        tema=obj.tema or "", memoria_marca="",
+        tema=obj.tema or "", memoria_marca=memoria_text,
         feedback_previo=comentario,
     )
 
     contenido = repo.actualizar_campos(db, obj, {
         "copy_a": nuevo["copy_a"], "copy_b": nuevo["copy_b"],
+        "copy_c": nuevo.get("copy_c"),
         "hashtags_a": nuevo.get("hashtags_a"), "hashtags_b": nuevo.get("hashtags_b"),
+        "hashtags_c": nuevo.get("hashtags_c"),
+        "cta_a": nuevo.get("cta_a"), "cta_b": nuevo.get("cta_b"),
+        "cta_c": nuevo.get("cta_c"),
         "estado": "pendiente_aprobacion",
         "variante_seleccionada": None,
     })
 
     repo.guardar_version(db, contenido_id, {
         "copy_a": nuevo["copy_a"], "copy_b": nuevo["copy_b"],
+        "copy_c": nuevo.get("copy_c"),
         "motivo_rechazo": comentario, "creado_por": "ia",
     })
 
@@ -132,8 +140,8 @@ def editar(db: Session, contenido_id: UUID, marca_id: UUID, copy_editado: str, v
     if not obj:
         raise AppError("Contenido no encontrado", "NOT_FOUND", 404)
 
-    copy_original = obj.copy_a if variante == "a" else obj.copy_b
-    campo = "copy_a" if variante == "a" else "copy_b"
+    copy_original = getattr(obj, f"copy_{variante}")
+    campo = f"copy_{variante}"
 
     contenido = repo.actualizar_campos(db, obj, {campo: copy_editado})
 
