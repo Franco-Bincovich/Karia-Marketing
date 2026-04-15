@@ -54,14 +54,18 @@ def procesar_mensaje(db: Session, marca_id: UUID, mensaje_data: dict) -> dict:
 
 
 def generar_respuesta(db: Session, marca_id: UUID, contenido: str, clasificacion: str) -> str:
-    """Genera respuesta con Claude usando el tono de la marca."""
+    """Genera respuesta con Claude usando el perfil de marca completo."""
+    from repositories import memoria_marca_repository as memoria_repo
+    memoria_text = memoria_repo.obtener_para_agente(db, marca_id)
+
     system = (
-        "Sos el Agente Comunidad de KarIA Marketing. Respondés en nombre de la marca.\n"
+        "Sos el Agente Comunidad de Nexo Marketing. Respondés en nombre de la marca.\n"
         "Nunca inventás información del negocio que no tenés.\n"
         "Si no sabés algo, decís que vas a consultar y derivás.\n"
         "Ante comentarios negativos: reconocés el malestar, mostrás disposición a resolver, "
         "invitás a continuar en privado.\n"
-        "Respondé SOLO con el texto de la respuesta, sin explicaciones."
+        "Respondé SOLO con el texto de la respuesta, sin explicaciones.\n\n"
+        f"PERFIL DE MARCA:\n{memoria_text}"
     )
     try:
         message = _get_client().messages.create(
@@ -83,6 +87,11 @@ def listar_pendientes(db: Session, marca_id: UUID) -> list:
 def listar_leads_detectados(db: Session, marca_id: UUID) -> list:
     """Lista leads detectados en DMs."""
     return msg_repo.listar_leads(db, marca_id)
+
+
+def listar_historial(db: Session, marca_id: UUID) -> list:
+    """Historial de mensajes gestionados (respondidos e ignorados)."""
+    return msg_repo.listar_respondidos(db, marca_id)
 
 
 def _debe_escalar(clasificacion: str, config: dict) -> bool:

@@ -240,7 +240,61 @@ def ejecutar_agente(db: Session, marca_id: UUID, nombre: str, rol: str = "") -> 
     if config and config.system_prompt_custom:
         system_prompt = config.system_prompt_custom
 
+    # Dispatch especializados
+    if nombre == "creativo":
+        return _dispatch_creativo(db, marca_id, config)
+    if nombre == "comunidad":
+        return _dispatch_comunidad(db, marca_id)
+    if nombre == "estrategia":
+        return _dispatch_estrategia(db, marca_id)
+
     return _dispatch_agent(nombre, system_prompt, memoria_text, marca_nombre)
+
+
+def _dispatch_creativo(db: Session, marca_id: UUID, config) -> dict:
+    """Genera imagen real usando el servicio de imágenes."""
+    from services import imagen_service
+    modo = config.modo if config else "copilot"
+    try:
+        img = imagen_service.generar(
+            db, marca_id,
+            descripcion="Imagen creativa para la próxima publicación de la marca",
+            usar_perfil=True,
+        )
+        if modo == "autopilot":
+            return {"agente": "creativo", "resultado": "Imagen generada y lista", "imagen": img}
+        return {"agente": "creativo", "resultado": "Imagen generada para aprobación", "imagen": img}
+    except Exception as e:
+        return {"agente": "creativo", "resultado": f"Error al generar imagen: {str(e)}"}
+
+
+def _dispatch_comunidad(db: Session, marca_id: UUID) -> dict:
+    """Ejecuta revisión de mensajes pendientes y genera sugerencias."""
+    from services import comunidad_service
+    pendientes = comunidad_service.listar_pendientes(db, marca_id)
+    if not pendientes:
+        return {"agente": "comunidad", "resultado": "No hay mensajes pendientes de respuesta."}
+    resumen = f"{len(pendientes)} mensajes pendientes.\n\n"
+    for m in pendientes[:5]:
+        resumen += f"- [{m['red_social']}] {m['autor_username'] or 'Anónimo'}: {m['contenido'][:80]}\n"
+        if m.get("respuesta_sugerida"):
+            resumen += f"  Sugerida: {m['respuesta_sugerida'][:80]}\n"
+    return {"agente": "comunidad", "resultado": resumen, "pendientes": len(pendientes)}
+
+
+def _dispatch_estrategia(db: Session, marca_id: UUID) -> dict:
+    """Genera sugerencias estratégicas reales."""
+    from services import estrategia_service
+    entry = estrategia_service.sugerir_acciones(db, marca_id)
+    contenido = entry.get("contenido", {})
+    sugerencias = contenido.get("sugerencias", [])
+    resumen = f"{len(sugerencias)} sugerencias generadas:\n\n"
+    for s in sugerencias:
+        titulo = s.get("titulo", "")
+        desc = s.get("descripcion", "")
+        prio = s.get("prioridad", "")
+        resumen += f"- [{prio}] {titulo}: {desc[:100]}\n"
+    return {"agente": "estrategia", "resultado": resumen, "estrategia_id": entry.get("id")}
 
 
 def _dispatch_agent(nombre: str, system_prompt: str, memoria: str, marca_nombre: str) -> dict:

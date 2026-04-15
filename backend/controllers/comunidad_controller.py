@@ -84,6 +84,11 @@ class ComunidadController:
         self.db.commit()
         return r
 
+    def historial(self, x_marca_id: Optional[str], current_user: dict) -> dict:
+        """Historial de mensajes gestionados."""
+        items = comunidad_service.listar_historial(self.db, _marca(x_marca_id))
+        return {"data": items, "count": len(items)}
+
     def leads(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista leads detectados en DMs."""
         items = comunidad_service.listar_leads_detectados(self.db, _marca(x_marca_id))

@@ -77,6 +77,15 @@ def marcar_escalado(db: Session, msg_id: UUID, motivo: str) -> dict:
     return _s(obj)
 
 
+def listar_respondidos(db: Session, marca_id: UUID) -> list:
+    """Lista mensajes respondidos o ignorados (historial gestionado)."""
+    rows = db.query(MensajeComunidadMkt).filter(
+        MensajeComunidadMkt.marca_id == marca_id,
+        MensajeComunidadMkt.respondido == True,  # noqa: E712
+    ).order_by(MensajeComunidadMkt.respondido_at.desc()).all()
+    return [_s(r) for r in rows]
+
+
 def listar_leads(db: Session, marca_id: UUID) -> list:
     """Lista mensajes detectados como leads."""
     rows = db.query(MensajeComunidadMkt).filter(

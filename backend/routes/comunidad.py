@@ -54,6 +54,16 @@ def responder_mensaje(
     return ctrl.responder_mensaje(msg_id, body, x_marca_id, current_user)
 
 
+@router.get("/historial")
+def historial(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: ComunidadController = Depends(_ctrl),
+):
+    """Historial de mensajes gestionados."""
+    return ctrl.historial(x_marca_id, current_user)
+
+
 @router.get("/leads")
 def leads(
     x_marca_id: Optional[str] = Header(default=None),

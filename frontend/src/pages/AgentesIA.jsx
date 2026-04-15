@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useApi } from "../hooks/useApi";
 import { ENDPOINTS } from "../constants/endpoints";
@@ -20,6 +21,7 @@ const estadoBadge = (estado) => {
 
 export default function AgentesIA() {
   const { get, patch, post } = useApi();
+  const navigate = useNavigate();
   const [agentes, setAgentes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(null);
@@ -63,7 +65,15 @@ export default function AgentesIA() {
     finally { setSaving(false); }
   }
 
-  async function ejecutar(agente) {
+  function ejecutar(agente) {
+    // Redirect specials to their dedicated pages
+    if (agente.nombre === "creativo") { navigate("/creativo"); return; }
+    if (agente.nombre === "comunidad") { navigate("/comunidad"); return; }
+    if (agente.nombre === "estrategia") { navigate("/estrategia"); return; }
+    ejecutarRemoto(agente);
+  }
+
+  async function ejecutarRemoto(agente) {
     setExecuting(agente.nombre);
     setResultado(null);
     try {
