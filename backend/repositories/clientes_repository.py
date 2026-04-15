@@ -1,5 +1,6 @@
 """Repositorio de acceso a datos para clientes_mkt y marcas_mkt."""
 
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -42,6 +43,26 @@ class ClientesRepository:
             setattr(cliente, key, value)
         self.db.flush()
         return cliente
+
+    def list_por_vencer(self, dias: int = 7) -> List[ClienteMkt]:
+        """Clientes activos cuyo vencimiento es en exactamente N días (+-12h) y no notificados."""
+        ahora = datetime.now(timezone.utc)
+        desde = ahora + timedelta(days=dias - 0.5)
+        hasta = ahora + timedelta(days=dias + 0.5)
+        return self.db.query(ClienteMkt).filter(
+            ClienteMkt.activo == True,  # noqa: E712
+            ClienteMkt.notificacion_enviada == False,  # noqa: E712
+            ClienteMkt.fecha_vencimiento >= desde,
+            ClienteMkt.fecha_vencimiento <= hasta,
+        ).all()
+
+    def list_vencidos(self) -> List[ClienteMkt]:
+        """Clientes activos cuyo vencimiento ya pasó."""
+        ahora = datetime.now(timezone.utc)
+        return self.db.query(ClienteMkt).filter(
+            ClienteMkt.activo == True,  # noqa: E712
+            ClienteMkt.fecha_vencimiento <= ahora,
+        ).all()
 
     def get_marca_by_id(self, marca_id: UUID) -> Optional[MarcaMkt]:
         """Obtiene una marca por ID."""

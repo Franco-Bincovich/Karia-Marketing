@@ -2,6 +2,7 @@
 
 import secrets
 import string
+from datetime import datetime, timedelta, timezone
 from typing import List
 from uuid import UUID
 
@@ -12,6 +13,9 @@ from middleware.error_handler import AppError
 from repositories.auth_repository import AuthRepository
 from repositories.clientes_repository import ClientesRepository
 from utils.security import hash_password
+
+CICLO_DIAS = 30
+ALERTA_DIAS = 7
 
 
 def _generate_temp_password(length: int = 12) -> str:
@@ -35,11 +39,14 @@ class ClientesService:
         if self.auth_repo.get_usuario_by_email(data["email_admin"]):
             raise AppError("El email ya tiene un usuario asociado", "EMAIL_EXISTS", 409)
 
+        ahora = datetime.now(timezone.utc)
         cliente = self.repo.create_cliente({
             "nombre": data["nombre"],
             "email_admin": data["email_admin"],
             "pais": data.get("pais", "AR"),
             "plan": data.get("plan", "Basic"),
+            "fecha_vencimiento": ahora + timedelta(days=CICLO_DIAS),
+            "fecha_ultimo_pago": ahora,
         })
         self.db.flush()
 
@@ -76,6 +83,28 @@ class ClientesService:
         accion = "reactivar_cliente" if activo else "pausar_cliente"
         registrar_auditoria(
             self.db, accion, "clientes",
+            usuario_id=actor_id, recurso_id=str(cliente_id),
+        )
+        self.db.commit()
+        self.db.refresh(cliente)
+        return _serialize_cliente(cliente)
+
+    def renovar_cliente(self, cliente_id: UUID, actor_id: UUID) -> dict:
+        """Registra pago manual y extiende membresía 30 días desde hoy."""
+        cliente = self.repo.get_cliente_by_id(cliente_id)
+        if not cliente:
+            raise AppError("Cliente no encontrado", "CLIENT_NOT_FOUND", 404)
+
+        ahora = datetime.now(timezone.utc)
+        cliente = self.repo.update_cliente(cliente_id, {
+            "fecha_ultimo_pago": ahora,
+            "fecha_vencimiento": ahora + timedelta(days=CICLO_DIAS),
+            "activo": True,
+            "notificacion_enviada": False,
+        })
+
+        registrar_auditoria(
+            self.db, "renovar_cliente", "clientes",
             usuario_id=actor_id, recurso_id=str(cliente_id),
         )
         self.db.commit()
@@ -135,7 +164,26 @@ class ClientesService:
         return {"usuario_id": str(usuario_id), "marca_id": str(marca_id)}
 
 
+def _calcular_estado_vencimiento(cliente) -> dict:
+    """Calcula días restantes y estado de vencimiento."""
+    ahora = datetime.now(timezone.utc)
+    delta = cliente.fecha_vencimiento - ahora
+    dias_restantes = max(0, delta.days)
+
+    if not cliente.activo:
+        estado = "vencido"
+    elif dias_restantes <= 0:
+        estado = "vencido"
+    elif dias_restantes <= ALERTA_DIAS:
+        estado = "por_vencer"
+    else:
+        estado = "activo"
+
+    return {"dias_restantes": dias_restantes, "estado_vencimiento": estado}
+
+
 def _serialize_cliente(c) -> dict:
+    venc = _calcular_estado_vencimiento(c)
     return {
         "id": str(c.id),
         "nombre": c.nombre,
@@ -143,6 +191,10 @@ def _serialize_cliente(c) -> dict:
         "pais": c.pais,
         "plan": c.plan,
         "activo": c.activo,
+        "fecha_vencimiento": c.fecha_vencimiento.isoformat() if c.fecha_vencimiento else None,
+        "fecha_ultimo_pago": c.fecha_ultimo_pago.isoformat() if c.fecha_ultimo_pago else None,
+        "dias_restantes": venc["dias_restantes"],
+        "estado_vencimiento": venc["estado_vencimiento"],
         "created_at": c.created_at.isoformat() if c.created_at else None,
     }
 

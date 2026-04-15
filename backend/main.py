@@ -1,5 +1,7 @@
 """Entry point de KarIA Marketing API — FastAPI."""
 
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,11 +14,31 @@ from routes import (
     contenido, feature_flags, onboarding, seo, social, usuarios,
 )
 
+logger = logging.getLogger(__name__)
+
+VENCIMIENTO_CHECK_INTERVAL = 86400  # 24 horas en segundos
+
+
+async def _vencimiento_loop():
+    """Loop que ejecuta la verificación de vencimientos cada 24 horas."""
+    from services.vencimiento_job import ejecutar_verificacion_vencimientos
+    # Espera inicial de 60s para que la app termine de arrancar
+    await asyncio.sleep(60)
+    while True:
+        try:
+            logger.info("Ejecutando verificación de vencimientos...")
+            ejecutar_verificacion_vencimientos()
+        except Exception:
+            logger.exception("Error en loop de vencimientos")
+        await asyncio.sleep(VENCIMIENTO_CHECK_INTERVAL)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Las tablas se gestionan via migraciones en Supabase — no crear aquí.
+    task = asyncio.create_task(_vencimiento_loop())
     yield
+    task.cancel()
 
 
 def create_app() -> FastAPI:

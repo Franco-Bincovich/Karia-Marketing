@@ -23,6 +23,9 @@ class ClienteMkt(Base):
     pais: Mapped[str] = mapped_column(String(10), default="AR")
     plan: Mapped[str] = mapped_column(String(20), default="Basic")
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    fecha_vencimiento: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    fecha_ultimo_pago: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    notificacion_enviada: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 

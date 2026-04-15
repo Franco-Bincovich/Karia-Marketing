@@ -6,6 +6,12 @@ const s = {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     padding: "0 28px", position: "sticky", top: 0, zIndex: 50,
   },
+  left: { display: "flex", alignItems: "center", gap: 12 },
+  menuBtn: {
+    background: "none", border: "1px solid #E2E8F0", borderRadius: 8,
+    padding: "6px 8px", cursor: "pointer", display: "flex", alignItems: "center",
+    justifyContent: "center", color: "#475569", fontSize: 18, lineHeight: 1,
+  },
   title: { fontSize: 18, fontWeight: 700, color: "#0F172A" },
   right: { display: "flex", alignItems: "center", gap: 14 },
   toggle: {
@@ -28,13 +34,20 @@ const s = {
   },
 };
 
-export default function Header({ title }) {
+export default function Header({ title, onMenuClick, showMenu }) {
   const { user, modo, setModo } = useAuth();
   const initials = user?.nombre?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
 
   return (
     <header style={s.header}>
-      <h1 style={s.title}>{title}</h1>
+      <div style={s.left}>
+        {showMenu && (
+          <button style={s.menuBtn} onClick={onMenuClick} aria-label="Menu">
+            &#9776;
+          </button>
+        )}
+        <h1 style={s.title}>{title}</h1>
+      </div>
       <div style={s.right}>
         <div style={s.toggle}>
           <button

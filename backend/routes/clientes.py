@@ -37,6 +37,17 @@ def listar_clientes(
     return ClientesController(db).listar_clientes()
 
 
+@router.post("/{cliente_id}/renovar")
+def renovar_cliente(
+    cliente_id: UUID,
+    current_user: dict = Depends(require_superadmin()),
+    db: Session = Depends(get_db),
+):
+    """Registra renovación manual de un cliente. Solo superadmin."""
+    actor_id = UUID(current_user["sub"])
+    return ClientesController(db).renovar_cliente(cliente_id, actor_id)
+
+
 @router.patch("/{cliente_id}/estado")
 def cambiar_estado(
     cliente_id: UUID,

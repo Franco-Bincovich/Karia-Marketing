@@ -66,6 +66,9 @@ class ClientesController:
     def cambiar_estado(self, cliente_id: UUID, body: CambiarEstadoRequest, actor_id: UUID) -> dict:
         return self.service.cambiar_estado(cliente_id, body.activo, actor_id)
 
+    def renovar_cliente(self, cliente_id: UUID, actor_id: UUID) -> dict:
+        return self.service.renovar_cliente(cliente_id, actor_id)
+
     def crear_marca(self, cliente_id: UUID, body: CrearMarcaRequest, actor_id: UUID) -> dict:
         return self.service.crear_marca(cliente_id, body.model_dump(), actor_id)
 
