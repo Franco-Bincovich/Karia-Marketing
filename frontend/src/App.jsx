@@ -21,6 +21,7 @@ import Reporting from "./pages/Reporting";
 import SocialListening from "./pages/SocialListening";
 import AgentesIA from "./pages/AgentesIA";
 import PerfilMarca from "./pages/PerfilMarca";
+import Automatizaciones from "./pages/Automatizaciones";
 import CrearMarca from "./components/CrearMarca";
 
 function ProtectedRoute({ children, requireSuperadmin = false, allowNoMarca = false }) {
@@ -66,6 +67,7 @@ export default function App() {
       <Route path="/social-listening" element={<P><SocialListening /></P>} />
       <Route path="/agentes-ia" element={<P><AgentesIA /></P>} />
       <Route path="/marca/perfil" element={<P><PerfilMarca /></P>} />
+      <Route path="/automatizaciones" element={<P><Automatizaciones /></P>} />
       <Route path="*" element={<Navigate to={user ? (marcaActiva ? "/dashboard" : "/crear-marca") : "/login"} replace />} />
     </Routes>
   );

@@ -31,6 +31,7 @@ const sections = [
   { title: "SISTEMA", items: [
     { path: "/onboarding", label: "Configuración", icon: "⚙️" },
     { path: "/marca/perfil", label: "Perfil de Marca", icon: "🏷️" },
+    { path: "/automatizaciones", label: "Automatizaciones", icon: "🔄" },
   ]},
   { title: "ADMIN", superadminOnly: true, items: [
     { path: "/clientes", label: "Clientes", icon: "🏢" },
