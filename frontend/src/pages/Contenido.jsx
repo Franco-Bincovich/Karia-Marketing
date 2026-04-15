@@ -9,6 +9,8 @@ const select = { ...input, appearance: "auto" };
 const btn = { padding: "10px 20px", background: "#F97316", color: "#fff", border: "none", borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: "pointer" };
 const btnSuccess = { ...btn, background: "#10B981" };
 const btnDanger = { ...btn, background: "#EF4444" };
+const btnBlue = { ...btn, background: "#3B82F6" };
+const btnSmall = { padding: "6px 14px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "#fff", color: "#475569" };
 
 export default function Contenido() {
   const { get, post } = useApi();
@@ -18,6 +20,12 @@ export default function Contenido() {
   const [loading, setLoading] = useState(false);
   const [rechazoMotivo, setRechazoMotivo] = useState("");
   const [error, setError] = useState("");
+
+  // Publicar/programar state
+  const [publishing, setPublishing] = useState(null);
+  const [scheduling, setScheduling] = useState(null);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [pubMsg, setPubMsg] = useState("");
 
   useEffect(() => { get(ENDPOINTS.CONTENIDO).then(r => setLista(r.data.data || [])).catch(() => {}); }, []);
 
@@ -44,10 +52,50 @@ export default function Contenido() {
     setRechazoMotivo(""); setResultado(null);
   }
 
+  async function publicarAhora(contenido) {
+    setPublishing(contenido.id);
+    setPubMsg("");
+    try {
+      await post(ENDPOINTS.SOCIAL_PUBLICAR, {
+        red_social: contenido.red_social || "instagram",
+        copy_text: contenido.copy_aprobado || contenido.copy_a || "",
+        contenido_id: contenido.id,
+        imagen_url: contenido.imagen_url || null,
+      });
+      setPubMsg("Publicado correctamente");
+    } catch (err) {
+      setPubMsg(err.response?.data?.message || "Error al publicar");
+    } finally {
+      setPublishing(null);
+    }
+  }
+
+  async function programarPost(contenido) {
+    if (!scheduleDate) { setPubMsg("Seleccioná fecha y hora"); return; }
+    setScheduling(contenido.id);
+    setPubMsg("");
+    try {
+      await post(ENDPOINTS.SOCIAL_PROGRAMAR, {
+        red_social: contenido.red_social || "instagram",
+        copy_text: contenido.copy_aprobado || contenido.copy_a || "",
+        contenido_id: contenido.id,
+        imagen_url: contenido.imagen_url || null,
+        programado_para: new Date(scheduleDate).toISOString(),
+      });
+      setPubMsg("Programado correctamente");
+      setScheduleDate("");
+    } catch (err) {
+      setPubMsg(err.response?.data?.message || "Error al programar");
+    } finally {
+      setScheduling(null);
+    }
+  }
+
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   return (
     <Layout title="Generar Contenido">
+      {/* Configuración */}
       <div style={card}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Configuración</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -62,6 +110,8 @@ export default function Contenido() {
         <button style={btn} onClick={generar} disabled={loading}>{loading ? "Generando..." : "Generar Variantes A/B"}</button>
         {error && <p style={{ color: "#EF4444", fontSize: 13, marginTop: 8 }}>{error}</p>}
       </div>
+
+      {/* Variantes A/B */}
       {resultado && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
           {["a", "b"].map(v => (
@@ -82,12 +132,59 @@ export default function Contenido() {
           </div>
         </div>
       )}
+
+      {/* Feedback de publicación */}
+      {pubMsg && (
+        <div style={{
+          ...card,
+          borderColor: pubMsg.includes("Error") ? "#EF4444" : "#10B981",
+          background: pubMsg.includes("Error") ? "#FEF2F2" : "#F0FDF4",
+          padding: 12, fontSize: 13,
+          color: pubMsg.includes("Error") ? "#B91C1C" : "#15803D",
+        }}>
+          {pubMsg}
+          <button onClick={() => setPubMsg("")} style={{ marginLeft: 12, background: "none", border: "none", cursor: "pointer", color: "inherit", fontWeight: 600 }}>x</button>
+        </div>
+      )}
+
+      {/* Contenido Generado con acciones de publicación */}
       <div style={card}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Contenido Generado ({lista.length})</h3>
+        {lista.length === 0 && <p style={{ color: "#94A3B8", fontSize: 13 }}>No hay contenido generado</p>}
         {lista.map(c => (
-          <div key={c.id} style={{ padding: "10px 0", borderBottom: "1px solid #F1F5F9", display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-            <span style={{ color: "#475569" }}>{c.tema || c.red_social} — {c.formato}</span>
-            <span style={{ background: c.estado === "aprobado" ? "#DCFCE7" : "#FEF3C7", color: c.estado === "aprobado" ? "#15803D" : "#B45309", padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{c.estado}</span>
+          <div key={c.id} style={{ padding: "12px 0", borderBottom: "1px solid #F1F5F9" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <span style={{ fontSize: 13, color: "#475569" }}>{c.tema || c.red_social} — {c.formato}</span>
+              <span style={{
+                background: c.estado === "aprobado" ? "#DCFCE7" : "#FEF3C7",
+                color: c.estado === "aprobado" ? "#15803D" : "#B45309",
+                padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+              }}>{c.estado}</span>
+            </div>
+            {c.estado === "aprobado" && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+                <button
+                  style={{ ...btnSmall, borderColor: "#10B981", color: "#15803D" }}
+                  onClick={() => publicarAhora(c)}
+                  disabled={publishing === c.id}
+                >
+                  {publishing === c.id ? "Publicando..." : "Publicar ahora"}
+                </button>
+                <input
+                  type="datetime-local"
+                  style={{ ...input, width: "auto", marginBottom: 0, padding: "5px 8px", fontSize: 12 }}
+                  value={scheduleDate}
+                  onChange={e => setScheduleDate(e.target.value)}
+                />
+                <button
+                  style={{ ...btnSmall, borderColor: "#3B82F6", color: "#1D4ED8" }}
+                  onClick={() => programarPost(c)}
+                  disabled={scheduling === c.id}
+                >
+                  {scheduling === c.id ? "Programando..." : "Programar"}
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

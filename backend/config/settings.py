@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "http://localhost:5173"
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_KEY: str = ""
+    ZERNIO_API_KEY: str = ""
+    ZERNIO_BASE_URL: str = "https://api.zernio.com/v1"
     SEMRUSH_API_KEY: str = ""
     MENTION_API_KEY: str = ""
     MANYCHAT_API_KEY: str = ""

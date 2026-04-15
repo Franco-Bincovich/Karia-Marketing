@@ -52,6 +52,8 @@ class PublicacionesMkt(Base):
     comentarios_2hs: Mapped[int] = mapped_column(Integer, default=0)
     alcance_2hs: Mapped[int] = mapped_column(Integer, default=0)
     engagement_bajo: Mapped[bool] = mapped_column(Boolean, default=False)
+    programado_para: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    zernio_post_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     publicado_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
