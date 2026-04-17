@@ -8,7 +8,7 @@ import { useState, useRef } from "react";
  *     <button>Ver</button>
  *   </Tooltip>
  */
-export default function Tooltip({ text, children, delay = 500 }) {
+export default function Tooltip({ text, children, delay = 500, placement = "top" }) {
   const [visible, setVisible] = useState(false);
   const timer = useRef(null);
 
@@ -29,7 +29,7 @@ export default function Tooltip({ text, children, delay = 500 }) {
     >
       {children}
       {visible && text && (
-        <span className="tooltip-box">{text}</span>
+        <span className={`tooltip-box${placement === "right" ? " tooltip-right" : ""}`}>{text}</span>
       )}
     </span>
   );

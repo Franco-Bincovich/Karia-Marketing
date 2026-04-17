@@ -572,6 +572,22 @@ aside nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
   border-top-color: var(--sidebar-bg);
 }
 
+/* Right-side variant — used by collapsed sidebar */
+.tooltip-right {
+  bottom: auto;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+.tooltip-right::after {
+  top: 50%;
+  left: auto;
+  right: 100%;
+  transform: translateY(-50%);
+  border-top-color: transparent;
+  border-right-color: var(--sidebar-bg);
+}
+
 /* ============================================================
    PLAN GATE (premium lock)
    ============================================================ */

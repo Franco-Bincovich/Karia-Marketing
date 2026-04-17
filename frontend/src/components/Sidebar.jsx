@@ -9,33 +9,33 @@ const SIDEBAR_COL  =  64;
 const sections = [
   { title: "PRINCIPAL", items: [
     { path: "/dashboard",         label: "Dashboard",        icon: "⊞" },
-    { path: "/prospeccion",       label: "Prospección",      icon: "◎", badge: true },
+    { path: "/prospeccion",       label: "Prospección",      icon: "⊙", badge: true },
     { path: "/estrategia",        label: "Estrategia",       icon: "◈" },
     { path: "/agentes-ia",        label: "Agentes IA",       icon: "✦" },
   ]},
   { title: "CONTENIDO", items: [
     { path: "/contenido",         label: "Generar Contenido",icon: "✎" },
-    { path: "/creativo",          label: "Creativo IA",      icon: "◇" },
+    { path: "/creativo",          label: "Creativo IA",      icon: "✴" },
     { path: "/calendario",        label: "Calendario",       icon: "▦" },
-    { path: "/social-media",      label: "Redes Sociales",   icon: "◎" },
+    { path: "/social-media",      label: "Redes Sociales",   icon: "◉" },
   ]},
   { title: "PUBLICIDAD & SEO", items: [
-    { path: "/ads",               label: "Ads",              icon: "◉" },
-    { path: "/seo",               label: "SEO",              icon: "⊕" },
+    { path: "/ads",               label: "Ads",              icon: "⊕" },
+    { path: "/seo",               label: "SEO",              icon: "◎" },
   ]},
   { title: "ANÁLISIS", items: [
     { path: "/analytics",         label: "Analytics",        icon: "◬" },
-    { path: "/comunidad",         label: "Comunidad",        icon: "◎", badge: true },
-    { path: "/social-listening",  label: "Social Listening", icon: "◌" },
+    { path: "/comunidad",         label: "Comunidad",        icon: "◑", badge: true },
+    { path: "/social-listening",  label: "Social Listening", icon: "⊛" },
     { path: "/reporting",         label: "Reporting",        icon: "▤" },
   ]},
   { title: "SISTEMA", items: [
-    { path: "/onboarding",        label: "Configuración",    icon: "⊙" },
+    { path: "/onboarding",        label: "Configuración",    icon: "⚙" },
     { path: "/marca/perfil",      label: "Perfil de Marca",  icon: "◫" },
     { path: "/automatizaciones",  label: "Automatizaciones", icon: "↻" },
   ]},
   { title: "ADMIN", superadminOnly: true, items: [
-    { path: "/clientes",          label: "Clientes",         icon: "▦" },
+    { path: "/clientes",          label: "Clientes",         icon: "◧" },
   ]},
 ];
 
@@ -91,23 +91,60 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
       transition: "width var(--t), min-width var(--t)",
       overflowX: "hidden",
     }}>
+
       {/* ── Logo ── */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: collapsed ? "center" : "space-between",
-        padding: collapsed ? "20px 0" : "20px 16px",
-        minHeight: 68,
-        borderBottom: "1px solid var(--sidebar-border)",
-      }}>
-        {collapsed ? (
+      {collapsed ? (
+        /* Collapsed header: N logo + toggle stacked */
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          padding: "14px 0 10px",
+          minHeight: 68,
+          borderBottom: "1px solid var(--sidebar-border)",
+        }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 40, height: 40, borderRadius: 12,
             background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, fontWeight: 900, color: "#fff",
+            fontSize: 20, fontWeight: 900, color: "#fff",
+            flexShrink: 0,
           }}>N</div>
-        ) : (
+          {!isMobile && (
+            <button
+              onClick={onToggle}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "none",
+                borderRadius: 6,
+                width: 28, height: 18,
+                cursor: "pointer",
+                color: "var(--sidebar-text)",
+                fontSize: 12,
+                lineHeight: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background var(--t-fast)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.16)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+              aria-label="Expandir sidebar"
+            >›</button>
+          )}
+        </div>
+      ) : (
+        /* Expanded header: NEXO text + collapse button */
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 16px",
+          minHeight: 68,
+          borderBottom: "1px solid var(--sidebar-border)",
+        }}>
           <div>
             <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
               NEXO
@@ -115,36 +152,33 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
             </div>
             <div style={{ fontSize: 11, color: "var(--sidebar-text)", marginTop: 1 }}>Marketing AI Platform</div>
           </div>
-        )}
-        {!isMobile && (
-          <button
-            onClick={onToggle}
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "none",
-              borderRadius: 8,
-              padding: "7px 8px",
-              cursor: "pointer",
-              color: "var(--sidebar-text)",
-              fontSize: 13,
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "background var(--t-fast)",
-              flexShrink: 0,
-              marginLeft: collapsed ? 0 : 8,
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
-            aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-          >
-            {collapsed ? "›" : "‹"}
-          </button>
-        )}
-      </div>
+          {!isMobile && (
+            <button
+              onClick={onToggle}
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "none",
+                borderRadius: 8,
+                padding: "7px 8px",
+                cursor: "pointer",
+                color: "var(--sidebar-text)",
+                fontSize: 13,
+                lineHeight: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background var(--t-fast)",
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+              aria-label="Colapsar sidebar"
+            >‹</button>
+          )}
+        </div>
+      )}
 
-      {/* ── Marca activa ── */}
+      {/* ── Marca activa (expanded only) ── */}
       {!collapsed && marcas.length > 0 && (
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--sidebar-border)" }}>
           {marcas.length === 1 ? (
@@ -170,8 +204,6 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
               {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
             </select>
           )}
-
-          {/* Completitud */}
           <div style={{ marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
               <span style={{ fontSize: 10, color: "var(--sidebar-text)", fontWeight: 600 }}>PERFIL DE MARCA</span>
@@ -191,41 +223,105 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
       )}
 
       {/* ── Navegación ── */}
-      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: collapsed ? "8px 4px" : "8px 8px", minHeight: 0 }}>
-        {visibleSections.map(sec => (
+      <nav style={{
+        flex: 1,
+        overflowY: "auto",
+        overflowX: "hidden",
+        padding: collapsed ? "6px 0" : "8px 8px",
+        minHeight: 0,
+      }}>
+        {visibleSections.map((sec, secIdx) => (
           <div key={sec.title}>
-            {/* Section header */}
-            <div
-              onClick={() => toggleSection(sec.title)}
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                color: "var(--sidebar-section)",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                padding: collapsed ? "14px 0 6px" : "14px 8px 6px",
-                cursor: collapsed ? "default" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                userSelect: "none",
-              }}
-            >
-              {!collapsed && <span>{sec.title}</span>}
-              {!collapsed && (
+
+            {/* Section header / separator */}
+            {collapsed ? (
+              /* Thin separator line between sections (skip first) */
+              secIdx > 0 && (
+                <div style={{
+                  height: 1,
+                  background: "rgba(255,255,255,0.07)",
+                  margin: "6px 12px",
+                }} />
+              )
+            ) : (
+              <div
+                onClick={() => toggleSection(sec.title)}
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: "var(--sidebar-section)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  padding: "14px 8px 6px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  userSelect: "none",
+                }}
+              >
+                <span>{sec.title}</span>
                 <span style={{
                   fontSize: 9,
                   transition: "transform var(--t-fast)",
                   transform: openSections[sec.title] ? "rotate(0)" : "rotate(-90deg)",
                   color: "var(--sidebar-text)",
                 }}>▾</span>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Items */}
             {(collapsed || openSections[sec.title]) && sec.items.map(item => {
-              const active = pathname === item.path || (item.path !== "/dashboard" && pathname.startsWith(item.path));
-              const content = (
+              const active = pathname === item.path ||
+                (item.path !== "/dashboard" && pathname.startsWith(item.path));
+
+              if (collapsed) {
+                /* ── Collapsed item: 40×40 centered icon with right tooltip ── */
+                return (
+                  <Tooltip key={item.path} text={item.label} delay={250} placement="right">
+                    <Link
+                      to={item.path}
+                      onClick={handleLinkClick}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 40,
+                        height: 40,
+                        margin: "2px auto",
+                        borderRadius: 10,
+                        fontSize: 20,
+                        color: active ? "#fff" : "var(--sidebar-text)",
+                        background: active ? "var(--sidebar-active)" : "transparent",
+                        border: active ? "1px solid rgba(255,107,43,0.35)" : "1px solid transparent",
+                        cursor: "pointer",
+                        transition: "all var(--t-fast)",
+                        textDecoration: "none",
+                        position: "relative",
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={e => {
+                        if (!active) {
+                          e.currentTarget.style.background = "var(--sidebar-hover)";
+                          e.currentTarget.style.color = "#fff";
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (!active) {
+                          e.currentTarget.style.background = "transparent";
+                          e.currentTarget.style.color = "var(--sidebar-text)";
+                        }
+                      }}
+                      title=""
+                    >
+                      {item.icon}
+                    </Link>
+                  </Tooltip>
+                );
+              }
+
+              /* ── Expanded item ── */
+              return (
                 <Link
                   key={item.path}
                   to={item.path}
@@ -233,9 +329,8 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: collapsed ? 0 : 10,
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    padding: collapsed ? "10px 0" : "9px 10px",
+                    gap: 10,
+                    padding: "9px 10px",
                     borderRadius: 8,
                     fontSize: 13,
                     fontWeight: active ? 600 : 400,
@@ -249,10 +344,20 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                     textDecoration: "none",
                     position: "relative",
                   }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--sidebar-hover)"; e.currentTarget.style.color = "#fff"; }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--sidebar-text)"; }}}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = "var(--sidebar-hover)";
+                      e.currentTarget.style.color = "#fff";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "var(--sidebar-text)";
+                    }
+                  }}
                 >
-                  {active && !collapsed && (
+                  {active && (
                     <span style={{
                       position: "absolute",
                       left: 0,
@@ -264,9 +369,9 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                       borderRadius: "0 2px 2px 0",
                     }} />
                   )}
-                  <span style={{ fontSize: collapsed ? 16 : 13, flexShrink: 0, lineHeight: 1 }}>{item.icon}</span>
-                  {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
-                  {!collapsed && item.badge && (
+                  <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1 }}>{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.badge && (
                     <span style={{
                       background: "#EF4444",
                       color: "#fff",
@@ -280,12 +385,6 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                   )}
                 </Link>
               );
-
-              return collapsed ? (
-                <Tooltip key={item.path} text={item.label} delay={300}>
-                  {content}
-                </Tooltip>
-              ) : content;
             })}
           </div>
         ))}
@@ -294,31 +393,25 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
       {/* ── User box ── */}
       <div style={{
         borderTop: "1px solid var(--sidebar-border)",
-        padding: collapsed ? "12px 4px" : "12px 12px",
+        padding: collapsed ? "12px 0" : "12px 12px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: collapsed ? "center" : "flex-start",
       }}>
         {collapsed ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <Tooltip text={user?.nombre || "Usuario"} delay={200}>
-              <div style={{
-                width: 36, height: 36, borderRadius: "50%",
-                background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 12, fontWeight: 700, cursor: "default",
-              }}>{initials}</div>
-            </Tooltip>
-            <Tooltip text="Cerrar sesión" delay={200}>
-              <button
-                onClick={handleLogout}
-                style={{
-                  background: "rgba(255,255,255,0.06)", border: "none",
-                  borderRadius: 8, padding: "6px 8px", color: "rgba(255,255,255,0.65)",
-                  fontSize: 11, cursor: "pointer",
-                }}
-              >↪</button>
-            </Tooltip>
-          </div>
+          /* Collapsed: just the avatar, tooltip with name */
+          <Tooltip text={user?.nombre || "Usuario"} delay={200} placement="right">
+            <div style={{
+              width: 38, height: 38, borderRadius: "50%",
+              background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontSize: 13, fontWeight: 700,
+              cursor: "default", flexShrink: 0,
+            }}>{initials}</div>
+          </Tooltip>
         ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          /* Expanded: avatar + name + plan badge + logout */
+          <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
             <div style={{
               width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
               background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
