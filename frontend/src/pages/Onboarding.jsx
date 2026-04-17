@@ -4,23 +4,24 @@ import Layout from "../components/Layout";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
 import { ENDPOINTS } from "../constants/endpoints";
+import SkeletonLoader from "../components/ui/SkeletonLoader";
 
-const card = { background: "#fff", border: "1px solid #E2E8F0", borderRadius: 14, padding: 24, marginBottom: 16 };
-const inputStyle = { width: "100%", padding: "12px 14px", border: "1.5px solid #E2E8F0", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 8 };
-const textareaStyle = { ...inputStyle, minHeight: 80, resize: "vertical" };
-const selectStyle = { ...inputStyle, appearance: "auto", background: "#fff" };
-const btnPrimary = { padding: "10px 24px", background: "#F97316", color: "#fff", border: "none", borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: "pointer" };
-const btnSecondary = { ...btnPrimary, background: "#fff", color: "#0F172A", border: "1px solid #E2E8F0" };
-const btnSuccess = { ...btnPrimary, background: "#10B981" };
-const btnIA = { padding: "6px 14px", background: "#EDE9FE", color: "#6D28D9", border: "1px solid #C4B5FD", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 };
-const btnAutocompletar = { ...btnIA, background: "#DBEAFE", color: "#1D4ED8", borderColor: "#93C5FD" };
+const card         = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, marginBottom: 16 };
+const inputStyle   = { width: "100%", padding: "12px 14px", border: "1.5px solid var(--border)", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 8, background: "var(--surface)", color: "var(--text)" };
+const textareaStyle= { ...inputStyle, minHeight: 80, resize: "vertical" };
+const selectStyle  = { ...inputStyle, appearance: "auto" };
+const btnPrimary   = { padding: "10px 24px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: "pointer" };
+const btnSecondary = { ...btnPrimary, background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)" };
+const btnSuccess   = { ...btnPrimary, background: "var(--success)" };
+const btnIA        = { padding: "6px 14px", background: "var(--purple-bg)", color: "var(--purple-text)", border: "1px solid var(--purple-bg)", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 };
+const btnAutocompletar = { ...btnIA, background: "var(--blue-bg)", color: "var(--blue-text)", borderColor: "var(--blue-bg)" };
 
 const SECCIONES = {
-  "Marca": { color: "#F97316", icon: "🏢" },
-  "Audiencia": { color: "#3B82F6", icon: "🎯" },
-  "Contenido": { color: "#8B5CF6", icon: "✍️" },
-  "Identidad": { color: "#EC4899", icon: "🎨" },
-  "Operación": { color: "#10B981", icon: "⚙️" },
+  "Marca":     { color: "var(--primary)", icon: "🏢" },
+  "Audiencia": { color: "var(--blue)",    icon: "🎯" },
+  "Contenido": { color: "var(--purple)",  icon: "✍️" },
+  "Identidad": { color: "#EC4899",        icon: "🎨" },
+  "Operación": { color: "var(--success)", icon: "⚙️" },
 };
 
 export default function Onboarding() {
@@ -56,7 +57,6 @@ export default function Onboarding() {
     }).finally(() => setLoading(false));
   }, []);
 
-  // Auto-save debounced
   useEffect(() => {
     if (!preguntas.length || loading) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -126,7 +126,7 @@ export default function Onboarding() {
     setRespuestas(prev => ({ ...prev, [String(id)]: valor }));
   }
 
-  if (loading) return <Layout title="Onboarding"><p style={{ color: "#94A3B8" }}>Cargando...</p></Layout>;
+  if (loading) return <Layout title="Configuración"><SkeletonLoader type="card" count={2} /></Layout>;
 
   const preguntaActual = preguntas[pasoActivo];
   const comp = estado?.completitud || 0;
@@ -142,27 +142,26 @@ export default function Onboarding() {
   });
 
   return (
-    <Layout title="Onboarding">
-      {/* Progress bar */}
+    <Layout title="Configuración de Marca">
+      {/* Progress */}
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Configuración de Marca</h3>
-            <span style={{ fontSize: 12, color: "#94A3B8" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 2, color: "var(--text)" }}>Perfil de Marca</h3>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
               Plan {plan} — {respondidas}/{total} preguntas
-              {isPremium && <span style={{ color: "#6D28D9", marginLeft: 8 }}>con asistencia IA</span>}
+              {isPremium && <span style={{ color: "var(--purple-text)", marginLeft: 8 }}>con asistencia IA</span>}
             </span>
           </div>
-          <span style={{ fontSize: 24, fontWeight: 800, color: comp >= 100 ? "#10B981" : "#F97316" }}>{comp}%</span>
+          <span style={{ fontSize: 24, fontWeight: 800, color: comp >= 100 ? "var(--success-text)" : "var(--primary)" }}>{comp}%</span>
         </div>
-        <div style={{ height: 8, background: "#F1F5F9", borderRadius: 4, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${comp}%`, background: comp >= 100 ? "#10B981" : "#F97316", borderRadius: 4, transition: "width 300ms" }} />
+        <div className="progress-track">
+          <div className={`progress-fill ${comp >= 100 ? "success" : ""}`} style={{ width: `${comp}%` }} />
         </div>
-        {/* Autocompletar button for Premium */}
         {isPremium && !isCompleted && respondidas < 5 && (
           <div style={{ marginTop: 12 }}>
             <button style={btnAutocompletar} onClick={autocompletarPerfil} disabled={autocompleting}>
-              {autocompleting ? "Investigando marca..." : "Autocompletar con IA (busca info pública de tu marca)"}
+              {autocompleting ? "Investigando marca..." : "🔍 Autocompletar con IA (info pública de tu marca)"}
             </button>
           </div>
         )}
@@ -170,11 +169,11 @@ export default function Onboarding() {
 
       {/* Messages */}
       {msg && (
-        <div style={{ ...card, borderColor: "#10B981", background: "#F0FDF4" }}>
+        <div style={{ ...card, borderColor: "var(--success)", background: "var(--success-bg)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#15803D", marginBottom: 4 }}>{msg}</div>
-              <span style={{ fontSize: 12, color: "#475569" }}>Todos los agentes de IA ya tienen el contexto de tu marca.</span>
+              <div style={{ fontSize: 14, fontWeight: 600, color: "var(--success-text)", marginBottom: 4 }}>{msg}</div>
+              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>Todos los agentes de IA ya tienen el contexto de tu marca.</span>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button style={btnPrimary} onClick={() => navigate("/dashboard")}>Ir al Dashboard</button>
@@ -185,24 +184,25 @@ export default function Onboarding() {
       )}
 
       {error && (
-        <div style={{ ...card, borderColor: "#EF4444", background: "#FEF2F2", padding: 12 }}>
-          <span style={{ color: "#B91C1C", fontSize: 13 }}>{error}</span>
-          <button onClick={() => setError("")} style={{ marginLeft: 8, background: "none", border: "none", cursor: "pointer", color: "#B91C1C", fontWeight: 600 }}>x</button>
+        <div className="msg-error" style={{ marginBottom: 16, borderRadius: 12 }}>
+          <span style={{ flex: 1 }}>{error}</span>
+          <button className="msg-dismiss" onClick={() => setError("")}>×</button>
         </div>
       )}
 
       {/* Section tabs */}
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         {secciones.map(sec => {
-          const info = SECCIONES[sec.nombre] || { color: "#94A3B8", icon: "📋" };
+          const info = SECCIONES[sec.nombre] || { color: "var(--text-muted)", icon: "📋" };
           const isActive = preguntaActual?.seccion === sec.nombre;
           return (
             <button key={sec.nombre} onClick={() => setPasoActivo(sec.inicio)} style={{
               padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-              border: isActive ? `2px solid ${info.color}` : "1px solid #E2E8F0",
-              background: isActive ? `${info.color}10` : "#fff",
-              color: isActive ? info.color : "#475569",
+              border: isActive ? `2px solid ${info.color}` : "1px solid var(--border)",
+              background: isActive ? `${info.color}18` : "var(--surface)",
+              color: isActive ? info.color : "var(--text-secondary)",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
+              transition: "all var(--t-fast)",
             }}>
               <span>{info.icon}</span> {sec.nombre}
             </button>
@@ -215,25 +215,24 @@ export default function Onboarding() {
         <div style={card}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ background: "#F97316", color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>
+              <span style={{ background: "var(--primary)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>
                 {pasoActivo + 1}/{total}
               </span>
-              <span style={{ fontSize: 11, color: "#94A3B8", textTransform: "uppercase", fontWeight: 600 }}>
+              <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600 }}>
                 {preguntaActual.seccion}
               </span>
               {preguntaActual.obligatoria && (
-                <span style={{ fontSize: 10, color: "#B45309", background: "#FEF3C7", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Obligatoria</span>
+                <span style={{ fontSize: 10, color: "var(--warning-text)", background: "var(--warning-bg)", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Obligatoria</span>
               )}
             </div>
-            {/* IA Suggest button — Premium only */}
             {isPremium && preguntaActual.tipo !== "select" && (
               <button style={btnIA} onClick={pedirSugerencia} disabled={suggesting}>
-                {suggesting ? "Pensando..." : "Ayuda IA"}
+                {suggesting ? "Pensando..." : "✦ Ayuda IA"}
               </button>
             )}
           </div>
 
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#0F172A", marginBottom: 16, lineHeight: 1.4 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", marginBottom: 16, lineHeight: 1.4 }}>
             {preguntaActual.pregunta}
           </h3>
 
@@ -253,11 +252,11 @@ export default function Onboarding() {
 
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
             {pasoActivo > 0 && (
-              <button style={btnSecondary} onClick={() => setPasoActivo(pasoActivo - 1)}>Anterior</button>
+              <button style={btnSecondary} onClick={() => setPasoActivo(pasoActivo - 1)}>← Anterior</button>
             )}
             {pasoActivo < total - 1 ? (
               <button style={btnPrimary} onClick={guardarYSiguiente} disabled={saving}>
-                {saving ? "Guardando..." : "Siguiente"}
+                {saving ? "Guardando..." : "Siguiente →"}
               </button>
             ) : (
               <button style={btnSuccess} onClick={completarOnboarding} disabled={completing}>
@@ -266,8 +265,8 @@ export default function Onboarding() {
             )}
           </div>
 
-          <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 12 }}>
-            Tu progreso se guarda automáticamente. Podés salir y retomar en cualquier momento.
+          <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 12 }}>
+            Tu progreso se guarda automáticamente.
           </p>
         </div>
       )}
@@ -275,7 +274,7 @@ export default function Onboarding() {
       {/* Question list */}
       {!isCompleted && (
         <div style={card}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Preguntas</h3>
+          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: "var(--text)" }}>Preguntas</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {preguntas.map((p, i) => {
               const answered = !!respuestas[String(p.id)];
@@ -284,11 +283,12 @@ export default function Onboarding() {
                 <button key={p.id} onClick={() => setPasoActivo(i)} style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "8px 10px", borderRadius: 8, textAlign: "left",
-                  border: active ? "1.5px solid #F97316" : "1px solid transparent",
-                  background: active ? "#FFF7ED" : "transparent",
+                  border: active ? "1.5px solid var(--primary)" : "1px solid transparent",
+                  background: active ? "var(--primary-light)" : "transparent",
                   cursor: "pointer", fontSize: 13,
-                  color: answered ? "#15803D" : active ? "#F97316" : "#475569",
+                  color: answered ? "var(--success-text)" : active ? "var(--primary)" : "var(--text-secondary)",
                   fontWeight: active ? 600 : 400,
+                  transition: "all var(--t-fast)",
                 }}>
                   <span style={{ fontSize: 14, width: 18, textAlign: "center" }}>
                     {answered ? "✓" : `${p.id}`}
@@ -297,7 +297,7 @@ export default function Onboarding() {
                     {p.pregunta}
                   </span>
                   {p.obligatoria && !answered && (
-                    <span style={{ fontSize: 9, color: "#B45309", flexShrink: 0 }}>*</span>
+                    <span style={{ fontSize: 9, color: "var(--warning-text)", flexShrink: 0 }}>*</span>
                   )}
                 </button>
               );
@@ -306,13 +306,12 @@ export default function Onboarding() {
         </div>
       )}
 
-      {/* Completed state */}
       {isCompleted && !msg && (
-        <div style={{ ...card, borderColor: "#10B981" }}>
+        <div style={{ ...card, borderColor: "var(--success)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#15803D", marginBottom: 4 }}>Onboarding completo</h3>
-              <span style={{ fontSize: 13, color: "#475569" }}>Tu perfil de marca está configurado.</span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--success-text)", marginBottom: 4 }}>✓ Onboarding completo</h3>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Tu perfil de marca está configurado.</span>
             </div>
             <button style={btnPrimary} onClick={() => navigate("/marca/perfil")}>Ver Perfil de Marca</button>
           </div>

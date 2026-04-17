@@ -3,17 +3,19 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useApi } from "../hooks/useApi";
 import { ENDPOINTS } from "../constants/endpoints";
+import Badge from "../components/ui/Badge";
+import SkeletonLoader from "../components/ui/SkeletonLoader";
 
-const card = { background: "#fff", border: "1px solid #E2E8F0", borderRadius: 14, padding: 20 };
-const btnSmall = { padding: "6px 14px", border: "1px solid #E2E8F0", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "#fff", color: "#475569" };
-const btnPrimary = { padding: "8px 18px", background: "#F97316", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" };
-const inputStyle = { width: "100%", padding: "10px 12px", border: "1.5px solid #E2E8F0", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box" };
+const card     = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20 };
+const btnSmall = { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "var(--surface)", color: "var(--text-secondary)" };
+const btnPrimary = { padding: "8px 18px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" };
+const inputStyle = { width: "100%", padding: "10px 12px", border: "1.5px solid var(--border)", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box", background: "var(--surface)", color: "var(--text)" };
 
 const estadoBadge = (estado) => {
   const map = {
-    disponible: { bg: "#DCFCE7", c: "#15803D", text: "Disponible" },
-    bloqueado_v1: { bg: "#FEE2E2", c: "#B91C1C", text: "Próximamente" },
-    solo_premium: { bg: "#EDE9FE", c: "#6D28D9", text: "Solo Premium" },
+    disponible:     { bg: "var(--success-bg)", c: "var(--success-text)", text: "Disponible" },
+    bloqueado_v1:   { bg: "var(--danger-bg)",  c: "var(--danger-text)",  text: "Próximamente" },
+    solo_premium:   { bg: "var(--purple-bg)",  c: "var(--purple-text)",  text: "Solo Premium" },
   };
   const s = map[estado] || map.disponible;
   return { style: { background: s.bg, color: s.c, padding: "3px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600 }, text: s.text };
@@ -66,10 +68,9 @@ export default function AgentesIA() {
   }
 
   function ejecutar(agente) {
-    // Redirect specials to their dedicated pages
-    if (agente.nombre === "creativo") { navigate("/creativo"); return; }
+    if (agente.nombre === "creativo")  { navigate("/creativo");  return; }
     if (agente.nombre === "comunidad") { navigate("/comunidad"); return; }
-    if (agente.nombre === "estrategia") { navigate("/estrategia"); return; }
+    if (agente.nombre === "estrategia"){ navigate("/estrategia");return; }
     ejecutarRemoto(agente);
   }
 
@@ -79,58 +80,54 @@ export default function AgentesIA() {
     try {
       const { data } = await post(ENDPOINTS.AGENTE_EJECUTAR(agente.nombre));
       setResultado(data);
-    } catch (e) { setResultado({ agente: agente.nombre, resultado: e.response?.data?.message || "Error al ejecutar" }); }
-    finally { setExecuting(null); }
+    } catch (e) {
+      setResultado({ agente: agente.nombre, resultado: e.response?.data?.message || "Error al ejecutar" });
+    } finally { setExecuting(null); }
   }
 
-  if (loading) return <Layout title="Agentes IA"><p style={{ color: "#94A3B8" }}>Cargando...</p></Layout>;
+  if (loading) return <Layout title="Agentes IA"><SkeletonLoader type="card" count={6} /></Layout>;
 
   const bloqueado = (a) => a.estado === "bloqueado_v1" || a.estado === "solo_premium";
 
   return (
     <Layout title="Agentes IA">
-      {/* Resultado de ejecución */}
       {resultado && (
-        <div style={{ ...card, marginBottom: 16, borderColor: "#F97316" }}>
+        <div style={{ ...card, marginBottom: 16, borderColor: "var(--primary)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700 }}>Resultado — {resultado.agente}</h3>
-            <button onClick={() => setResultado(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#94A3B8" }}>x</button>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>Resultado — {resultado.agente}</h3>
+            <button onClick={() => setResultado(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "var(--text-muted)" }}>×</button>
           </div>
-          <pre style={{ fontSize: 13, color: "#475569", whiteSpace: "pre-wrap", lineHeight: 1.6, maxHeight: 400, overflow: "auto" }}>
+          <pre style={{ fontSize: 13, color: "var(--text-secondary)", whiteSpace: "pre-wrap", lineHeight: 1.6, maxHeight: 400, overflow: "auto" }}>
             {resultado.resultado}
           </pre>
         </div>
       )}
 
-      {/* Grid de agentes */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 16 }}>
         {agentes.map(a => {
           const isBlocked = bloqueado(a);
           const badge = estadoBadge(a.estado);
           return (
             <div key={a.nombre} style={{ ...card, opacity: isBlocked ? 0.55 : 1, position: "relative" }}>
-              {/* Header */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                <span style={{ width: 42, height: 42, borderRadius: 12, background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                <span style={{ width: 42, height: 42, borderRadius: 12, background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
                   {a.icon}
                 </span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A" }}>{a.label}</div>
-                  <div style={{ fontSize: 12, color: "#94A3B8" }}>{a.rol}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{a.label}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{a.rol}</div>
                 </div>
               </div>
 
-              {/* Status row */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                {/* Active toggle */}
                 {!isBlocked ? (
                   <button
                     onClick={() => toggleActivo(a)}
                     style={{
                       padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                       border: "none", cursor: "pointer",
-                      background: a.activo ? "#DCFCE7" : "#F1F5F9",
-                      color: a.activo ? "#15803D" : "#94A3B8",
+                      background: a.activo ? "var(--success-bg)" : "var(--surface-2)",
+                      color: a.activo ? "var(--success-text)" : "var(--text-muted)",
                     }}
                   >
                     {a.activo ? "Activo" : "Inactivo"}
@@ -139,15 +136,14 @@ export default function AgentesIA() {
                   <span style={badge.style}>{badge.text}</span>
                 )}
 
-                {/* Mode toggle */}
                 {!isBlocked && a.activo && (
                   <button
                     onClick={() => a.autopilot_disponible ? toggleModo(a) : null}
                     style={{
                       padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                       border: "none", cursor: a.autopilot_disponible ? "pointer" : "default",
-                      background: a.modo === "autopilot" ? "#DCFCE7" : "#EDE9FE",
-                      color: a.modo === "autopilot" ? "#15803D" : "#6D28D9",
+                      background: a.modo === "autopilot" ? "var(--success-bg)" : "var(--purple-bg)",
+                      color: a.modo === "autopilot" ? "var(--success-text)" : "var(--purple-text)",
                       opacity: a.autopilot_disponible ? 1 : 0.5,
                     }}
                     title={a.autopilot_disponible ? "Click para cambiar modo" : "Autopilot solo disponible en Premium"}
@@ -157,13 +153,12 @@ export default function AgentesIA() {
                 )}
               </div>
 
-              {/* Actions */}
               {!isBlocked && (
                 <div style={{ display: "flex", gap: 6 }}>
                   <button style={btnSmall} onClick={() => abrirConfig(a)}>Configurar</button>
                   {a.activo && (
                     <button
-                      style={{ ...btnSmall, borderColor: "#F97316", color: "#F97316" }}
+                      style={{ ...btnSmall, borderColor: "var(--primary)", color: "var(--primary)" }}
                       onClick={() => ejecutar(a)}
                       disabled={executing === a.nombre}
                     >
@@ -177,30 +172,24 @@ export default function AgentesIA() {
         })}
       </div>
 
-      {/* Config drawer/modal */}
+      {/* Drawer de configuración */}
       {configOpen && (
         <>
-          <div onClick={() => setConfigOpen(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", zIndex: 200 }} />
-          <div style={{
-            position: "fixed", top: 0, right: 0, width: 480, height: "100vh",
-            background: "#fff", zIndex: 201, padding: 24, overflowY: "auto",
-            boxShadow: "-4px 0 20px rgba(0,0,0,.1)",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>
-                {configOpen.icon} {configOpen.label}
-              </h2>
-              <button onClick={() => setConfigOpen(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#94A3B8" }}>x</button>
+          <div onClick={() => setConfigOpen(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 200 }} />
+          <div className="drawer">
+            <div className="drawer-header">
+              <h2 className="drawer-title">{configOpen.icon} {configOpen.label}</h2>
+              <button onClick={() => setConfigOpen(null)} className="modal-close">×</button>
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 12, color: "#94A3B8", display: "block", marginBottom: 6 }}>System Prompt</label>
+              <label className="field-label-sm" style={{ marginBottom: 6 }}>System Prompt</label>
               <textarea
                 style={{ ...inputStyle, minHeight: 200, resize: "vertical", fontFamily: "monospace", fontSize: 13 }}
                 value={promptEdit}
                 onChange={e => setPromptEdit(e.target.value)}
               />
-              <p style={{ fontSize: 11, color: "#94A3B8", marginTop: 4 }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
                 Este prompt se usa como instrucción base del agente. Podés personalizarlo.
               </p>
             </div>
@@ -209,10 +198,7 @@ export default function AgentesIA() {
               <button style={btnPrimary} onClick={guardarPrompt} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar"}
               </button>
-              <button
-                style={btnSmall}
-                onClick={() => setPromptEdit(configOpen.system_prompt_default || "")}
-              >
+              <button style={btnSmall} onClick={() => setPromptEdit(configOpen.system_prompt_default || "")}>
                 Restaurar default
               </button>
             </div>

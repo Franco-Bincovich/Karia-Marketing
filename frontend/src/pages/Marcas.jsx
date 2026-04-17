@@ -3,10 +3,11 @@ import Layout from "../components/Layout";
 import { useApi } from "../hooks/useApi";
 import { useAuth } from "../context/AuthContext";
 import { ENDPOINTS } from "../constants/endpoints";
+import EmptyState from "../components/ui/EmptyState";
 
-const card = { background: "#fff", border: "1px solid #E2E8F0", borderRadius: 14, padding: 20, marginBottom: 16 };
-const input = { width: "100%", padding: "10px 12px", border: "1.5px solid #E2E8F0", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 12 };
-const btn = { padding: "10px 20px", background: "#F97316", color: "#fff", border: "none", borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: "pointer" };
+const card  = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginBottom: 16 };
+const input = { width: "100%", padding: "10px 12px", border: "1.5px solid var(--border)", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 12, background: "var(--surface)", color: "var(--text)" };
+const btn   = { padding: "10px 20px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: "pointer" };
 
 export default function Marcas() {
   const { user } = useAuth();
@@ -40,23 +41,34 @@ export default function Marcas() {
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
         <button style={btn} onClick={() => setShowForm(v => !v)}>{showForm ? "Cancelar" : "+ Nueva marca"}</button>
       </div>
+
       {showForm && (
         <form style={card} onSubmit={handleSubmit}>
-          {error && <p style={{ color: "#EF4444", fontSize: 13, marginBottom: 8 }}>{error}</p>}
+          {error && (
+            <div className="msg-error" style={{ marginBottom: 12, borderRadius: 8 }}>
+              <span style={{ flex: 1 }}>{error}</span>
+              <button type="button" className="msg-dismiss" onClick={() => setError("")}>×</button>
+            </div>
+          )}
           <input style={input} placeholder="Nombre *" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
           <input style={input} placeholder="Industria" value={form.industria} onChange={e => setForm({ ...form, industria: e.target.value })} />
           <input style={input} placeholder="Sitio web" value={form.sitio_web} onChange={e => setForm({ ...form, sitio_web: e.target.value })} />
           <button style={btn} type="submit" disabled={saving}>{saving ? "Guardando..." : "Crear marca"}</button>
         </form>
       )}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 16 }}>
-        {marcas.map(m => (
-          <div key={m.id} style={card}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{m.nombre}</div>
-            {m.industria && <div style={{ fontSize: 13, color: "#94A3B8" }}>{m.industria}</div>}
-          </div>
-        ))}
-      </div>
+
+      {marcas.length === 0 && !showForm ? (
+        <EmptyState icon="🏢" title="Sin marcas" description="Creá tu primera marca para empezar" action={{ label: "+ Nueva marca", onClick: () => setShowForm(true) }} />
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 16 }}>
+          {marcas.map(m => (
+            <div key={m.id} style={card}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, color: "var(--text)" }}>{m.nombre}</div>
+              {m.industria && <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{m.industria}</div>}
+            </div>
+          ))}
+        </div>
+      )}
     </Layout>
   );
 }

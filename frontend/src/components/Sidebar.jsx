@@ -1,40 +1,41 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Tooltip from "./ui/Tooltip";
 
-const SIDEBAR_FULL = 224;
-const SIDEBAR_COLLAPSED = 64;
+const SIDEBAR_FULL = 240;
+const SIDEBAR_COL  =  64;
 
 const sections = [
   { title: "PRINCIPAL", items: [
-    { path: "/dashboard", label: "Dashboard", icon: "📊" },
-    { path: "/prospeccion", label: "Prospección", icon: "🎯", badge: true },
-    { path: "/estrategia", label: "Estrategia", icon: "🧠" },
-    { path: "/agentes-ia", label: "Agentes IA", icon: "🤖" },
+    { path: "/dashboard",         label: "Dashboard",        icon: "⊞" },
+    { path: "/prospeccion",       label: "Prospección",      icon: "◎", badge: true },
+    { path: "/estrategia",        label: "Estrategia",       icon: "◈" },
+    { path: "/agentes-ia",        label: "Agentes IA",       icon: "✦" },
   ]},
   { title: "CONTENIDO", items: [
-    { path: "/contenido", label: "Generar Contenido", icon: "✍️" },
-    { path: "/creativo", label: "Creativo", icon: "🎨" },
-    { path: "/calendario", label: "Calendario", icon: "📅" },
-    { path: "/social-media", label: "Redes Sociales", icon: "📱" },
+    { path: "/contenido",         label: "Generar Contenido",icon: "✎" },
+    { path: "/creativo",          label: "Creativo IA",      icon: "◇" },
+    { path: "/calendario",        label: "Calendario",       icon: "▦" },
+    { path: "/social-media",      label: "Redes Sociales",   icon: "◎" },
   ]},
   { title: "PUBLICIDAD & SEO", items: [
-    { path: "/ads", label: "Ads", icon: "📣" },
-    { path: "/seo", label: "SEO", icon: "🔍" },
+    { path: "/ads",               label: "Ads",              icon: "◉" },
+    { path: "/seo",               label: "SEO",              icon: "⊕" },
   ]},
   { title: "ANÁLISIS", items: [
-    { path: "/analytics", label: "Analytics", icon: "📈" },
-    { path: "/comunidad", label: "Comunidad", icon: "💬", badge: true },
-    { path: "/social-listening", label: "Social Listening", icon: "👂" },
-    { path: "/reporting", label: "Reporting", icon: "📋" },
+    { path: "/analytics",         label: "Analytics",        icon: "◬" },
+    { path: "/comunidad",         label: "Comunidad",        icon: "◎", badge: true },
+    { path: "/social-listening",  label: "Social Listening", icon: "◌" },
+    { path: "/reporting",         label: "Reporting",        icon: "▤" },
   ]},
   { title: "SISTEMA", items: [
-    { path: "/onboarding", label: "Configuración", icon: "⚙️" },
-    { path: "/marca/perfil", label: "Perfil de Marca", icon: "🏷️" },
-    { path: "/automatizaciones", label: "Automatizaciones", icon: "🔄" },
+    { path: "/onboarding",        label: "Configuración",    icon: "⊙" },
+    { path: "/marca/perfil",      label: "Perfil de Marca",  icon: "◫" },
+    { path: "/automatizaciones",  label: "Automatizaciones", icon: "↻" },
   ]},
   { title: "ADMIN", superadminOnly: true, items: [
-    { path: "/clientes", label: "Clientes", icon: "🏢" },
+    { path: "/clientes",          label: "Clientes",         icon: "▦" },
   ]},
 ];
 
@@ -42,13 +43,15 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
   const { user, marcas, marcaActiva, setMarcaActiva, completitud, logout } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const initials = user?.nombre?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
+
+  const initials = user?.nombre?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?";
+  const plan = user?.plan || "Basic";
 
   const defaultOpen = {};
   sections.forEach(sec => { defaultOpen[sec.title] = true; });
   const [openSections, setOpenSections] = useState(defaultOpen);
 
-  const w = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_FULL;
+  const w = collapsed ? SIDEBAR_COL : SIDEBAR_FULL;
 
   function toggleSection(title) {
     if (collapsed) return;
@@ -69,58 +72,97 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
     if (onNavigate) onNavigate();
   }
 
-  const visibleSections = sections.filter(sec => !sec.superadminOnly || user?.rol === "superadmin");
+  const visibleSections = sections.filter(
+    sec => !sec.superadminOnly || user?.rol === "superadmin"
+  );
 
   return (
     <aside style={{
-      width: w, height: "100vh", background: "#0F172A", display: "flex",
-      flexDirection: "column", padding: collapsed ? "20px 6px" : "20px 12px",
-      position: "fixed", top: 0, left: 0, zIndex: 100,
-      transition: "width 200ms, padding 200ms",
+      width: w,
+      minWidth: w,
+      height: "100vh",
+      background: "var(--sidebar-bg)",
+      display: "flex",
+      flexDirection: "column",
+      position: "fixed",
+      top: 0,
+      left: 0,
+      zIndex: 100,
+      transition: "width var(--t), min-width var(--t)",
       overflowX: "hidden",
     }}>
-      {/* Logo + collapse toggle */}
+      {/* ── Logo ── */}
       <div style={{
-        display: "flex", alignItems: "center",
+        display: "flex",
+        alignItems: "center",
         justifyContent: collapsed ? "center" : "space-between",
-        padding: collapsed ? "0" : "0 8px", marginBottom: 16, minHeight: 30,
+        padding: collapsed ? "20px 0" : "20px 16px",
+        minHeight: 68,
+        borderBottom: "1px solid var(--sidebar-border)",
       }}>
-        {!collapsed && (
+        {collapsed ? (
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 16, fontWeight: 900, color: "#fff",
+          }}>N</div>
+        ) : (
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#F97316", lineHeight: 1.2 }}>KarIA</div>
-            <div style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>Marketing Platform</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
+              NEXO
+              <span style={{ fontSize: 9, fontWeight: 700, color: "var(--primary)", marginLeft: 4, letterSpacing: "0.08em", opacity: 0.9 }}>MKTG</span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--sidebar-text)", marginTop: 1 }}>Marketing AI Platform</div>
           </div>
-        )}
-        {collapsed && (
-          <div style={{ fontSize: 20, fontWeight: 800, color: "#F97316" }}>K</div>
         )}
         {!isMobile && (
           <button
             onClick={onToggle}
             style={{
-              background: "none", border: "1px solid rgba(255,255,255,.12)", borderRadius: 6,
-              padding: "4px 6px", cursor: "pointer", color: "#94A3B8", fontSize: 14,
-              lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
-              marginLeft: collapsed ? 0 : 0,
+              background: "rgba(255,255,255,0.06)",
+              border: "none",
+              borderRadius: 8,
+              padding: "7px 8px",
+              cursor: "pointer",
+              color: "var(--sidebar-text)",
+              fontSize: 13,
+              lineHeight: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background var(--t-fast)",
+              flexShrink: 0,
+              marginLeft: collapsed ? 0 : 8,
             }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
             aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
           >
-            {collapsed ? "▸" : "◂"}
+            {collapsed ? "›" : "‹"}
           </button>
         )}
       </div>
 
-      {/* Marca selector */}
+      {/* ── Marca activa ── */}
       {!collapsed && marcas.length > 0 && (
-        <div style={{ padding: "0 8px", marginBottom: 16 }}>
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--sidebar-border)" }}>
           {marcas.length === 1 ? (
-            <div style={{ fontSize: 12, color: "#E2E8F0", padding: "4px 0", fontWeight: 500 }}>{marcaActiva?.nombre}</div>
+            <div style={{ fontSize: 13, color: "#fff", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {marcaActiva?.nombre || "Sin marca"}
+            </div>
           ) : (
             <select
               style={{
-                width: "100%", padding: "7px 8px", borderRadius: 8,
-                border: "1px solid rgba(255,255,255,.1)",
-                background: "rgba(255,255,255,.05)", color: "#E2E8F0", fontSize: 12, outline: "none",
+                width: "100%",
+                padding: "7px 8px",
+                borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.06)",
+                color: "#fff",
+                fontSize: 12,
+                outline: "none",
+                cursor: "pointer",
               }}
               value={marcaActiva?.id || ""}
               onChange={handleMarcaChange}
@@ -128,127 +170,194 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
               {marcas.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
             </select>
           )}
-        </div>
-      )}
 
-      {/* Progress bar */}
-      {!collapsed && (
-        <div style={{ padding: "8px 8px 0", marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: "#475569", marginBottom: 4, fontWeight: 600 }}>Perfil de marca</div>
-          <div style={{ height: 6, background: "rgba(255,255,255,.08)", borderRadius: 3, overflow: "hidden" }}>
-            <div style={{
-              height: "100%", width: `${completitud}%`,
-              background: completitud >= 80 ? "#10B981" : "#F97316",
-              borderRadius: 3, transition: "width 300ms",
-            }} />
+          {/* Completitud */}
+          <div style={{ marginTop: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 10, color: "var(--sidebar-text)", fontWeight: 600 }}>PERFIL DE MARCA</span>
+              <span style={{ fontSize: 10, color: completitud >= 100 ? "#34D399" : "var(--primary)", fontWeight: 700 }}>{completitud}%</span>
+            </div>
+            <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+              <div style={{
+                height: "100%",
+                width: `${completitud}%`,
+                background: completitud >= 100 ? "#10B981" : "linear-gradient(90deg, #FF6B2B, #F5A623)",
+                borderRadius: 999,
+                transition: "width var(--t-slow)",
+              }} />
+            </div>
           </div>
-          <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 3, textAlign: "right" }}>{completitud}%</div>
         </div>
       )}
 
-      {/* Navigation with scroll */}
-      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0 }}>
-        {visibleSections.map((sec) => (
+      {/* ── Navegación ── */}
+      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: collapsed ? "8px 4px" : "8px 8px", minHeight: 0 }}>
+        {visibleSections.map(sec => (
           <div key={sec.title}>
-            {/* Section header — clickable to toggle */}
+            {/* Section header */}
             <div
               onClick={() => toggleSection(sec.title)}
               style={{
-                fontSize: 10, fontWeight: 700, color: "#334155", textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                padding: collapsed ? "16px 4px 6px" : "16px 8px 6px",
+                fontSize: 9,
+                fontWeight: 700,
+                color: "var(--sidebar-section)",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                padding: collapsed ? "14px 0 6px" : "14px 8px 6px",
                 cursor: collapsed ? "default" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 userSelect: "none",
               }}
             >
               {!collapsed && <span>{sec.title}</span>}
               {!collapsed && (
                 <span style={{
-                  fontSize: 9, transition: "transform 200ms",
-                  transform: openSections[sec.title] ? "rotate(0deg)" : "rotate(-90deg)",
-                }}>
-                  ▾
-                </span>
+                  fontSize: 9,
+                  transition: "transform var(--t-fast)",
+                  transform: openSections[sec.title] ? "rotate(0)" : "rotate(-90deg)",
+                  color: "var(--sidebar-text)",
+                }}>▾</span>
               )}
             </div>
 
-            {/* Section items */}
-            {(collapsed || openSections[sec.title]) && sec.items.map((item) => {
-              const active = pathname === item.path;
-              return (
+            {/* Items */}
+            {(collapsed || openSections[sec.title]) && sec.items.map(item => {
+              const active = pathname === item.path || (item.path !== "/dashboard" && pathname.startsWith(item.path));
+              const content = (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={handleLinkClick}
-                  title={collapsed ? item.label : undefined}
                   style={{
-                    display: "flex", alignItems: "center",
+                    display: "flex",
+                    alignItems: "center",
                     gap: collapsed ? 0 : 10,
                     justifyContent: collapsed ? "center" : "flex-start",
-                    padding: collapsed ? "9px 0" : "9px 10px",
-                    borderRadius: 8, fontSize: 13,
-                    color: active ? "#F97316" : "#94A3B8",
-                    background: active ? "rgba(249,115,22,.18)" : "transparent",
+                    padding: collapsed ? "10px 0" : "9px 10px",
+                    borderRadius: 8,
+                    fontSize: 13,
                     fontWeight: active ? 600 : 400,
-                    cursor: "pointer", transition: "all 150ms", marginBottom: 2,
-                    whiteSpace: "nowrap", overflow: "hidden",
+                    color: active ? "var(--sidebar-text-active)" : "var(--sidebar-text)",
+                    background: active ? "var(--sidebar-active)" : "transparent",
+                    cursor: "pointer",
+                    transition: "all var(--t-fast)",
+                    marginBottom: 2,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textDecoration: "none",
+                    position: "relative",
                   }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--sidebar-hover)"; e.currentTarget.style.color = "#fff"; }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--sidebar-text)"; }}}
                 >
-                  <span style={{ fontSize: collapsed ? 18 : 13, flexShrink: 0 }}>{item.icon}</span>
-                  {!collapsed && <span>{item.label}</span>}
+                  {active && !collapsed && (
+                    <span style={{
+                      position: "absolute",
+                      left: 0,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: 3,
+                      height: 16,
+                      background: "var(--primary)",
+                      borderRadius: "0 2px 2px 0",
+                    }} />
+                  )}
+                  <span style={{ fontSize: collapsed ? 16 : 13, flexShrink: 0, lineHeight: 1 }}>{item.icon}</span>
+                  {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
                   {!collapsed && item.badge && (
                     <span style={{
-                      background: "#EF4444", color: "#fff", fontSize: 10, fontWeight: 700,
-                      padding: "1px 6px", borderRadius: 9, marginLeft: "auto",
+                      background: "#EF4444",
+                      color: "#fff",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      padding: "2px 5px",
+                      borderRadius: 9,
+                      minWidth: 16,
+                      textAlign: "center",
                     }}>3</span>
                   )}
                 </Link>
               );
+
+              return collapsed ? (
+                <Tooltip key={item.path} text={item.label} delay={300}>
+                  {content}
+                </Tooltip>
+              ) : content;
             })}
           </div>
         ))}
       </nav>
 
-      {/* User box */}
+      {/* ── User box ── */}
       <div style={{
-        padding: collapsed ? "12px 4px" : "12px 8px",
-        borderTop: "1px solid rgba(255,255,255,.08)",
-        display: "flex", alignItems: "center",
-        flexDirection: collapsed ? "column" : "row",
-        gap: collapsed ? 8 : 10,
+        borderTop: "1px solid var(--sidebar-border)",
+        padding: collapsed ? "12px 4px" : "12px 12px",
       }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center",
-          justifyContent: "center", background: "linear-gradient(135deg,#F97316,#FB923C)",
-          color: "#fff", fontSize: 13, fontWeight: 700, flexShrink: 0,
-        }}>{initials}</div>
-        {!collapsed && (
-          <>
+        {collapsed ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <Tooltip text={user?.nombre || "Usuario"} delay={200}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: 12, fontWeight: 700, cursor: "default",
+              }}>{initials}</div>
+            </Tooltip>
+            <Tooltip text="Cerrar sesión" delay={200}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  background: "rgba(255,255,255,0.06)", border: "none",
+                  borderRadius: 8, padding: "6px 8px", color: "rgba(255,255,255,0.4)",
+                  fontSize: 11, cursor: "pointer",
+                }}
+              >↪</button>
+            </Tooltip>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+              background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontSize: 12, fontWeight: 700,
+            }}>{initials}</div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.nombre || "Usuario"}</div>
-              <div style={{ fontSize: 11, color: "#64748B" }}>{user?.rol || "—"}</div>
+              <div style={{ fontSize: 13, color: "#fff", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {user?.nombre || "Usuario"}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+                <span style={{
+                  fontSize: 9, fontWeight: 700,
+                  color: plan === "Premium" ? "#A78BFA" : "rgba(255,255,255,0.35)",
+                  background: plan === "Premium" ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.08)",
+                  padding: "1px 6px", borderRadius: 4, letterSpacing: "0.06em",
+                }}>
+                  {plan?.toUpperCase()}
+                </span>
+              </div>
             </div>
             <button
-              style={{
-                marginLeft: "auto", background: "none", border: "1px solid rgba(255,255,255,.12)",
-                borderRadius: 6, padding: "6px 10px", color: "#94A3B8", fontSize: 11, fontWeight: 500,
-                cursor: "pointer", transition: "all 150ms", flexShrink: 0,
-              }}
               onClick={handleLogout}
-            >Salir</button>
-          </>
-        )}
-        {collapsed && (
-          <button
-            onClick={handleLogout}
-            title="Salir"
-            style={{
-              background: "none", border: "1px solid rgba(255,255,255,.12)",
-              borderRadius: 6, padding: "4px 8px", color: "#94A3B8", fontSize: 11,
-              cursor: "pointer", lineHeight: 1,
-            }}
-          >✕</button>
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "none",
+                borderRadius: 8,
+                padding: "7px 8px",
+                color: "rgba(255,255,255,0.4)",
+                fontSize: 11,
+                cursor: "pointer",
+                flexShrink: 0,
+                transition: "background var(--t-fast)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.2)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+              title="Cerrar sesión"
+            >↪</button>
+          </div>
         )}
       </div>
     </aside>
