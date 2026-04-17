@@ -311,7 +311,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                 onClick={handleLogout}
                 style={{
                   background: "rgba(255,255,255,0.06)", border: "none",
-                  borderRadius: 8, padding: "6px 8px", color: "rgba(255,255,255,0.4)",
+                  borderRadius: 8, padding: "6px 8px", color: "rgba(255,255,255,0.65)",
                   fontSize: 11, cursor: "pointer",
                 }}
               >↪</button>
@@ -332,7 +332,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
                 <span style={{
                   fontSize: 9, fontWeight: 700,
-                  color: plan === "Premium" ? "#A78BFA" : "rgba(255,255,255,0.35)",
+                  color: plan === "Premium" ? "#A78BFA" : "rgba(255,255,255,0.60)",
                   background: plan === "Premium" ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.08)",
                   padding: "1px 6px", borderRadius: 4, letterSpacing: "0.06em",
                 }}>
@@ -347,7 +347,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                 border: "none",
                 borderRadius: 8,
                 padding: "7px 8px",
-                color: "rgba(255,255,255,0.4)",
+                color: "rgba(255,255,255,0.65)",
                 fontSize: 11,
                 cursor: "pointer",
                 flexShrink: 0,
