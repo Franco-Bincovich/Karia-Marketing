@@ -15,7 +15,7 @@ function getGreeting() {
   return "Buenas noches";
 }
 
-function MetricCard({ label, value, icon, color, suffix = "", prefix = "" }) {
+function MetricCard({ label, value, icon, color, iconColor, suffix = "", prefix = "" }) {
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -24,8 +24,11 @@ function MetricCard({ label, value, icon, color, suffix = "", prefix = "" }) {
           background: color || "var(--primary-light)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 18, flexShrink: 0,
+          color: iconColor || "var(--primary)",
+          fontWeight: 700,
+          lineHeight: 1,
         }}>{icon}</div>
-        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", fontWeight: 500 }}>{label}</span>
+        <span style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", fontWeight: 500 }}>{label}</span>
       </div>
       <div style={{ fontSize: 28, fontWeight: 800, color: "var(--text)", lineHeight: 1 }}>
         {prefix}{typeof value === "number" ? value.toLocaleString("es-AR") : (value || 0)}{suffix}
@@ -34,7 +37,7 @@ function MetricCard({ label, value, icon, color, suffix = "", prefix = "" }) {
   );
 }
 
-function QuickAction({ icon, label, onClick, color }) {
+function QuickAction({ icon, label, onClick, color, iconColor }) {
   return (
     <button
       onClick={onClick}
@@ -62,6 +65,9 @@ function QuickAction({ icon, label, onClick, color }) {
         background: color || "var(--primary-light)",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 20,
+        color: iconColor || "var(--primary)",
+        fontWeight: 700,
+        lineHeight: 1,
       }}>{icon}</div>
       <span style={{ fontSize: "var(--text-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>{label}</span>
     </button>
@@ -163,10 +169,10 @@ export default function Dashboard() {
         <SkeletonLoader type="metric" count={4} style={{ marginBottom: 24 }} />
       ) : (
         <div className="grid-4" style={{ marginBottom: 24 }}>
-          <MetricCard label="Posts este mes"         value={metricas.posts_mes || 0}       icon="✎" color="var(--primary-light)" />
-          <MetricCard label="Menciones hoy"          value={metricas.menciones_hoy || 0}   icon="◎" color="var(--blue-bg)" />
-          <MetricCard label="Engagement promedio"    value={metricas.engagement || 0}       icon="◬" color="var(--purple-bg)" suffix="%" />
-          <MetricCard label="Automatizaciones activas" value={metricas.automatizaciones || 0} icon="↻" color="var(--success-bg)" />
+          <MetricCard label="Posts este mes"           value={metricas.posts_mes || 0}         icon="✎" color="var(--primary-light)" iconColor="var(--primary)" />
+          <MetricCard label="Menciones hoy"            value={metricas.menciones_hoy || 0}     icon="◎" color="var(--blue-bg)"       iconColor="var(--blue-text)" />
+          <MetricCard label="Engagement promedio"      value={metricas.engagement || 0}         icon="◬" color="var(--purple-bg)"     iconColor="var(--purple-text)" suffix="%" />
+          <MetricCard label="Automatizaciones activas" value={metricas.automatizaciones || 0}   icon="↻" color="var(--success-bg)"    iconColor="var(--success-text)" />
         </div>
       )}
 
@@ -200,10 +206,10 @@ export default function Dashboard() {
         <div>
           <div className="section-label" style={{ marginBottom: 12 }}>Acciones rápidas</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <QuickAction icon="✎" label="Generar contenido"  color="var(--primary-light)" onClick={() => navigate("/contenido")} />
-            <QuickAction icon="▦" label="Ver calendario"     color="var(--blue-bg)"       onClick={() => navigate("/calendario")} />
-            <QuickAction icon="▤" label="Ver reportes"       color="var(--purple-bg)"     onClick={() => navigate("/reporting")} />
-            <QuickAction icon="◌" label="Escanear menciones" color="var(--warning-bg)"    onClick={() => navigate("/social-listening")} />
+            <QuickAction icon="✎" label="Generar contenido"  color="var(--primary-light)" iconColor="var(--primary)"       onClick={() => navigate("/contenido")} />
+            <QuickAction icon="▦" label="Ver calendario"     color="var(--blue-bg)"       iconColor="var(--blue-text)"     onClick={() => navigate("/calendario")} />
+            <QuickAction icon="▤" label="Ver reportes"       color="var(--purple-bg)"     iconColor="var(--purple-text)"   onClick={() => navigate("/reporting")} />
+            <QuickAction icon="◌" label="Escanear menciones" color="var(--warning-bg)"    iconColor="var(--warning-text)"  onClick={() => navigate("/social-listening")} />
           </div>
         </div>
 
