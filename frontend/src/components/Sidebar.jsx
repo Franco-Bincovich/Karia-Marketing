@@ -330,14 +330,21 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
                 {user?.nombre || "Usuario"}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                <span style={{
-                  fontSize: 9, fontWeight: 700,
-                  color: plan === "Premium" ? "#A78BFA" : "rgba(255,255,255,0.60)",
-                  background: plan === "Premium" ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.08)",
-                  padding: "1px 6px", borderRadius: 4, letterSpacing: "0.06em",
-                }}>
-                  {plan?.toUpperCase()}
-                </span>
+                {user?.rol === "superadmin" ? (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700,
+                    color: "#F5A623",
+                    background: "rgba(245,166,35,0.18)",
+                    padding: "1px 6px", borderRadius: 4, letterSpacing: "0.06em",
+                  }}>SUPERADMIN</span>
+                ) : (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700,
+                    color: plan === "Premium" ? "#A78BFA" : "rgba(255,255,255,0.60)",
+                    background: plan === "Premium" ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.08)",
+                    padding: "1px 6px", borderRadius: 4, letterSpacing: "0.06em",
+                  }}>{plan?.toUpperCase()}</span>
+                )}
               </div>
             </div>
             <button

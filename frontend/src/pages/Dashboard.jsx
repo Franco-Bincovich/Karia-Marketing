@@ -110,8 +110,9 @@ export default function Dashboard() {
   }, [marcaActiva?.id]);
 
   const metricas = data?.metricas_30d || {};
+  const isSuperAdmin = user?.rol === "superadmin";
   const plan = user?.plan || "Basic";
-  const isBasic = plan === "Basic";
+  const isBasic = !isSuperAdmin && plan === "Basic";
 
   return (
     <Layout title="Dashboard">
