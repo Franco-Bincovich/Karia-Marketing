@@ -17,18 +17,39 @@ ANOMALIA_UMBRAL = 0.20  # 20% de caída vs promedio
 
 
 def consolidar_metricas(db: Session, marca_id: UUID, fecha: date) -> dict:
-    """Consolida métricas de todos los canales para una fecha. Trackea todo."""
-    canales = ["instagram", "facebook", "linkedin", "tiktok", "twitter"]
+    """Consolida métricas reales desde publicaciones_mkt agrupadas por red social."""
+    from repositories import publicaciones_repository as pub_repo
+    from repositories import cuentas_sociales_repository as cuentas_repo
+
+    cuentas = cuentas_repo.listar(db, marca_id)
+    redes_conectadas = {c["red_social"] for c in cuentas if c.get("activa")}
+
+    if not redes_conectadas:
+        redes_conectadas = {"instagram"}
+
+    pubs = pub_repo.listar(db, marca_id)
+    pubs_fecha = [p for p in pubs if p.get("publicado_at") and p["publicado_at"][:10] == fecha.isoformat()]
+
     resultados = []
-    for canal in canales:
+    for canal in redes_conectadas:
+        pubs_canal = [p for p in pubs_fecha if p.get("red_social") == canal]
+        total_likes = sum(p.get("likes_2hs", 0) for p in pubs_canal)
+        total_comments = sum(p.get("comentarios_2hs", 0) for p in pubs_canal)
+        total_reach = sum(p.get("alcance_2hs", 0) for p in pubs_canal)
+        engagement = total_likes + total_comments
+        post_count = len(pubs_canal)
+
         data = {
             "marca_id": marca_id, "red_social": canal, "fecha": fecha,
-            "alcance": 0, "impresiones": 0, "engagement": 0,
-            "engagement_rate": 0, "nuevos_seguidores": 0,
-            "clicks": 0, "reproducciones_video": 0,
+            "alcance": total_reach, "impresiones": total_reach,
+            "engagement": engagement,
+            "engagement_rate": round(engagement / max(total_reach, 1), 4),
+            "nuevos_seguidores": 0, "clicks": 0, "reproducciones_video": 0,
         }
         resultados.append(metricas_repo.guardar_metricas(db, data))
+
     db.commit()
+    logger.info("[analytics] consolidar_metricas — marca=%s, fecha=%s, redes=%d", marca_id, fecha, len(resultados))
     return {"fecha": fecha.isoformat(), "canales": len(resultados)}
 
 

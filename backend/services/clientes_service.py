@@ -59,8 +59,8 @@ class ClientesService:
             "cliente_id": cliente.id,
         })
 
-        # TODO: Enviar email de bienvenida con credenciales
-        # send_welcome_email(data["email_admin"], temp_password)
+        from integrations.email_client import send_welcome_email
+        send_welcome_email(data["email_admin"], temp_password, data["nombre"])
 
         registrar_auditoria(
             self.db, "crear_cliente", "clientes",

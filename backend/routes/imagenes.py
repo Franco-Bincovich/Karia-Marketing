@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from controllers.imagen_controller import (
-    GenerarImagenRequest, GenerarParaContenidoRequest,
+    GenerarCarruselRequest, GenerarImagenRequest, GenerarParaContenidoRequest,
     GuardarOpenAIKeyRequest, ImagenController,
 )
 from integrations.database import get_db
@@ -41,6 +41,18 @@ def generar_para_contenido(
 ):
     """Genera imagen para un contenido existente usando el copy como contexto."""
     return ctrl.generar_para_contenido(contenido_id, body, x_marca_id, current_user)
+
+
+@router.post("/generar-carrusel/{contenido_id}")
+def generar_carrusel(
+    contenido_id: UUID,
+    body: GenerarCarruselRequest,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: ImagenController = Depends(_ctrl),
+):
+    """Genera N slides de carrusel con copies + imágenes."""
+    return ctrl.generar_carrusel(contenido_id, body, x_marca_id, current_user)
 
 
 @router.get("")

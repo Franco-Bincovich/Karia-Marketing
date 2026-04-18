@@ -21,13 +21,14 @@ def _s(u: UmbralesAdsMkt) -> dict:
 
 
 def obtener_o_crear(db: Session, marca_id: UUID) -> dict:
-    """Devuelve los umbrales de la marca, creando defaults si no existen."""
+    """Devuelve los umbrales de la marca, o nulls si no están configurados."""
     obj = db.query(UmbralesAdsMkt).filter(UmbralesAdsMkt.marca_id == marca_id).first()
     if not obj:
-        obj = UmbralesAdsMkt(marca_id=marca_id)
-        db.add(obj)
-        db.flush()
-        logger.debug(f"[umbrales_repo] creados defaults — marca={marca_id}")
+        return {
+            "id": None, "marca_id": str(marca_id),
+            "cpa_maximo": None, "roas_minimo": None,
+            "gasto_diario_maximo": None, "updated_at": None,
+        }
     return _s(obj)
 
 

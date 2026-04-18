@@ -76,6 +76,7 @@ export const ENDPOINTS = {
   IMAGENES: `${BASE_URL}/imagenes`,
   IMAGENES_GENERAR: `${BASE_URL}/imagenes/generar`,
   IMAGENES_PARA_CONTENIDO: (id) => `${BASE_URL}/imagenes/generar-para-contenido/${id}`,
+  IMAGENES_CARRUSEL: (id) => `${BASE_URL}/imagenes/generar-carrusel/${id}`,
   IMAGENES_ASOCIAR: (imgId, contId) => `${BASE_URL}/imagenes/${imgId}/asociar-contenido/${contId}`,
   IMAGENES_OPENAI_KEY: `${BASE_URL}/imagenes/openai-key`,
   LISTENING_ESCANEAR: `${BASE_URL}/listening/escanear`,

@@ -51,10 +51,15 @@ def monitorear_publicacion(db: Session, publicacion_id: UUID, marca_id: UUID) ->
         return pub
 
     cuenta = cuentas_repo.obtener_por_red(db, marca_id, pub["red_social"])
-    access_token = "mock"
-    if cuenta and cuenta.access_token_encrypted:
-        from utils.security import decrypt_token
-        access_token = decrypt_token(cuenta.access_token_encrypted)
+    if not cuenta or not cuenta.access_token_encrypted:
+        logger.error("[monitoring] Sin cuenta conectada para %s — marca=%s", pub["red_social"], marca_id)
+        return pub
+
+    from utils.security import decrypt_token
+    access_token = decrypt_token(cuenta.access_token_encrypted)
+    if not access_token:
+        logger.error("[monitoring] Token vacío para %s — marca=%s", pub["red_social"], marca_id)
+        return pub
 
     metricas_raw = _obtener_metricas(pub["red_social"], access_token, pub["post_id_externo"])
 
@@ -97,4 +102,5 @@ def _obtener_metricas(red_social: str, access_token: str, post_id: str) -> dict:
         return meta_client.obtener_metricas_post(access_token, post_id)
     if red_social == "linkedin":
         return linkedin_client.obtener_metricas_post(access_token, post_id)
-    return {"likes": 0, "comentarios": 0, "alcance": 0, "mock": True}
+    logger.warning("[monitoring] Red social '%s' sin cliente de métricas implementado", red_social)
+    return {"likes": 0, "comentarios": 0, "alcance": 0}

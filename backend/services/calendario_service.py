@@ -82,9 +82,20 @@ def publicar_ahora(db: Session, evento_id: UUID, marca_id: UUID) -> dict:
             "NO_SOCIAL_ACCOUNT", 400,
         )
 
+    if not cuenta.access_token_encrypted:
+        raise AppError(
+            f"La cuenta de {evento.red_social} no tiene token de acceso. Reconectala desde Redes Sociales.",
+            "NO_SOCIAL_TOKEN", 400,
+        )
+    if not cuenta.account_id_externo:
+        raise AppError(
+            f"La cuenta de {evento.red_social} no tiene ID externo. Reconectala desde Redes Sociales.",
+            "NO_SOCIAL_ACCOUNT_ID", 400,
+        )
+
     from utils.security import decrypt_token
-    access_token = decrypt_token(cuenta.access_token_encrypted or "mock")
-    account_id = cuenta.account_id_externo or "mock"
+    access_token = decrypt_token(cuenta.access_token_encrypted)
+    account_id = cuenta.account_id_externo
 
     ultimo_error = None
     for intento in range(1, MAX_INTENTOS + 1):

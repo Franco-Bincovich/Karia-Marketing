@@ -233,13 +233,50 @@ def programar_publicacion(
 # --- Webhook ---
 
 def procesar_webhook(payload: dict) -> dict:
-    """
-    Procesa webhook de Zernio para confirmar publicación.
-    Placeholder — implementar cuando Zernio envíe callbacks.
-    """
-    # TODO: Implementar procesamiento de webhook
-    # event_type = payload.get("event")  # "post.published", "post.failed"
-    # zernio_post_id = payload.get("post_id")
-    # Buscar publicación por zernio_post_id y actualizar estado
-    logger.info("[zernio_webhook] Payload recibido: %s", payload)
-    return {"received": True}
+    """Procesa webhook de Zernio para actualizar estado de publicaciones."""
+    from integrations.database import SessionLocal
+    from models.social_models import PublicacionesMkt
+
+    event_type = payload.get("event")
+    zernio_post_id = payload.get("post_id")
+
+    if not event_type or not zernio_post_id:
+        logger.warning("[zernio_webhook] Payload incompleto: %s", payload)
+        return {"received": True, "processed": False}
+
+    db = SessionLocal()
+    try:
+        pub = db.query(PublicacionesMkt).filter(
+            PublicacionesMkt.zernio_post_id == zernio_post_id,
+        ).first()
+
+        if not pub:
+            logger.warning("[zernio_webhook] Publicación no encontrada: zernio_id=%s", zernio_post_id)
+            return {"received": True, "processed": False}
+
+        if event_type == "post.published":
+            pub.estado = "publicado"
+            pub.url_publicacion = payload.get("url", pub.url_publicacion)
+            pub.post_id_externo = payload.get("external_post_id", pub.post_id_externo)
+            logger.info("[zernio_webhook] Publicación confirmada: %s", zernio_post_id)
+
+        elif event_type == "post.failed":
+            pub.estado = "fallido"
+            pub.error_detalle = payload.get("error", "Error reportado por Zernio")
+            logger.error("[zernio_webhook] Publicación fallida: %s — %s", zernio_post_id, pub.error_detalle)
+
+        elif event_type == "post.scheduled":
+            pub.estado = "programado"
+            logger.info("[zernio_webhook] Publicación programada: %s", zernio_post_id)
+
+        else:
+            logger.info("[zernio_webhook] Evento no manejado: %s", event_type)
+
+        db.commit()
+        return {"received": True, "processed": True, "event": event_type}
+    except Exception:
+        db.rollback()
+        logger.exception("[zernio_webhook] Error procesando webhook")
+        return {"received": True, "processed": False}
+    finally:
+        db.close()

@@ -23,15 +23,26 @@ def buscar_menciones(db: Session, marca_id: UUID) -> dict:
     memoria = memoria_repo.obtener_o_crear(db, marca_id)
     nombre_marca = memoria.get("nombre_marca")
 
+    if not nombre_marca or not nombre_marca.strip():
+        return {
+            "menciones": 0,
+            "mensaje": "Completá el onboarding para activar el Social Listening. Se necesita el nombre de la marca.",
+        }
+
     terminos = (config.get("terminos_marca") or [])
-    if nombre_marca and nombre_marca not in terminos:
+    if nombre_marca not in terminos:
         terminos = [nombre_marca] + terminos
 
-    if not terminos:
-        return {"menciones": 0, "mensaje": "Sin términos configurados. Completá el perfil de marca."}
+    descripcion = memoria.get("descripcion") or ""
+    industria = memoria.get("industria") or ""
 
-    # Use Claude web search to find mentions
     from integrations.claude_client import _get_client, _SEARCH_MODEL, _WEB_SEARCH_TOOL, _parse_json_object
+
+    context_parts = [f"'{nombre_marca}'"]
+    if descripcion:
+        context_parts.append(f"(empresa/marca: {descripcion[:100]})")
+    if industria:
+        context_parts.append(f"del sector {industria}")
 
     client = _get_client()
     message = client.messages.create(
@@ -39,7 +50,10 @@ def buscar_menciones(db: Session, marca_id: UUID) -> dict:
         max_tokens=2048,
         tools=_WEB_SEARCH_TOOL,
         messages=[{"role": "user", "content": (
-            f"Buscá menciones recientes de '{', '.join(terminos)}' en redes sociales y web.\n\n"
+            f"Buscá menciones recientes de la marca {' '.join(context_parts)} en redes sociales y web.\n"
+            f"Términos de búsqueda adicionales: {', '.join(terminos)}\n\n"
+            f"IMPORTANTE: Solo incluí menciones que se refieran a esta marca/empresa/negocio específico. "
+            f"Ignorá resultados de personas homónimas o temas no relacionados.\n\n"
             f"Para cada mención encontrá:\n"
             f"- plataforma (instagram, facebook, twitter, linkedin, web, foro)\n"
             f"- usuario o autor\n"
@@ -47,6 +61,7 @@ def buscar_menciones(db: Session, marca_id: UUID) -> dict:
             f"- sentimiento (positivo, neutro, negativo)\n"
             f"- score_sentimiento (0 = muy negativo, 50 = neutro, 100 = muy positivo)\n"
             f"- url si la encontrás\n\n"
+            f"Si no encontrás menciones reales de esta marca, retorná un array vacío.\n"
             f"Respondé SOLO con JSON: {{\"menciones\": [{{\"plataforma\": ..., \"usuario\": ..., "
             f"\"texto\": ..., \"sentimiento\": ..., \"score_sentimiento\": ..., \"url\": ...}}]}}"
         )}],

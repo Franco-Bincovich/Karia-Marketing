@@ -22,6 +22,11 @@ class GenerarParaContenidoRequest(BaseModel):
     estilo: str = "vivid"
 
 
+class GenerarCarruselRequest(BaseModel):
+    num_slides: int = 5
+    estilo: str = "vivid"
+
+
 class GuardarOpenAIKeyRequest(BaseModel):
     api_key: str
 
@@ -61,6 +66,15 @@ class ImagenController:
         marca_id = _marca(x_marca_id)
         items = svc.listar(self.db, marca_id)
         return {"data": items, "count": len(items)}
+
+    def generar_carrusel(self, contenido_id: UUID, body: GenerarCarruselRequest,
+                         x_marca_id: Optional[str], current_user: dict) -> dict:
+        marca_id = _marca(x_marca_id)
+        rol = current_user.get("rol", "")
+        return svc.generar_carrusel(
+            self.db, marca_id, contenido_id,
+            num_slides=body.num_slides, estilo=body.estilo, rol=rol,
+        )
 
     def asociar(self, imagen_id: UUID, contenido_id: UUID,
                 x_marca_id: Optional[str], current_user: dict) -> dict:

@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     SEMRUSH_API_KEY: str = ""
     MENTION_API_KEY: str = ""
     MANYCHAT_API_KEY: str = ""
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "Nexo <noreply@nexo.marketing>"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -92,3 +92,14 @@ class TemplatesMkt(Base):
     objetivo: Mapped[Optional[str]] = mapped_column(Text)
     usos: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class CarruselSlideMkt(Base):
+    __tablename__ = "carrusel_slides_mkt"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    contenido_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("contenido_mkt.id", ondelete="CASCADE"), nullable=False)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    imagen_url: Mapped[Optional[str]] = mapped_column(Text)
+    copy_slide: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

@@ -46,18 +46,17 @@ def _upload_to_supabase(b64_data: str, marca_id: UUID, filename: str) -> str:
     """Sube imagen a Supabase Storage y retorna URL pública."""
     settings = get_settings()
     if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
-        logger.warning("[imagen_svc] Supabase Storage no configurado — usando URL placeholder")
-        return f"https://placeholder.nexo.ai/imagenes/{marca_id}/{filename}"
+        raise AppError(
+            "Supabase Storage no configurado. Verificá SUPABASE_URL y SUPABASE_SERVICE_KEY.",
+            "IMAGE_STORAGE_ERROR", 500,
+        )
 
     bucket = "imagenes-nexo"
     path = f"{marca_id}/{filename}"
     image_bytes = base64.b64decode(b64_data)
 
-    # Use REST API to upload
     base_url = settings.SUPABASE_URL.rstrip("/")
-    # Extract the project ref from the dashboard URL or construct storage URL
     if "supabase.com/dashboard" in base_url:
-        # Dashboard URL format: https://supabase.com/dashboard/project/{ref}
         ref = base_url.split("/")[-1]
         storage_url = f"https://{ref}.supabase.co/storage/v1/object/{bucket}/{path}"
     else:
@@ -75,11 +74,14 @@ def _upload_to_supabase(b64_data: str, marca_id: UUID, filename: str) -> str:
 
     if resp.status_code in (200, 201):
         public_url = storage_url.replace("/object/", "/object/public/")
-        logger.info(f"[imagen_svc] uploaded — {path}")
+        logger.info("[imagen_svc] uploaded — %s", path)
         return public_url
 
-    logger.warning(f"[imagen_svc] upload failed {resp.status_code} — using b64 fallback")
-    return f"data:image/png;base64,{b64_data[:100]}..."
+    logger.error("[imagen_svc] upload failed %s — %s", resp.status_code, resp.text[:200])
+    raise AppError(
+        f"Error al subir imagen a Supabase Storage (HTTP {resp.status_code})",
+        "IMAGE_STORAGE_ERROR", 500,
+    )
 
 
 def generar(
@@ -127,15 +129,30 @@ def generar(
     return img
 
 
+FORMAT_SIZE_MAP = {
+    "post": "1024x1024",
+    "carrusel": "1024x1024",
+    "reel": "1024x1792",
+    "story": "1024x1792",
+}
+
+
+def _size_for_format(formato: str, tamano_override: Optional[str] = None) -> str:
+    """Retorna el tamaño de imagen adecuado según formato, o el override si se provee."""
+    if tamano_override and tamano_override != "auto":
+        return tamano_override
+    return FORMAT_SIZE_MAP.get(formato, "1024x1024")
+
+
 def generar_para_contenido(
     db: Session,
     marca_id: UUID,
     contenido_id: UUID,
-    tamano: str = "1024x1024",
+    tamano: str = "auto",
     estilo: str = "vivid",
     rol: str = "",
 ) -> dict:
-    """Genera imagen para un contenido existente usando el copy como contexto."""
+    """Genera imagen para un contenido existente. Tamaño auto según formato."""
     cliente, marca = _get_context(db, marca_id)
     custom_key = _custom_openai_key(cliente, rol)
 
@@ -143,15 +160,16 @@ def generar_para_contenido(
     if not obj:
         raise AppError("Contenido no encontrado", "NOT_FOUND", 404)
 
+    size = _size_for_format(obj.formato, tamano if tamano != "auto" else None)
     variante = obj.variante_seleccionada or "a"
     copy_text = getattr(obj, f"copy_{variante}") or obj.copy_a or ""
-    descripcion = f"Imagen para post de {obj.red_social}: {copy_text[:300]}"
+    descripcion = f"Imagen para {obj.formato} de {obj.red_social}: {copy_text[:300]}"
 
     perfil = memoria_repo.obtener_o_crear(db, marca_id)
 
     try:
         result = generar_imagen_desde_marca(
-            descripcion, perfil, size=tamano, style=estilo, custom_api_key=custom_key,
+            descripcion, perfil, size=size, style=estilo, custom_api_key=custom_key,
         )
     except OpenAIError as e:
         raise AppError(f"Error al generar imagen: {e.message}", "OPENAI_ERROR", e.status_code)
@@ -169,13 +187,104 @@ def generar_para_contenido(
         "contenido_id": contenido_id,
         "prompt": result.get("revised_prompt") or descripcion,
         "imagen_url": imagen_url,
-        "tamano": tamano,
+        "tamano": size,
         "estilo": estilo,
     })
 
     contenido_repo.actualizar_campos(db, obj, {"imagen_url": imagen_url})
     db.commit()
     return img
+
+
+def generar_carrusel(
+    db: Session,
+    marca_id: UUID,
+    contenido_id: UUID,
+    num_slides: int = 5,
+    estilo: str = "vivid",
+    rol: str = "",
+) -> dict:
+    """Genera N slides para un carrusel: copies + imágenes por slide."""
+    cliente, marca = _get_context(db, marca_id)
+    custom_key = _custom_openai_key(cliente, rol)
+
+    obj = contenido_repo.obtener(db, contenido_id, marca_id)
+    if not obj:
+        raise AppError("Contenido no encontrado", "NOT_FOUND", 404)
+
+    num_slides = max(2, min(10, num_slides))
+    variante = obj.variante_seleccionada or "a"
+    copy_text = getattr(obj, f"copy_{variante}") or obj.copy_a or ""
+    perfil = memoria_repo.obtener_o_crear(db, marca_id)
+
+    # Generate slide copies with Claude
+    from integrations.claude_client import _get_client, _SEARCH_MODEL, _parse_json_object
+    import json
+
+    client = _get_client()
+    message = client.messages.create(
+        model=_SEARCH_MODEL,
+        max_tokens=2048,
+        system=(
+            f"Sos un experto en carruseles de Instagram. "
+            f"Perfil de marca: {memoria_repo.obtener_para_agente(db, marca_id)}"
+        ),
+        messages=[{"role": "user", "content": (
+            f"Creá un carrusel de {num_slides} slides para Instagram basado en este copy:\n\n"
+            f"{copy_text}\n\n"
+            f"Para cada slide incluí:\n"
+            f"- copy_slide: texto breve para el slide (max 100 chars)\n"
+            f"- descripcion_imagen: prompt para generar la imagen del slide\n\n"
+            f'Respondé con JSON: {{"slides": [{{"copy_slide": "...", "descripcion_imagen": "..."}}]}}'
+        )}],
+    )
+
+    text_blocks = [b for b in message.content if b.type == "text"]
+    try:
+        data = _parse_json_object(text_blocks[-1].text)
+        slides_data = data.get("slides", [])[:num_slides]
+    except Exception:
+        slides_data = [{"copy_slide": f"Slide {i+1}", "descripcion_imagen": copy_text[:200]} for i in range(num_slides)]
+
+    # Generate images and create slide records
+    from models.contenido_models import CarruselSlideMkt
+    slides_result = []
+
+    for i, slide in enumerate(slides_data):
+        try:
+            result = generar_imagen_desde_marca(
+                slide.get("descripcion_imagen", f"Slide {i+1} de carrusel"),
+                perfil, size="1024x1024", style=estilo, custom_api_key=custom_key,
+            )
+            import uuid as uuid_mod
+            filename = f"{uuid_mod.uuid4().hex}.png"
+            if result.get("b64_data"):
+                img_url = _upload_to_supabase(result["b64_data"], marca_id, filename)
+            else:
+                img_url = result.get("url", "")
+        except Exception as e:
+            logger.warning("Error generando slide %d: %s", i+1, e)
+            img_url = ""
+
+        slide_obj = CarruselSlideMkt(
+            contenido_id=contenido_id,
+            orden=i + 1,
+            imagen_url=img_url,
+            copy_slide=slide.get("copy_slide", f"Slide {i+1}"),
+        )
+        db.add(slide_obj)
+        db.flush()
+        slides_result.append({
+            "id": str(slide_obj.id), "orden": slide_obj.orden,
+            "imagen_url": slide_obj.imagen_url, "copy_slide": slide_obj.copy_slide,
+        })
+
+    # Set first slide as contenido imagen_url
+    if slides_result and slides_result[0].get("imagen_url"):
+        contenido_repo.actualizar_campos(db, obj, {"imagen_url": slides_result[0]["imagen_url"]})
+
+    db.commit()
+    return {"contenido_id": str(contenido_id), "num_slides": len(slides_result), "slides": slides_result}
 
 
 def asociar_contenido(
