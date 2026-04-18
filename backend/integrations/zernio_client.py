@@ -72,7 +72,7 @@ class ZernioError(Exception):
 
 def get_oauth_url(platform: str, callback_url: str, state: str) -> dict:
     """
-    Genera URL de OAuth para conectar una cuenta social.
+    Crea un invite link de Zernio para conectar una cuenta social.
 
     Args:
         platform: "instagram" o "facebook"
@@ -82,10 +82,8 @@ def get_oauth_url(platform: str, callback_url: str, state: str) -> dict:
     Returns:
         {"auth_url": "https://...", "state": "..."}
     """
-    return _request("POST", "/oauth/authorize", {
+    return _request("POST", "/platform-invites", {
         "platform": platform,
-        "callback_url": callback_url,
-        "state": state,
     })
 
 
