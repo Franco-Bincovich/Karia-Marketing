@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from typing import Optional
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, UploadFile, File
 from sqlalchemy.orm import Session
 
 from controllers.onboarding_controller import (
@@ -97,6 +98,49 @@ def perfil_marca(
 ):
     """Perfil de marca consolidado — usado por los agentes de IA."""
     return ctrl.perfil(x_marca_id, current_user)
+
+
+# --- Documentos de marca ---
+
+@router.post("/api/marca/documentos/subir")
+async def subir_documento(
+    file: UploadFile = File(...),
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Sube un documento (PDF, DOCX, TXT) para contexto de marca."""
+    from services import documentos_service
+    from controllers.onboarding_controller import _marca
+    content = await file.read()
+    return documentos_service.subir(db, _marca(x_marca_id), file.filename, content)
+
+
+@router.get("/api/marca/documentos")
+def listar_documentos(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Lista documentos subidos de la marca."""
+    from services import documentos_service
+    from controllers.onboarding_controller import _marca
+    items = documentos_service.listar(db, _marca(x_marca_id))
+    return {"data": items, "count": len(items)}
+
+
+@router.delete("/api/marca/documentos/{doc_id}")
+def eliminar_documento(
+    doc_id: UUID,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Elimina un documento de la marca."""
+    from services import documentos_service
+    from controllers.onboarding_controller import _marca
+    documentos_service.eliminar(db, doc_id, _marca(x_marca_id))
+    return {"message": "Documento eliminado"}
 
 
 # --- Legacy: pasos individuales ---

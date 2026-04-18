@@ -51,7 +51,7 @@ def _upload_to_supabase(b64_data: str, marca_id: UUID, filename: str) -> str:
             "IMAGE_STORAGE_ERROR", 500,
         )
 
-    bucket = "imagenes-nexo"
+    bucket = "Nexo - Marketing - Imagens"
     path = f"{marca_id}/{filename}"
     image_bytes = base64.b64decode(b64_data)
 

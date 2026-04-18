@@ -247,7 +247,14 @@ def obtener_perfil(db: Session, marca_id: UUID) -> dict:
         "politica_respuestas": memoria.get("politica_respuestas"),
         "objetivos_periodo": memoria.get("objetivos_periodo"),
         "updated_at": memoria.get("updated_at"),
+        "documentos_adicionales": _get_documentos_texto(db, marca_id),
     }
+
+
+def _get_documentos_texto(db: Session, marca_id: UUID) -> str:
+    """Obtiene texto concatenado de documentos de marca para contexto de agentes."""
+    from services.documentos_service import obtener_textos
+    return obtener_textos(db, marca_id)
 
 
 def regenerar_memoria(db: Session, marca_id: UUID) -> str:
