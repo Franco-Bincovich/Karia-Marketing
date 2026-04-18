@@ -37,6 +37,7 @@ const sections = [
   ]},
   { title: "ADMIN", superadminOnly: true, items: [
     { path: "/clientes",          label: "Clientes",         icon: "◧" },
+    { path: "/configuracion",     label: "Configuración APIs",icon: "⚙" },
   ]},
 ];
 

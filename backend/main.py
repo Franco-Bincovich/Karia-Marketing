@@ -11,9 +11,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
 from routes import (
-    ads, agentes, analytics, auth, automatizaciones, calendario, clientes,
-    comunidad, contactos, contenido, estrategia, feature_flags, imagenes,
-    listening, onboarding, reporting, seo, social, usuarios,
+    ads, agentes, analytics, api_keys, auth, automatizaciones, calendario,
+    clientes, comunidad, contactos, contenido, estrategia, feature_flags,
+    imagenes, listening, onboarding, reporting, seo, social, usuarios,
 )
 
 logger = logging.getLogger(__name__)
@@ -199,6 +199,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth.router)
     app.include_router(agentes.router)
+    app.include_router(api_keys.router)
     app.include_router(automatizaciones.router)
     app.include_router(clientes.router)
     app.include_router(usuarios.router)

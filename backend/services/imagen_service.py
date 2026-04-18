@@ -318,6 +318,94 @@ def listar(db: Session, marca_id: UUID) -> list[dict]:
     return repo.listar(db, marca_id)
 
 
+# --- Biblioteca (upload manual) ---
+
+ALLOWED_IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MAX_IMAGE_SIZE = 20 * 1024 * 1024  # 20MB
+
+CONTENT_TYPES = {
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif",
+}
+
+
+def biblioteca_subir(db: Session, marca_id: UUID, filename: str, content: bytes) -> dict:
+    """Sube imagen manual a Supabase Storage y guarda en DB."""
+    ext = ("." + filename.rsplit(".", 1)[-1].lower()) if "." in filename else ""
+
+    if ext not in ALLOWED_IMAGE_TYPES:
+        raise AppError(f"Formato no soportado: {ext}. Usar JPG, PNG, WEBP o GIF.", "INVALID_FILE_TYPE", 400)
+
+    if len(content) > MAX_IMAGE_SIZE:
+        raise AppError("El archivo excede el límite de 20MB.", "FILE_TOO_LARGE", 400)
+
+    settings = get_settings()
+    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
+        raise AppError("Supabase Storage no configurado.", "IMAGE_STORAGE_ERROR", 500)
+
+    import uuid as uuid_mod
+    safe_name = f"{uuid_mod.uuid4().hex}{ext}"
+    bucket = "Nexo - Marketing - Imagens"
+    path = f"{marca_id}/biblioteca/{safe_name}"
+    base_url = settings.SUPABASE_URL.rstrip("/")
+
+    if "supabase.com/dashboard" in base_url:
+        ref = base_url.split("/")[-1]
+        storage_url = f"https://{ref}.supabase.co/storage/v1/object/{bucket}/{path}"
+    else:
+        storage_url = f"{base_url}/storage/v1/object/{bucket}/{path}"
+
+    resp = requests.post(
+        storage_url,
+        headers={
+            "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
+            "Content-Type": CONTENT_TYPES.get(ext, "application/octet-stream"),
+        },
+        data=content, timeout=30,
+    )
+
+    if resp.status_code not in (200, 201):
+        logger.error("[imagen_svc] biblioteca upload failed %s — %s", resp.status_code, resp.text[:200])
+        raise AppError(f"Error al subir imagen (HTTP {resp.status_code})", "IMAGE_STORAGE_ERROR", 500)
+
+    public_url = storage_url.replace("/object/", "/object/public/")
+
+    img = repo.crear(db, {
+        "marca_id": marca_id,
+        "prompt": filename,
+        "imagen_url": public_url,
+        "tamano": "original",
+        "estilo": "manual",
+        "origen": "manual",
+    })
+    db.commit()
+    logger.info("[imagen_svc] biblioteca — subido %s", filename)
+    return img
+
+
+def biblioteca_listar(db: Session, marca_id: UUID) -> list[dict]:
+    return repo.listar_por_origen(db, marca_id, "manual")
+
+
+def biblioteca_eliminar(db: Session, marca_id: UUID, imagen_id: UUID) -> bool:
+    obj = repo.eliminar(db, imagen_id, marca_id)
+    if not obj:
+        raise AppError("Imagen no encontrada", "NOT_FOUND", 404)
+
+    # Delete from storage
+    if obj.imagen_url:
+        settings = get_settings()
+        if settings.SUPABASE_SERVICE_KEY:
+            del_url = obj.imagen_url.replace("/object/public/", "/object/")
+            try:
+                requests.delete(del_url, headers={"Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}"}, timeout=10)
+            except Exception:
+                logger.warning("[imagen_svc] Error eliminando de storage")
+
+    db.commit()
+    return True
+
+
 def guardar_openai_key(db: Session, cliente_id: UUID, api_key: str, plan: str) -> dict:
     """Guarda API key propia de OpenAI encriptada."""
     from models.cliente_models import ClienteMkt
