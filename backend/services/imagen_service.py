@@ -9,11 +9,6 @@ import requests
 from sqlalchemy.orm import Session
 
 from config.settings import get_settings
-from integrations.openai_client import (
-    OpenAIError,
-    generar_imagen,
-    generar_imagen_desde_marca,
-)
 from middleware.error_handler import AppError
 from repositories import contenido_repository as contenido_repo
 from repositories import imagenes_repository as repo
@@ -21,6 +16,63 @@ from repositories import memoria_marca_repository as memoria_repo
 from utils.security import decrypt_token, encrypt_token
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_leonardo_key(db: Session, cliente_id: UUID):
+    """Busca Leonardo API key en .env o en la DB (guardada como servicio 'canva')."""
+    env_key = get_settings().LEONARDO_API_KEY
+    if env_key:
+        return env_key
+    from models.api_keys_models import ApiKeyConfigMkt
+    from utils.security import decrypt_token as _decrypt
+    obj = db.query(ApiKeyConfigMkt).filter(
+        ApiKeyConfigMkt.cliente_id == cliente_id,
+        ApiKeyConfigMkt.servicio == "canva",
+        ApiKeyConfigMkt.configurada == True,
+    ).first()
+    if obj and obj.api_key_encrypted:
+        return _decrypt(obj.api_key_encrypted)
+    return None
+
+
+def _gen_imagen(db: Session, cliente_id: UUID, prompt: str, size: str, style: str, openai_key=None):
+    """Genera imagen con Leonardo (preferido) o OpenAI (fallback)."""
+    leo_key = _resolve_leonardo_key(db, cliente_id)
+    if leo_key:
+        from integrations.leonardo_client import generar_imagen, LeonardoError
+        try:
+            return generar_imagen(prompt, size=size, style=style, custom_api_key=leo_key)
+        except LeonardoError as e:
+            raise AppError(f"Error al generar imagen: {e.message}", "IMAGE_GEN_ERROR", e.status_code)
+
+    if get_settings().OPENAI_API_KEY or openai_key:
+        from integrations.openai_client import generar_imagen
+        return generar_imagen(prompt, size=size, style=style, custom_api_key=openai_key)
+
+    raise AppError(
+        "No hay proveedor de imágenes configurado. Configurá Leonardo o OpenAI en Configuración APIs.",
+        "NO_IMAGE_PROVIDER", 400,
+    )
+
+
+def _gen_imagen_marca(db: Session, cliente_id: UUID, descripcion: str, perfil: dict, size: str, style: str, openai_key=None):
+    """Genera imagen con perfil de marca — Leonardo o OpenAI."""
+    leo_key = _resolve_leonardo_key(db, cliente_id)
+    if leo_key:
+        from integrations.leonardo_client import generar_imagen_desde_marca, LeonardoError
+        try:
+            return generar_imagen_desde_marca(descripcion, perfil, size=size, style=style, custom_api_key=leo_key)
+        except LeonardoError as e:
+            raise AppError(f"Error al generar imagen: {e.message}", "IMAGE_GEN_ERROR", e.status_code)
+
+    if get_settings().OPENAI_API_KEY or openai_key:
+        from integrations.openai_client import generar_imagen_desde_marca
+        return generar_imagen_desde_marca(descripcion, perfil, size=size, style=style, custom_api_key=openai_key)
+
+    raise AppError(
+        "No hay proveedor de imágenes configurado. Configurá Leonardo o OpenAI en Configuración APIs.",
+        "NO_IMAGE_PROVIDER", 400,
+    )
 
 
 def _get_context(db: Session, marca_id: UUID):
@@ -95,20 +147,13 @@ def generar(
 ) -> dict:
     """Genera imagen desde descripción libre, opcionalmente enriquecida con perfil de marca."""
     cliente, marca = _get_context(db, marca_id)
-    custom_key = _custom_openai_key(cliente, rol)
+    openai_key = _custom_openai_key(cliente, rol)
 
-    try:
-        if usar_perfil:
-            perfil = memoria_repo.obtener_o_crear(db, marca_id)
-            result = generar_imagen_desde_marca(
-                descripcion, perfil, size=tamano, style=estilo, custom_api_key=custom_key,
-            )
-        else:
-            result = generar_imagen(
-                descripcion, size=tamano, style=estilo, custom_api_key=custom_key,
-            )
-    except OpenAIError as e:
-        raise AppError(f"Error al generar imagen: {e.message}", "OPENAI_ERROR", e.status_code)
+    if usar_perfil:
+        perfil = memoria_repo.obtener_o_crear(db, marca_id)
+        result = _gen_imagen_marca(db, cliente.id, descripcion, perfil, size=tamano, style=estilo, openai_key=openai_key)
+    else:
+        result = _gen_imagen(db, cliente.id, descripcion, size=tamano, style=estilo, openai_key=openai_key)
 
     import uuid as uuid_mod
     filename = f"{uuid_mod.uuid4().hex}.png"
@@ -154,7 +199,7 @@ def generar_para_contenido(
 ) -> dict:
     """Genera imagen para un contenido existente. Tamaño auto según formato."""
     cliente, marca = _get_context(db, marca_id)
-    custom_key = _custom_openai_key(cliente, rol)
+    openai_key = _custom_openai_key(cliente, rol)
 
     obj = contenido_repo.obtener(db, contenido_id, marca_id)
     if not obj:
@@ -166,13 +211,7 @@ def generar_para_contenido(
     descripcion = f"Imagen para {obj.formato} de {obj.red_social}: {copy_text[:300]}"
 
     perfil = memoria_repo.obtener_o_crear(db, marca_id)
-
-    try:
-        result = generar_imagen_desde_marca(
-            descripcion, perfil, size=size, style=estilo, custom_api_key=custom_key,
-        )
-    except OpenAIError as e:
-        raise AppError(f"Error al generar imagen: {e.message}", "OPENAI_ERROR", e.status_code)
+    result = _gen_imagen_marca(db, cliente.id, descripcion, perfil, size=size, style=estilo, openai_key=openai_key)
 
     import uuid as uuid_mod
     filename = f"{uuid_mod.uuid4().hex}.png"
@@ -206,7 +245,7 @@ def generar_carrusel(
 ) -> dict:
     """Genera N slides para un carrusel: copies + imágenes por slide."""
     cliente, marca = _get_context(db, marca_id)
-    custom_key = _custom_openai_key(cliente, rol)
+    openai_key = _custom_openai_key(cliente, rol)
 
     obj = contenido_repo.obtener(db, contenido_id, marca_id)
     if not obj:
@@ -252,9 +291,10 @@ def generar_carrusel(
 
     for i, slide in enumerate(slides_data):
         try:
-            result = generar_imagen_desde_marca(
+            result = _gen_imagen_marca(
+                db, cliente.id,
                 slide.get("descripcion_imagen", f"Slide {i+1} de carrusel"),
-                perfil, size="1024x1024", style=estilo, custom_api_key=custom_key,
+                perfil, size="1024x1024", style=estilo, openai_key=openai_key,
             )
             import uuid as uuid_mod
             filename = f"{uuid_mod.uuid4().hex}.png"
