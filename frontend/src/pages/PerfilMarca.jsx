@@ -28,13 +28,18 @@ function Tags({ items }) {
 }
 
 function ColorSwatches({ items }) {
-  if (!items || !items.length) return <span style={{ color: "var(--text-muted)", fontSize: 13 }}>—</span>;
-  // items can be an array of strings — join them and extract all hex codes
-  const raw = Array.isArray(items) ? items.join(" ") : String(items);
+  if (!items || (Array.isArray(items) && items.length === 0)) return <span style={{ color: "var(--text-muted)", fontSize: 13 }}>—</span>;
+  // Handle any type: array, string, object — stringify safely then extract hex codes
+  let raw;
+  if (Array.isArray(items)) raw = items.join(" ");
+  else if (typeof items === "object") raw = JSON.stringify(items);
+  else raw = String(items || "");
   const hexCodes = raw.match(/#[0-9A-Fa-f]{6}/g);
   if (!hexCodes || !hexCodes.length) {
-    // No hex codes found — show as text
-    return <span style={{ fontSize: 13, color: "var(--text)" }}>{raw}</span>;
+    // No hex codes — show text only if it's meaningful (not "Sí" or single chars)
+    const cleaned = raw.replace(/[[\]"{}]/g, "").trim();
+    if (!cleaned || cleaned.length <= 3) return <span style={{ color: "var(--text-muted)", fontSize: 13 }}>—</span>;
+    return <span style={{ fontSize: 13, color: "var(--text)" }}>{cleaned}</span>;
   }
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>

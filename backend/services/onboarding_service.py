@@ -309,19 +309,32 @@ def _mapear_a_memoria(preguntas: list, respuestas: dict) -> dict:
         campos = p["campos"]
         if len(campos) == 1:
             campo = campos[0]
-            if campo in ("palabras_clave", "palabras_prohibidas", "colores_marca",
+            if campo in ("palabras_clave", "palabras_prohibidas",
                          "diferenciadores", "ejemplos_contenido_aprobado",
                          "icp_cargo", "icp_industria"):
                 datos[campo] = [x.strip() for x in resp.split(",") if x.strip()]
+            elif campo == "colores_marca":
+                # Guardar como lista solo si tiene hex codes, sino como string
+                import re
+                hexes = re.findall(r"#[0-9A-Fa-f]{6}", resp)
+                datos[campo] = hexes if hexes else [resp.strip()] if resp.strip() else []
             elif campo in ("competidores", "productos_servicios", "objetivos_periodo",
                            "preguntas_frecuentes"):
                 datos[campo] = {"respuesta": resp}
             else:
                 datos[campo] = resp
         elif len(campos) == 2:
+            import re
             partes = resp.split(".", 1)
-            datos[campos[0]] = partes[0].strip()
-            datos[campos[1]] = partes[1].strip() if len(partes) > 1 else resp
+            val0 = partes[0].strip()
+            val1 = partes[1].strip() if len(partes) > 1 else resp
+            # colores_marca es ARRAY(Text) — convertir a lista de hex codes o texto
+            if campos[0] == "colores_marca":
+                hexes = re.findall(r"#[0-9A-Fa-f]{6}", val0)
+                datos[campos[0]] = hexes if hexes else ([val0] if val0 and val0.lower() not in ("sí", "si", "no") else [])
+            else:
+                datos[campos[0]] = val0
+            datos[campos[1]] = val1
     return datos
 
 

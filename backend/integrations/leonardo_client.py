@@ -118,24 +118,27 @@ def generar_imagen_desde_marca(
     custom_api_key: Optional[str] = None,
 ) -> dict:
     """Construye prompt enriquecido con perfil de marca y genera imagen."""
-    parts = [descripcion_usuario]
+    import re
 
-    nombre = perfil_marca.get("nombre_marca")
-    if nombre:
-        parts.append(f"Para la marca '{nombre}'.")
+    # Extraer hex codes reales de los colores
+    colores_raw = perfil_marca.get("colores_marca", [])
+    colores_str = " ".join(colores_raw) if isinstance(colores_raw, list) else str(colores_raw or "")
+    hex_codes = re.findall(r"#[0-9A-Fa-f]{6}", colores_str)
+    colors_line = f"Brand colors: {', '.join(hex_codes)}." if hex_codes else ""
 
-    colores = perfil_marca.get("colores_marca", [])
-    if colores:
-        parts.append(f"Paleta de colores: {', '.join(colores)}.")
+    industria = perfil_marca.get("industria") or "technology"
+    publico = perfil_marca.get("publico_objetivo") or "Small business owners"
 
-    tono = perfil_marca.get("tono_voz")
-    if tono:
-        parts.append(f"Estética {tono}.")
+    prompt = (
+        f"{descripcion_usuario}\n\n"
+        f"Visual style: Professional marketing image for a SaaS company.\n"
+        f"{colors_line}\n"
+        f"Industry: {industria}.\n"
+        f"Aesthetic: Clean, modern, dark background with orange accents.\n"
+        f"Target audience: {publico}.\n"
+        f"No faces, no people. Focus on abstract business concepts, technology, data visualization, or professional environments.\n"
+        f"High quality, suitable for Instagram marketing post."
+    ).strip()
 
-    industria = perfil_marca.get("industria")
-    if industria:
-        parts.append(f"Industria: {industria}.")
-
-    prompt = " ".join(parts)
-    logger.debug("[leonardo] prompt enriquecido: %s", prompt[:100])
+    logger.debug("[leonardo] prompt enriquecido: %s", prompt[:150])
     return generar_imagen(prompt, size=size, style=style, custom_api_key=custom_api_key)
