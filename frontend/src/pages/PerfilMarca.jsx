@@ -12,7 +12,7 @@ const sectionTitle= { fontSize: 14, fontWeight: 700, color: "var(--text)", margi
 const fieldWrap   = { marginBottom: 12 };
 const labelStyle  = { fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 };
 const valueStyle  = { fontSize: 14, color: "var(--text)", lineHeight: 1.5 };
-const tag         = { display: "inline-block", background: "var(--surface-2)", color: "var(--text-secondary)", padding: "3px 10px", borderRadius: 6, fontSize: 12, marginRight: 6, marginBottom: 4 };
+const tag         = { display: "inline-block", background: "var(--surface-2)", color: "var(--text)", padding: "3px 10px", borderRadius: 6, fontSize: 12, marginRight: 6, marginBottom: 4 };
 const btnPrimary  = { padding: "8px 18px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" };
 const btnSmall    = { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "var(--surface)", color: "var(--text-secondary)" };
 const btnDanger   = { ...btnSmall, borderColor: "var(--danger)", color: "var(--danger-text)" };
@@ -53,8 +53,8 @@ function ColorSwatches({ items }) {
 
 function JsonField({ data }) {
   if (!data) return <span style={{ color: "var(--text-muted)", fontSize: 13 }}>—</span>;
-  if (typeof data === "string") return <span>{data}</span>;
-  if (data.respuesta) return <span>{data.respuesta}</span>;
+  if (typeof data === "string") return <span style={{ color: "var(--text)", fontSize: 14 }}>{data}</span>;
+  if (data.respuesta) return <span style={{ color: "var(--text)", fontSize: 14 }}>{data.respuesta}</span>;
   return <pre style={{ fontSize: 12, color: "var(--text)", whiteSpace: "pre-wrap" }}>{JSON.stringify(data, null, 2)}</pre>;
 }
 
