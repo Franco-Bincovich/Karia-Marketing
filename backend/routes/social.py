@@ -119,6 +119,23 @@ def listar_publicaciones(
     return ctrl.listar_publicaciones(x_marca_id, current_user)
 
 
+@router.patch("/publicaciones/{publicacion_id}/cancelar")
+def cancelar_publicacion(
+    publicacion_id: UUID,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancela una publicación programada."""
+    from repositories import publicaciones_repository as pub_repo
+    result = pub_repo.actualizar_estado(db, publicacion_id, "cancelado")
+    if not result:
+        from middleware.error_handler import AppError
+        raise AppError("Publicación no encontrada", "NOT_FOUND", 404)
+    db.commit()
+    return result
+
+
 @router.post("/publicaciones/{publicacion_id}/monitorear")
 def monitorear(
     publicacion_id: UUID,

@@ -157,8 +157,10 @@ def listar_menciones(
     desde_dt = None
     if desde:
         try:
-            desde_dt = datetime.fromisoformat(desde)
-        except ValueError:
+            import re
+            clean = re.sub(r'\.\d+', '', desde).replace('Z', '+00:00')
+            desde_dt = datetime.fromisoformat(clean)
+        except (ValueError, TypeError):
             pass
     return menciones_repo.listar_filtrado(db, marca_id, sentimiento=sentimiento, plataforma=plataforma, desde=desde_dt)
 

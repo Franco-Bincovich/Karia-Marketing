@@ -90,7 +90,9 @@ def completar_oauth(db: Session, marca_id: UUID, code: str, state: str, actor_id
     encrypted = encrypt_token(token_data["access_token"])
     expires_at = None
     if token_data.get("expires_at"):
-        expires_at = datetime.fromisoformat(token_data["expires_at"])
+        import re
+        clean = re.sub(r'\.\d+', '', token_data["expires_at"]).replace('Z', '+00:00')
+        expires_at = datetime.fromisoformat(clean)
 
     cuenta = cuentas_repo.crear_o_actualizar(db, {
         "marca_id": marca_id,
@@ -146,6 +148,7 @@ def publicar_ahora(
             account_id=cuenta.account_id_externo,
             text=copy,
             image_url=imagen_url,
+            platform=red_social,
         )
         pub = pub_repo.actualizar_estado(db, UUID(pub["id"]), "publicado")
         pub_obj = db.query(pub_repo.PublicacionesMkt).filter(
@@ -211,6 +214,7 @@ def programar_publicacion(
             text=copy,
             scheduled_at=programado_para,
             image_url=imagen_url,
+            platform=red_social,
         )
         pub_obj = db.query(pub_repo.PublicacionesMkt).filter(
             pub_repo.PublicacionesMkt.id == UUID(pub["id"])

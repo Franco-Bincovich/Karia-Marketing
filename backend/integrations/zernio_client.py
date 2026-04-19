@@ -114,21 +114,26 @@ def publish_now(
     account_id: str,
     text: str,
     image_url: Optional[str] = None,
+    image_urls: Optional[list] = None,
+    platform: str = "instagram",
 ) -> dict:
     """
-    Publica un post de forma inmediata.
+    Publica un post de forma inmediata via POST /posts con publishNow: true.
 
     Returns:
         {"id": "zernio_post_id", "status": "published",
          "external_post_id": "...", "url": "..."}
     """
     payload = {
-        "account_id": account_id,
-        "text": text,
+        "content": text,
+        "publishNow": True,
+        "platforms": [{"platform": platform, "accountId": account_id}],
     }
-    if image_url:
-        payload["media"] = [{"type": "image", "url": image_url}]
-    return _request("POST", "/posts/publish", payload)
+    if image_urls and len(image_urls) > 1:
+        payload["media"] = [{"url": u} for u in image_urls]
+    elif image_url:
+        payload["media"] = [{"url": image_url}]
+    return _request("POST", "/posts", payload)
 
 
 def schedule_post(
@@ -137,28 +142,31 @@ def schedule_post(
     scheduled_at: datetime,
     image_url: Optional[str] = None,
     image_urls: Optional[list] = None,
+    platform: str = "instagram",
 ) -> dict:
     """
-    Programa un post para una fecha futura.
+    Programa un post para fecha futura via POST /posts con scheduledFor.
 
     Args:
         scheduled_at: datetime con timezone (se envía como ISO 8601)
         image_url: URL de imagen única (post/story/reel)
         image_urls: lista de URLs de imágenes (carrusel)
+        platform: red social destino
 
     Returns:
         {"id": "zernio_post_id", "status": "scheduled", "scheduled_at": "..."}
     """
     payload = {
-        "account_id": account_id,
-        "text": text,
-        "scheduled_at": scheduled_at.isoformat(),
+        "content": text,
+        "scheduledFor": scheduled_at.isoformat(),
+        "timezone": "America/Argentina/Buenos_Aires",
+        "platforms": [{"platform": platform, "accountId": account_id}],
     }
     if image_urls and len(image_urls) > 1:
-        payload["media"] = [{"type": "image", "url": u} for u in image_urls]
+        payload["media"] = [{"url": u} for u in image_urls]
     elif image_url:
-        payload["media"] = [{"type": "image", "url": image_url}]
-    return _request("POST", "/posts/schedule", payload)
+        payload["media"] = [{"url": image_url}]
+    return _request("POST", "/posts", payload)
 
 
 def get_post_status(zernio_post_id: str) -> dict:

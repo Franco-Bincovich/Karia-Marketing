@@ -171,6 +171,7 @@ def _ejecutar_publicacion(db: Session, marca_id: UUID) -> str:
                 account_id=cuenta.account_id_externo,
                 text=pub.copy_publicado or "",
                 image_url=pub.imagen_url,
+                platform=pub.red_social,
             )
             pub.estado = "publicado"
             pub.post_id_externo = result.get("external_post_id")

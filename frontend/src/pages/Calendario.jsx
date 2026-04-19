@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import { useApi } from "../hooks/useApi";
 import { ENDPOINTS } from "../constants/endpoints";
 import EmptyState from "../components/ui/EmptyState";
+import api from "../hooks/useApi";
 
 const card       = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 };
 const inputStyle = { width: "100%", padding: "10px 12px", border: "1.5px solid var(--border)", borderRadius: 9, fontSize: 14, outline: "none", boxSizing: "border-box", background: "var(--surface)", color: "var(--text)" };
@@ -10,18 +11,39 @@ const selectEl   = { ...inputStyle, appearance: "auto" };
 const btn        = { padding: "10px 20px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 9, fontSize: 14, fontWeight: 600, cursor: "pointer" };
 const btnNav     = { ...btn, background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", padding: "8px 14px" };
 const btnSmall   = { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "var(--surface)", color: "var(--text-secondary)" };
+const btnDanger  = { ...btnSmall, borderColor: "var(--danger)", color: "var(--danger-text)" };
 const colors     = { instagram: "#E1306C", facebook: "#1877F2", linkedin: "#0A66C2", tiktok: "#333", twitter: "#1DA1F2" };
+const redIcon    = { instagram: "📷", facebook: "📘", linkedin: "💼", tiktok: "🎵", twitter: "🐦" };
+
+const estadoBadge = (e) => {
+  const map = {
+    programado: { bg: "var(--blue-bg)", c: "var(--blue-text)" },
+    publicado:  { bg: "var(--success-bg)", c: "var(--success-text)" },
+    fallido:    { bg: "var(--danger-bg)", c: "var(--danger-text)" },
+    cancelado:  { bg: "var(--surface-2)", c: "var(--text-muted)" },
+    publicando: { bg: "var(--warning-bg)", c: "var(--warning-text)" },
+    pendiente:  { bg: "var(--warning-bg)", c: "var(--warning-text)" },
+  };
+  const s = map[e] || { bg: "var(--surface-2)", c: "var(--text-secondary)" };
+  return { background: s.bg, color: s.c, padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600 };
+};
+
+function formatHora(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+}
 
 export default function Calendario() {
-  const { get, post } = useApi();
+  const { get, post, patch } = useApi();
   const [eventos, setEventos] = useState([]);
-  const [pubs, setPubs] = useState([]);
+  const [allPubs, setAllPubs] = useState([]);
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [anio, setAnio] = useState(new Date().getFullYear());
   const [showModal, setShowModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
   const [cuentas, setCuentas] = useState([]);
   const [imagenes, setImagenes] = useState([]);
-  const [form, setForm] = useState({ red_social: "instagram", copy_text: "", fecha: "", hora: "", formato: "post", imagen_url: "" });
+  const [form, setForm] = useState({ red_social: "instagram", copy_text: "", fechaHora: "", formato: "post", imagen_url: "" });
   const [carruselUrls, setCarruselUrls] = useState([]);
   const [scheduling, setScheduling] = useState(false);
   const [msg, setMsg] = useState("");
@@ -31,7 +53,7 @@ export default function Calendario() {
 
   function cargar() {
     get(ENDPOINTS.CALENDARIO, { mes, anio }).then(r => setEventos(r.data.data || [])).catch(() => {});
-    get(ENDPOINTS.SOCIAL_PUBLICACIONES).then(r => setPubs((r.data.data || []).filter(p => p.estado === "programado"))).catch(() => {});
+    get(ENDPOINTS.SOCIAL_PUBLICACIONES).then(r => setAllPubs(r.data.data || [])).catch(() => {});
   }
 
   useEffect(() => {
@@ -47,69 +69,41 @@ export default function Calendario() {
   const isCarrusel = form.formato === "carrusel";
 
   function toggleCarruselImg(url) {
-    setCarruselUrls(prev => {
-      if (prev.includes(url)) return prev.filter(u => u !== url);
-      if (prev.length >= 10) return prev;
-      return [...prev, url];
-    });
+    setCarruselUrls(prev => { if (prev.includes(url)) return prev.filter(u => u !== url); if (prev.length >= 10) return prev; return [...prev, url]; });
   }
-
   function moveCarruselImg(idx, dir) {
-    setCarruselUrls(prev => {
-      const arr = [...prev];
-      const newIdx = idx + dir;
-      if (newIdx < 0 || newIdx >= arr.length) return arr;
-      [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
-      return arr;
-    });
-  }
-
-  function normalizeHora(h) {
-    if (!h) return null;
-    // Already 24h format like "13:30" or "09:00"
-    if (/^\d{1,2}:\d{2}$/.test(h.trim())) return h.trim();
-    // 12h format: "1:30 p.m.", "01:30 a.m.", "1:30 PM", etc.
-    const match = h.match(/^(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?|AM|PM)$/i);
-    if (match) {
-      let hrs = parseInt(match[1], 10);
-      const mins = match[2];
-      const ampm = match[3].replace(/\./g, "").toLowerCase();
-      if (ampm === "pm" && hrs < 12) hrs += 12;
-      if (ampm === "am" && hrs === 12) hrs = 0;
-      return `${String(hrs).padStart(2, "0")}:${mins}`;
-    }
-    return h.trim();
+    setCarruselUrls(prev => { const a = [...prev]; const n = idx + dir; if (n < 0 || n >= a.length) return a; [a[idx], a[n]] = [a[n], a[idx]]; return a; });
   }
 
   async function programar() {
     if (!form.copy_text) { setError("Escribí el copy de la publicación"); return; }
-    if (!form.fecha) { setError("Seleccioná la fecha"); return; }
-    if (!form.hora) { setError("Seleccioná la hora"); return; }
+    if (!form.fechaHora) { setError("Seleccioná fecha y hora"); return; }
     if (isCarrusel && carruselUrls.length < 2) { setError("Seleccioná al menos 2 imágenes para el carrusel"); return; }
-
-    const hora24 = normalizeHora(form.hora);
-    if (!hora24 || !/^\d{2}:\d{2}$/.test(hora24)) { setError("Formato de hora inválido"); return; }
-
-    const dt = new Date(`${form.fecha}T${hora24}:00`);
-    if (isNaN(dt.getTime())) { setError("Fecha u hora inválida"); return; }
+    const dt = new Date(form.fechaHora);
+    if (isNaN(dt.getTime())) { setError("Fecha y hora inválida"); return; }
     if (dt <= new Date()) { setError("La fecha debe ser en el futuro"); return; }
-
     setScheduling(true); setError("");
-    const fechaHora = dt.toISOString();
     try {
       await post(ENDPOINTS.CALENDARIO_PROGRAMAR, {
         red_social: form.red_social, copy_text: form.copy_text,
-        fecha_hora: fechaHora, formato: form.formato,
+        fecha_hora: dt.toISOString(), formato: form.formato,
         imagen_url: isCarrusel ? null : (form.imagen_url || null),
         imagenes_urls: isCarrusel ? carruselUrls : null,
       });
       setMsg("Publicación programada correctamente");
       setShowModal(false);
-      setForm({ red_social: cuentas[0]?.red_social || "instagram", copy_text: "", fecha: "", hora: "", formato: "post", imagen_url: "" });
+      setForm({ red_social: cuentas[0]?.red_social || "instagram", copy_text: "", fechaHora: "", formato: "post", imagen_url: "" });
       setCarruselUrls([]);
       cargar();
     } catch (e) { setError(e.response?.data?.message || "Error al programar"); }
     finally { setScheduling(false); }
+  }
+
+  async function cancelarPub(id) {
+    try {
+      await patch(ENDPOINTS.SOCIAL_CANCELAR(id));
+      setAllPubs(prev => prev.map(p => p.id === id ? { ...p, estado: "cancelado" } : p));
+    } catch {}
   }
 
   const dias = new Date(anio, mes, 0).getDate();
@@ -118,18 +112,37 @@ export default function Calendario() {
   const hoy = new Date();
   const esHoy = (d) => d === hoy.getDate() && mes === hoy.getMonth() + 1 && anio === hoy.getFullYear();
 
+  function pubsDelDia(d) {
+    if (!d) return [];
+    return allPubs.filter(p => {
+      // Solo publicaciones con fecha programada explícita o estado programado/publicado con fecha
+      const fechaStr = p.programado_para || (p.estado === "publicado" ? p.publicado_at : null);
+      if (!fechaStr) return false;
+      const f = new Date(fechaStr);
+      if (isNaN(f.getTime())) return false;
+      return f.getDate() === d && f.getMonth() + 1 === mes && f.getFullYear() === anio;
+    }).sort((a, b) => (a.programado_para || a.publicado_at || "").localeCompare(b.programado_para || b.publicado_at || ""));
+  }
+
   function itemsDelDia(d) {
     const items = [];
     for (const e of eventos) {
       const f = new Date(e.fecha_programada);
-      if (f.getDate() === d && f.getMonth() + 1 === mes) items.push({ tipo: "evento", label: e.titulo, color: colors[e.red_social] });
+      if (f.getDate() === d && f.getMonth() + 1 === mes) items.push({ label: e.titulo, color: colors[e.red_social] });
     }
-    for (const p of pubs) {
-      const f = new Date(p.programado_para || p.publicado_at);
-      if (f.getDate() === d && f.getMonth() + 1 === mes) items.push({ tipo: "pub", label: (p.copy_publicado || "").slice(0, 20), color: colors[p.red_social] });
+    for (const p of pubsDelDia(d)) {
+      items.push({ label: (p.copy_publicado || "").slice(0, 20), color: colors[p.red_social] });
     }
     return items;
   }
+
+  function handleDayClick(d) {
+    if (!d) return;
+    const items = pubsDelDia(d);
+    if (items.length > 0) setSelectedDay(d);
+  }
+
+  const dayPubs = selectedDay ? pubsDelDia(selectedDay) : [];
 
   return (
     <Layout title="Calendario Editorial">
@@ -157,13 +170,18 @@ export default function Calendario() {
             <div key={d} style={{ textAlign: "center", fontSize: 10, color: "var(--text-muted)", padding: 6, textTransform: "uppercase", fontWeight: 600 }}>{d}</div>
           ))}
           {celdas.map((d, i) => {
-            const items = d ? itemsDelDia(d) : [];
+            const items = d && d > 0 ? itemsDelDia(d) : [];
+            const tienePubs = d && d > 0 ? pubsDelDia(d).length > 0 : false;
+            const isSelected = d && d > 0 && selectedDay === d;
             return (
-              <div key={i} style={{
-                minHeight: 72, border: esHoy(d) ? "2px solid var(--primary)" : "1px solid var(--border-subtle)",
-                borderRadius: 6, padding: 4, background: d ? "var(--surface)" : "var(--surface-2)",
+              <div key={i} onClick={() => handleDayClick(d)} style={{
+                minHeight: 72,
+                border: isSelected ? "2px solid var(--primary)" : tienePubs ? "1.5px solid var(--primary)" : "1px solid var(--border-subtle)",
+                borderRadius: 6, padding: 4,
+                background: d ? "var(--surface)" : "var(--surface-2)",
+                cursor: tienePubs ? "pointer" : "default",
               }}>
-                {d && <div style={{ fontSize: 12, color: esHoy(d) ? "var(--primary)" : "var(--text-secondary)", fontWeight: esHoy(d) ? 700 : 400, marginBottom: 2 }}>{d}</div>}
+                {d && <div style={{ fontSize: 12, color: esHoy(d) ? "var(--primary)" : "var(--text-secondary)", fontWeight: esHoy(d) ? 700 : 400, marginBottom: 2 }}>{d}{esHoy(d) && <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 2 }}>hoy</span>}</div>}
                 {items.slice(0, 3).map((item, j) => (
                   <div key={j} style={{ background: item.color || "var(--text-muted)", color: "#fff", fontSize: 9, padding: "2px 4px", borderRadius: 3, marginBottom: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {item.label}
@@ -175,6 +193,58 @@ export default function Calendario() {
           })}
         </div>
       </div>
+
+      {/* Day detail panel */}
+      {selectedDay && (
+        <>
+          <div onClick={() => setSelectedDay(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 200 }} />
+          <div style={{
+            position: "fixed", top: 0, right: 0, width: 420, height: "100vh",
+            background: "var(--surface)", borderLeft: "1px solid var(--border)",
+            zIndex: 201, overflowY: "auto", padding: 24,
+            boxShadow: "-4px 0 20px rgba(0,0,0,.1)",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--text)" }}>
+                {selectedDay} de {new Date(anio, mes - 1).toLocaleString("es-AR", { month: "long" })}
+              </h2>
+              <button onClick={() => setSelectedDay(null)} style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "var(--text-muted)" }}>×</button>
+            </div>
+
+            {dayPubs.length === 0 ? (
+              <EmptyState icon="����" title="Sin publicaciones" description="No hay publicaciones para este día" />
+            ) : dayPubs.map(p => (
+              <div key={p.id} style={{
+                background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 12,
+                padding: 16, marginBottom: 12,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>{redIcon[p.red_social] || "🌐"}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{p.red_social}</span>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{formatHora(p.programado_para || p.publicado_at)}</span>
+                  </div>
+                  <span style={estadoBadge(p.estado)}>{p.estado}</span>
+                </div>
+
+                {p.imagen_url && (
+                  <div style={{ marginBottom: 10, borderRadius: 8, overflow: "hidden" }}>
+                    <img src={p.imagen_url} alt="" style={{ width: "100%", height: 160, objectFit: "cover", display: "block" }} onError={e => { e.target.style.display = "none"; }} />
+                  </div>
+                )}
+
+                <p style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 10 }}>
+                  {p.copy_publicado || "—"}
+                </p>
+
+                {p.estado === "programado" && (
+                  <button style={btnDanger} onClick={() => cancelarPub(p.id)}>Cancelar publicación</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Modal de programación */}
       {showModal && (
@@ -193,15 +263,9 @@ export default function Calendario() {
 
             {error && <div className="msg-error" style={{ marginBottom: 12, borderRadius: 8 }}><span>{error}</span></div>}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Fecha</label>
-                <input type="date" style={inputStyle} value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Hora</label>
-                <input type="time" style={inputStyle} value={form.hora} onChange={e => setForm({ ...form, hora: e.target.value })} />
-              </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Fecha y hora de publicación</label>
+              <input type="datetime-local" style={inputStyle} value={form.fechaHora} min={new Date().toISOString().slice(0, 16)} onChange={e => setForm({ ...form, fechaHora: e.target.value })} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -229,8 +293,6 @@ export default function Calendario() {
               <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>
                 {isCarrusel ? `Imágenes del carrusel (${carruselUrls.length}/10 — mínimo 2)` : "Imagen (opcional)"}
               </label>
-
-              {/* Carrusel: strip de imágenes seleccionadas con orden */}
               {isCarrusel && carruselUrls.length > 0 && (
                 <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 8, paddingBottom: 4 }}>
                   {carruselUrls.map((url, idx) => (
@@ -246,34 +308,24 @@ export default function Calendario() {
                   ))}
                 </div>
               )}
-
-              {/* Single image: preview */}
               {!isCarrusel && form.imagen_url && (
                 <div style={{ marginBottom: 8, display: "flex", gap: 8, alignItems: "center" }}>
                   <img src={form.imagen_url} alt="" style={{ height: 48, borderRadius: 6, objectFit: "cover" }} onError={e => { e.target.style.display = "none"; }} />
                   <button style={btnSmall} onClick={() => setForm({ ...form, imagen_url: "" })}>Quitar</button>
                 </div>
               )}
-
-              {/* Gallery grid */}
               {imagenes.length > 0 ? (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, maxHeight: 140, overflowY: "auto" }}>
                   {imagenes.slice(0, 20).map(img => {
-                    const isSelected = isCarrusel
-                      ? carruselUrls.includes(img.imagen_url)
-                      : form.imagen_url === img.imagen_url;
+                    const isSel = isCarrusel ? carruselUrls.includes(img.imagen_url) : form.imagen_url === img.imagen_url;
                     return (
                       <div key={img.id} onClick={() => isCarrusel ? toggleCarruselImg(img.imagen_url) : setForm({ ...form, imagen_url: img.imagen_url })} style={{
                         borderRadius: 6, overflow: "hidden", cursor: "pointer", position: "relative",
-                        border: isSelected ? "2px solid var(--primary)" : "1px solid var(--border)",
-                        opacity: isCarrusel && carruselUrls.length >= 10 && !isSelected ? 0.4 : 1,
+                        border: isSel ? "2px solid var(--primary)" : "1px solid var(--border)",
+                        opacity: isCarrusel && carruselUrls.length >= 10 && !isSel ? 0.4 : 1,
                       }}>
                         <img src={img.imagen_url} alt="" style={{ width: "100%", height: 56, objectFit: "cover", display: "block" }} onError={e => { e.target.style.display = "none"; }} />
-                        {isCarrusel && isSelected && (
-                          <span style={{ position: "absolute", top: 2, right: 2, background: "var(--primary)", color: "#fff", fontSize: 9, fontWeight: 700, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {carruselUrls.indexOf(img.imagen_url) + 1}
-                          </span>
-                        )}
+                        {isCarrusel && isSel && <span style={{ position: "absolute", top: 2, right: 2, background: "var(--primary)", color: "#fff", fontSize: 9, fontWeight: 700, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{carruselUrls.indexOf(img.imagen_url) + 1}</span>}
                       </div>
                     );
                   })}

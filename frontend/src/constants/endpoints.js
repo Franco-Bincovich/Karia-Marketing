@@ -31,6 +31,7 @@ export const ENDPOINTS = {
   SOCIAL_PROGRAMAR: `${BASE_URL}/social/programar`,
   SOCIAL_CUENTAS: `${BASE_URL}/social/cuentas`,
   SOCIAL_PUBLICACIONES: `${BASE_URL}/social/publicaciones`,
+  SOCIAL_CANCELAR: (id) => `${BASE_URL}/social/publicaciones/${id}/cancelar`,
   ADS_CAMPANAS: `${BASE_URL}/ads/campanas`,
   ADS_APROBAR: (id) => `${BASE_URL}/ads/campanas/${id}/aprobar`,
   ADS_PAUSAR: (id) => `${BASE_URL}/ads/campanas/${id}/pausar`,

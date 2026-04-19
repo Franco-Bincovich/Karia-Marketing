@@ -70,11 +70,14 @@ def programar_manual(
     if not cuenta:
         raise AppError(f"No hay cuenta de {red_social} conectada", "NO_SOCIAL_ACCOUNT", 400)
 
+    import re
     try:
-        programado_para = datetime.fromisoformat(fecha_hora)
+        clean = re.sub(r'\.\d+', '', fecha_hora)  # Remove milliseconds
+        clean = clean.replace('Z', '+00:00')       # Python 3.9 compat
+        programado_para = datetime.fromisoformat(clean)
         if programado_para.tzinfo is None:
             programado_para = programado_para.replace(tzinfo=timezone.utc)
-    except ValueError:
+    except (ValueError, TypeError):
         raise AppError("Fecha inválida. Usá formato ISO 8601.", "INVALID_DATE", 400)
 
     if programado_para <= datetime.now(timezone.utc):
@@ -102,6 +105,7 @@ def programar_manual(
             scheduled_at=programado_para,
             image_url=primera_imagen if not is_carrusel else None,
             image_urls=imagenes_urls if is_carrusel else None,
+            platform=red_social,
         )
         from models.social_models import PublicacionesMkt
         obj = db.query(PublicacionesMkt).filter(PublicacionesMkt.id == pub["id"]).first()
