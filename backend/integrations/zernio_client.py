@@ -136,12 +136,15 @@ def schedule_post(
     text: str,
     scheduled_at: datetime,
     image_url: Optional[str] = None,
+    image_urls: Optional[list] = None,
 ) -> dict:
     """
     Programa un post para una fecha futura.
 
     Args:
         scheduled_at: datetime con timezone (se envía como ISO 8601)
+        image_url: URL de imagen única (post/story/reel)
+        image_urls: lista de URLs de imágenes (carrusel)
 
     Returns:
         {"id": "zernio_post_id", "status": "scheduled", "scheduled_at": "..."}
@@ -151,7 +154,9 @@ def schedule_post(
         "text": text,
         "scheduled_at": scheduled_at.isoformat(),
     }
-    if image_url:
+    if image_urls and len(image_urls) > 1:
+        payload["media"] = [{"type": "image", "url": u} for u in image_urls]
+    elif image_url:
         payload["media"] = [{"type": "image", "url": image_url}]
     return _request("POST", "/posts/schedule", payload)
 

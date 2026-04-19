@@ -24,6 +24,7 @@ export const ENDPOINTS = {
   CONTENIDO_PUBLICAR_DIRECTO: (id) => `${BASE_URL}/contenido/${id}/publicar-directo`,
   TEMPLATES: `${BASE_URL}/contenido/templates`,
   CALENDARIO: `${BASE_URL}/calendario`,
+  CALENDARIO_PROGRAMAR: `${BASE_URL}/calendario/programar-manual`,
   SOCIAL_CONECTAR: `${BASE_URL}/social/conectar`,
   SOCIAL_CONECTAR_CALLBACK: `${BASE_URL}/social/conectar/callback`,
   SOCIAL_PUBLICAR: `${BASE_URL}/social/publicar`,

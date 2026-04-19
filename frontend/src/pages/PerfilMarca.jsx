@@ -11,7 +11,7 @@ const card        = { background: "var(--surface)", border: "1px solid var(--bor
 const sectionTitle= { fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 12 };
 const fieldWrap   = { marginBottom: 12 };
 const labelStyle  = { fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 600, marginBottom: 4 };
-const valueStyle  = { fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 };
+const valueStyle  = { fontSize: 14, color: "var(--text)", lineHeight: 1.5 };
 const tag         = { display: "inline-block", background: "var(--surface-2)", color: "var(--text-secondary)", padding: "3px 10px", borderRadius: 6, fontSize: 12, marginRight: 6, marginBottom: 4 };
 const btnPrimary  = { padding: "8px 18px", background: "var(--primary)", color: "#fff", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer" };
 const btnSmall    = { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "var(--surface)", color: "var(--text-secondary)" };
@@ -27,11 +27,35 @@ function Tags({ items }) {
   return <div>{items.map((t, i) => <span key={i} style={tag}>{t}</span>)}</div>;
 }
 
+function ColorSwatches({ items }) {
+  if (!items || !items.length) return <span style={{ color: "var(--text-muted)", fontSize: 13 }}>—</span>;
+  // items can be an array of strings — join them and extract all hex codes
+  const raw = Array.isArray(items) ? items.join(" ") : String(items);
+  const hexCodes = raw.match(/#[0-9A-Fa-f]{6}/g);
+  if (!hexCodes || !hexCodes.length) {
+    // No hex codes found — show as text
+    return <span style={{ fontSize: 13, color: "var(--text)" }}>{raw}</span>;
+  }
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      {hexCodes.map((hex, i) => (
+        <div key={i} title={hex} style={{
+          width: 28, height: 28, borderRadius: "50%", backgroundColor: hex,
+          border: "2px solid var(--border)", cursor: "default", flexShrink: 0,
+        }} />
+      ))}
+      <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 4 }}>
+        {hexCodes.join(", ")}
+      </span>
+    </div>
+  );
+}
+
 function JsonField({ data }) {
   if (!data) return <span style={{ color: "var(--text-muted)", fontSize: 13 }}>—</span>;
   if (typeof data === "string") return <span>{data}</span>;
   if (data.respuesta) return <span>{data.respuesta}</span>;
-  return <pre style={{ fontSize: 12, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>{JSON.stringify(data, null, 2)}</pre>;
+  return <pre style={{ fontSize: 12, color: "var(--text)", whiteSpace: "pre-wrap" }}>{JSON.stringify(data, null, 2)}</pre>;
 }
 
 const ACCEPTED = ".pdf,.docx,.doc,.txt";
@@ -132,7 +156,7 @@ export default function PerfilMarca() {
         <Field label="Tono de Voz">
           <span style={{ background: "var(--purple-bg)", color: "var(--purple-text)", padding: "3px 10px", borderRadius: 6, fontSize: 13, fontWeight: 600 }}>{perfil.tono_voz}</span>
         </Field>
-        <div style={fieldWrap}><div style={labelStyle}>Colores de Marca</div><Tags items={perfil.colores_marca} /></div>
+        <div style={fieldWrap}><div style={labelStyle}>Colores de Marca</div><ColorSwatches items={perfil.colores_marca} /></div>
         <Field label="Tipografía">{perfil.tipografia}</Field>
         <div style={fieldWrap}><div style={labelStyle}>Palabras Clave</div><Tags items={perfil.palabras_clave} /></div>
         <div style={fieldWrap}>

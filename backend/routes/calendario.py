@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.orm import Session
 
-from controllers.calendario_controller import CalendarioController, CrearEventoRequest
+from controllers.calendario_controller import CalendarioController, CrearEventoRequest, ProgramarManualRequest
 from integrations.database import get_db
 from middleware.auth import get_current_user
 
@@ -39,6 +39,17 @@ def crear_evento(
 ):
     """Crea un evento programado en el calendario editorial."""
     return ctrl.crear_evento(body, x_marca_id, current_user)
+
+
+@router.post("/programar-manual")
+def programar_manual(
+    body: ProgramarManualRequest,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: CalendarioController = Depends(_ctrl),
+):
+    """Programa publicación con fecha/hora exacta vía Zernio."""
+    return ctrl.programar_manual(body, x_marca_id, current_user)
 
 
 @router.delete("/{evento_id}")

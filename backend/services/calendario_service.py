@@ -56,6 +56,69 @@ def eliminar_evento(db: Session, evento_id: UUID, marca_id: UUID) -> bool:
     return True
 
 
+def programar_manual(
+    db: Session, marca_id: UUID, red_social: str, copy_text: str,
+    fecha_hora: str, formato: str = "post", imagen_url: str = None,
+    imagenes_urls: list = None,
+) -> dict:
+    """Programa una publicación para fecha/hora exacta vía Zernio.
+    Para carrusel, recibe imagenes_urls con múltiples imágenes en orden."""
+    from datetime import datetime, timezone
+    from integrations import zernio_client
+
+    cuenta = cuentas_repo.obtener_por_red(db, marca_id, red_social)
+    if not cuenta:
+        raise AppError(f"No hay cuenta de {red_social} conectada", "NO_SOCIAL_ACCOUNT", 400)
+
+    try:
+        programado_para = datetime.fromisoformat(fecha_hora)
+        if programado_para.tzinfo is None:
+            programado_para = programado_para.replace(tzinfo=timezone.utc)
+    except ValueError:
+        raise AppError("Fecha inválida. Usá formato ISO 8601.", "INVALID_DATE", 400)
+
+    if programado_para <= datetime.now(timezone.utc):
+        raise AppError("La fecha debe ser futura", "INVALID_DATE", 400)
+
+    is_carrusel = formato == "carrusel" and imagenes_urls and len(imagenes_urls) >= 2
+    primera_imagen = imagenes_urls[0] if is_carrusel else imagen_url
+
+    pub_data = {
+        "marca_id": marca_id,
+        "red_social": red_social,
+        "copy_publicado": copy_text,
+        "imagen_url": primera_imagen,
+        "estado": "programado",
+        "programado_para": programado_para,
+    }
+
+    pub = pub_repo.crear(db, pub_data)
+    db.flush()
+
+    try:
+        result = zernio_client.schedule_post(
+            account_id=cuenta.account_id_externo,
+            text=copy_text,
+            scheduled_at=programado_para,
+            image_url=primera_imagen if not is_carrusel else None,
+            image_urls=imagenes_urls if is_carrusel else None,
+        )
+        from models.social_models import PublicacionesMkt
+        obj = db.query(PublicacionesMkt).filter(PublicacionesMkt.id == pub["id"]).first()
+        if obj:
+            obj.zernio_post_id = result.get("id")
+            db.flush()
+            pub = pub_repo._s(obj)
+        logger.info("[calendario] programado en Zernio — %s %s a las %s (%s imágenes)",
+                     formato, red_social, programado_para, len(imagenes_urls) if is_carrusel else 1)
+    except Exception as e:
+        logger.warning("[calendario] Zernio schedule falló, queda pendiente para automatización: %s", e)
+        # Se queda como "programado" en DB — la automatización lo publicará
+
+    db.commit()
+    return pub
+
+
 def publicar_ahora(db: Session, evento_id: UUID, marca_id: UUID) -> dict:
     """
     Publica inmediatamente el contenido de un evento en la red social correspondiente.

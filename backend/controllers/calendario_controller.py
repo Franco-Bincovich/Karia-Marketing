@@ -23,6 +23,15 @@ class CrearEventoRequest(BaseModel):
     contenido_id: Optional[UUID] = None
 
 
+class ProgramarManualRequest(BaseModel):
+    red_social: str
+    copy_text: str
+    fecha_hora: str
+    formato: str = "post"
+    imagen_url: Optional[str] = None
+    imagenes_urls: Optional[list] = None
+
+
 def _marca(x_marca_id: Optional[str]) -> UUID:
     if not x_marca_id:
         raise AppError("Header X-Marca-ID es requerido", "MISSING_MARCA_ID", 400)
@@ -53,6 +62,15 @@ class CalendarioController:
         marca_id = _marca(x_marca_id)
         svc.eliminar_evento(self.db, evento_id, marca_id)
         return {"message": "Evento eliminado"}
+
+    def programar_manual(self, body: "ProgramarManualRequest", x_marca_id: Optional[str], current_user: dict) -> dict:
+        """Programa publicación manual con fecha/hora exacta."""
+        marca_id = _marca(x_marca_id)
+        return svc.programar_manual(
+            self.db, marca_id, body.red_social, body.copy_text,
+            body.fecha_hora, formato=body.formato, imagen_url=body.imagen_url,
+            imagenes_urls=body.imagenes_urls,
+        )
 
     def publicar_ahora(self, evento_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
         """

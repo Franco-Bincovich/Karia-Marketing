@@ -110,8 +110,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
           gap: 6, padding: "14px 0 10px", minHeight: 68, borderBottom: "1px solid var(--sidebar-border)",
         }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 12,
-            background: "linear-gradient(135deg, #FF6B2B, #F5A623)",
+            width: 38, height: 38, borderRadius: 10, background: "#FF6B00",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 20, fontWeight: 900, color: "#fff", flexShrink: 0,
           }}>N</div>
@@ -133,12 +132,16 @@ export default function Sidebar({ collapsed, onToggle, onNavigate, isMobile }) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "0 16px", minHeight: 68, borderBottom: "1px solid var(--sidebar-border)",
         }}>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.2 }}>
-              NEXO
-              <span style={{ fontSize: 9, fontWeight: 700, color: "var(--primary)", marginLeft: 4, letterSpacing: "0.08em", opacity: 0.9 }}>MKTG</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, background: "#FF6B00",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, fontWeight: 900, color: "#fff", flexShrink: 0,
+            }}>N</div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.2 }}>NEXO</div>
+              <div style={{ fontSize: 10, color: "var(--sidebar-text)", marginTop: 1 }}>AI Marketing</div>
             </div>
-            <div style={{ fontSize: 11, color: "var(--sidebar-text)", marginTop: 1 }}>Marketing AI Platform</div>
           </div>
           {!isMobile && (
             <button onClick={onToggle} style={{
