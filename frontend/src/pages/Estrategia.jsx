@@ -26,7 +26,11 @@ export default function Estrategia() {
   const [error, setError] = useState("");
   const [analisis, setAnalisis] = useState(null);
   const [periodo, setPeriodo] = useState("semanal");
+  const [redSocial, setRedSocial] = useState("todas");
+  const [formatos, setFormatos] = useState(["post", "carrusel", "reel", "story"]);
   const [plan, setPlan] = useState(null);
+  const [planId, setPlanId] = useState(null);
+  const [planSaved, setPlanSaved] = useState(false);
   const [sugerencias, setSugerencias] = useState([]);
 
   useEffect(() => {
@@ -42,13 +46,27 @@ export default function Estrategia() {
     finally { setLoading(null); }
   }
 
+  function toggleFormato(f) {
+    setFormatos(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
+  }
+
   async function generarPlan() {
-    setLoading("plan"); setError(""); setPlan(null);
+    if (formatos.length === 0) { setError("Seleccioná al menos un formato"); return; }
+    setLoading("plan"); setError(""); setPlan(null); setPlanSaved(false);
     try {
-      const { data } = await post(ENDPOINTS.ESTRATEGIA_PLAN, { periodo });
+      const { data } = await post(ENDPOINTS.ESTRATEGIA_PLAN, { periodo, red_social: redSocial, formatos });
       setPlan(data.contenido || data);
+      setPlanId(data.id || null);
     } catch (e) { setError(e.response?.data?.message || "Error al generar plan"); }
     finally { setLoading(null); }
+  }
+
+  async function guardarPlan() {
+    if (!planId) return;
+    try {
+      await post(ENDPOINTS.ESTRATEGIA_PLAN_ACTIVAR(planId));
+      setPlanSaved(true);
+    } catch (e) { setError(e.response?.data?.message || "Error al guardar plan"); }
   }
 
   async function generarSugerencias() {
@@ -124,17 +142,48 @@ export default function Estrategia() {
         <div>
           <div style={card}>
             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: "var(--text)" }}>Generar Plan de Contenido</h3>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
               <select style={selectStyle} value={periodo} onChange={e => setPeriodo(e.target.value)}>
                 <option value="diario">Diario (7 días)</option>
                 <option value="semanal">Semanal (7 días)</option>
                 <option value="mensual">Mensual (30 días)</option>
               </select>
-              <button style={btn} onClick={generarPlan} disabled={loading === "plan"}>
-                {loading === "plan" ? "Generando..." : "Generar Plan"}
-              </button>
+              <select style={selectStyle} value={redSocial} onChange={e => setRedSocial(e.target.value)}>
+                <option value="todas">Todas las redes</option>
+                <option value="instagram">Solo Instagram</option>
+                <option value="facebook">Solo Facebook</option>
+              </select>
             </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>Formatos a incluir</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {[["post", "Post"], ["carrusel", "Carrusel"], ["reel", "Reel"], ["story", "Historia"]].map(([val, label]) => (
+                  <label key={val} style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
+                    borderRadius: 8, cursor: "pointer", fontSize: 13,
+                    border: formatos.includes(val) ? "2px solid var(--primary)" : "1px solid var(--border)",
+                    background: formatos.includes(val) ? "var(--primary-light)" : "var(--surface)",
+                    color: formatos.includes(val) ? "var(--primary)" : "var(--text-secondary)",
+                    fontWeight: formatos.includes(val) ? 600 : 400,
+                  }}>
+                    <input type="checkbox" checked={formatos.includes(val)} onChange={() => toggleFormato(val)} style={{ display: "none" }} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <button style={btn} onClick={generarPlan} disabled={loading === "plan"}>
+              {loading === "plan" ? "Generando..." : "Generar Plan"}
+            </button>
           </div>
+
+          {planSaved && (
+            <div className="msg-success" style={{ marginBottom: 16, borderRadius: 12 }}>
+              <span style={{ flex: 1 }}>Plan guardado — el sistema lo usará para las próximas publicaciones.</span>
+              <button className="msg-dismiss" onClick={() => setPlanSaved(false)}>×</button>
+            </div>
+          )}
+
           {plan && (
             <div style={card}>
               {plan.resumen && <p style={{ fontSize: 14, color: "var(--text)", marginBottom: 16 }}>{plan.resumen}</p>}
@@ -160,6 +209,14 @@ export default function Estrategia() {
                   </tbody>
                 </table>
               </div>
+              {planId && !planSaved && (
+                <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+                  <button style={{ ...btn, background: "var(--success)" }} onClick={guardarPlan}>Guardar plan</button>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)", alignSelf: "center" }}>
+                    Al guardar, este plan se usará como referencia para las publicaciones automáticas.
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

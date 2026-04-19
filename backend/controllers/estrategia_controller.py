@@ -12,6 +12,8 @@ from services import estrategia_service as svc
 
 class PlanContenidoRequest(BaseModel):
     periodo: str = "semanal"
+    red_social: str = "todas"
+    formatos: Optional[list] = None
 
 
 def _marca(x_marca_id: Optional[str]) -> UUID:
@@ -32,7 +34,10 @@ class EstrategiaController:
 
     def plan_contenido(self, body: PlanContenidoRequest,
                        x_marca_id: Optional[str], current_user: dict) -> dict:
-        return svc.generar_plan_contenido(self.db, _marca(x_marca_id), periodo=body.periodo)
+        return svc.generar_plan_contenido(
+            self.db, _marca(x_marca_id), periodo=body.periodo,
+            red_social=body.red_social, formatos=body.formatos,
+        )
 
     def sugerencias(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         items = svc.listar_sugerencias(self.db, _marca(x_marca_id))
@@ -40,6 +45,13 @@ class EstrategiaController:
 
     def generar_sugerencias(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         return svc.sugerir_acciones(self.db, _marca(x_marca_id))
+
+    def activar_plan(self, plan_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
+        return svc.activar_plan(self.db, _marca(x_marca_id), plan_id)
+
+    def plan_activo(self, x_marca_id: Optional[str], current_user: dict) -> dict:
+        result = svc.obtener_plan_activo(self.db, _marca(x_marca_id))
+        return result or {"activo": False}
 
     def marcar_implementada(self, estrategia_id: UUID,
                             x_marca_id: Optional[str], current_user: dict) -> dict:

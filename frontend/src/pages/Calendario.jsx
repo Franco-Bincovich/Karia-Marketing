@@ -64,11 +64,38 @@ export default function Calendario() {
     });
   }
 
+  function normalizeHora(h) {
+    if (!h) return null;
+    // Already 24h format like "13:30" or "09:00"
+    if (/^\d{1,2}:\d{2}$/.test(h.trim())) return h.trim();
+    // 12h format: "1:30 p.m.", "01:30 a.m.", "1:30 PM", etc.
+    const match = h.match(/^(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?|AM|PM)$/i);
+    if (match) {
+      let hrs = parseInt(match[1], 10);
+      const mins = match[2];
+      const ampm = match[3].replace(/\./g, "").toLowerCase();
+      if (ampm === "pm" && hrs < 12) hrs += 12;
+      if (ampm === "am" && hrs === 12) hrs = 0;
+      return `${String(hrs).padStart(2, "0")}:${mins}`;
+    }
+    return h.trim();
+  }
+
   async function programar() {
-    if (!form.copy_text || !form.fecha || !form.hora) { setError("Completá copy, fecha y hora"); return; }
+    if (!form.copy_text) { setError("Escribí el copy de la publicación"); return; }
+    if (!form.fecha) { setError("Seleccioná la fecha"); return; }
+    if (!form.hora) { setError("Seleccioná la hora"); return; }
     if (isCarrusel && carruselUrls.length < 2) { setError("Seleccioná al menos 2 imágenes para el carrusel"); return; }
+
+    const hora24 = normalizeHora(form.hora);
+    if (!hora24 || !/^\d{2}:\d{2}$/.test(hora24)) { setError("Formato de hora inválido"); return; }
+
+    const dt = new Date(`${form.fecha}T${hora24}:00`);
+    if (isNaN(dt.getTime())) { setError("Fecha u hora inválida"); return; }
+    if (dt <= new Date()) { setError("La fecha debe ser en el futuro"); return; }
+
     setScheduling(true); setError("");
-    const fechaHora = new Date(`${form.fecha}T${form.hora}`).toISOString();
+    const fechaHora = dt.toISOString();
     try {
       await post(ENDPOINTS.CALENDARIO_PROGRAMAR, {
         red_social: form.red_social, copy_text: form.copy_text,

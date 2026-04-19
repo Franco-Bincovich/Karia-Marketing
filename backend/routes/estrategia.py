@@ -38,6 +38,27 @@ def plan_contenido(
     return ctrl.plan_contenido(body, x_marca_id, current_user)
 
 
+@router.post("/plan-contenido/{plan_id}/activar")
+def activar_plan(
+    plan_id: UUID,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: EstrategiaController = Depends(_ctrl),
+):
+    """Activa un plan como el plan vigente de la marca."""
+    return ctrl.activar_plan(plan_id, x_marca_id, current_user)
+
+
+@router.get("/plan-activo")
+def plan_activo(
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: EstrategiaController = Depends(_ctrl),
+):
+    """Retorna el plan de contenido activo."""
+    return ctrl.plan_activo(x_marca_id, current_user)
+
+
 @router.get("/sugerencias")
 def sugerencias(
     x_marca_id: Optional[str] = Header(default=None),

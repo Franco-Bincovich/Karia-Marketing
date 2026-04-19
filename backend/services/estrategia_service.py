@@ -66,13 +66,24 @@ def analizar_competencia(db: Session, marca_id: UUID) -> dict:
     return entry
 
 
-def generar_plan_contenido(db: Session, marca_id: UUID, periodo: str = "semanal") -> dict:
-    """Genera plan de contenido basado en perfil de marca y objetivos."""
+def generar_plan_contenido(
+    db: Session, marca_id: UUID, periodo: str = "semanal",
+    red_social: str = "todas", formatos: list = None,
+) -> dict:
+    """Genera plan de contenido con filtros de red social y formatos."""
     memoria_text = _get_memoria(db, marca_id)
     memoria = memoria_repo.obtener_o_crear(db, marca_id)
     nombre = memoria.get("nombre_marca", "la marca")
 
     dias = {"diario": 7, "semanal": 7, "mensual": 30}.get(periodo, 7)
+    formatos_permitidos = formatos or ["post", "carrusel", "reel", "story"]
+    formatos_str = ", ".join(formatos_permitidos)
+
+    red_instruccion = ""
+    if red_social == "todas":
+        red_instruccion = "Alterná entre Instagram y Facebook de forma equilibrada."
+    else:
+        red_instruccion = f"Todos los días deben ser para {red_social}."
 
     message = _get_client().messages.create(
         model=_SEARCH_MODEL,
@@ -83,10 +94,13 @@ def generar_plan_contenido(db: Session, marca_id: UUID, periodo: str = "semanal"
         ),
         messages=[{"role": "user", "content": (
             f"Generá un plan de contenido {periodo} ({dias} días) para {nombre}.\n\n"
+            f"RESTRICCIONES:\n"
+            f"- Redes sociales: {red_instruccion}\n"
+            f"- Formatos permitidos: {formatos_str}. NO uses otros formatos.\n\n"
             f"Para cada día incluí:\n"
-            f"- Día y fecha relativa\n"
+            f"- Día (número)\n"
             f"- Red social\n"
-            f"- Formato (post/story/reel/carrusel)\n"
+            f"- Formato (solo de los permitidos: {formatos_str})\n"
             f"- Tema\n"
             f"- Objetivo\n"
             f"- Copy sugerido breve\n\n"
@@ -108,6 +122,21 @@ def generar_plan_contenido(db: Session, marca_id: UUID, periodo: str = "semanal"
     })
     db.commit()
     return entry
+
+
+def activar_plan(db: Session, marca_id: UUID, plan_id: UUID) -> dict:
+    """Activa un plan y desactiva los anteriores."""
+    result = repo.activar_plan(db, plan_id, marca_id)
+    if not result:
+        from middleware.error_handler import AppError
+        raise AppError("Plan no encontrado", "NOT_FOUND", 404)
+    db.commit()
+    return result
+
+
+def obtener_plan_activo(db: Session, marca_id: UUID) -> dict:
+    """Retorna el plan de contenido activo de la marca."""
+    return repo.obtener_plan_activo(db, marca_id)
 
 
 def sugerir_acciones(db: Session, marca_id: UUID) -> dict:

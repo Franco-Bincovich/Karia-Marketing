@@ -25,4 +25,5 @@ class EstrategiaMkt(Base):
     contenido: Mapped[dict] = mapped_column(JSONB, nullable=False)
     periodo: Mapped[Optional[str]] = mapped_column(Text)
     implementada: Mapped[bool] = mapped_column(Boolean, default=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

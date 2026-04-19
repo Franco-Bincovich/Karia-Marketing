@@ -92,6 +92,8 @@ export const ENDPOINTS = {
   LISTENING_PROCESAR: (id) => `${BASE_URL}/listening/menciones/${id}/procesar`,
   ESTRATEGIA_COMPETENCIA: `${BASE_URL}/estrategia/analizar-competencia`,
   ESTRATEGIA_PLAN: `${BASE_URL}/estrategia/plan-contenido`,
+  ESTRATEGIA_PLAN_ACTIVAR: (id) => `${BASE_URL}/estrategia/plan-contenido/${id}/activar`,
+  ESTRATEGIA_PLAN_ACTIVO: `${BASE_URL}/estrategia/plan-activo`,
   ESTRATEGIA_SUGERENCIAS: `${BASE_URL}/estrategia/sugerencias`,
   ESTRATEGIA_IMPLEMENTAR: (id) => `${BASE_URL}/estrategia/sugerencias/${id}/implementada`,
   ONBOARDING_ESTADO: `${BASE_URL}/onboarding/estado`,
