@@ -63,10 +63,13 @@ def generar_imagen(
         headers=headers,
         json={
             "prompt": prompt,
+            "negative_prompt": "people, faces, humans, hands, text, watermark, blurry, low quality",
             "width": w,
             "height": h,
             "modelId": _DEFAULT_MODEL,
             "num_images": 1,
+            "guidance_scale": 7,
+            "num_inference_steps": 30,
         },
         timeout=_TIMEOUT,
     )
@@ -120,24 +123,22 @@ def generar_imagen_desde_marca(
     """Construye prompt enriquecido con perfil de marca y genera imagen."""
     import re
 
-    # Extraer hex codes reales de los colores
     colores_raw = perfil_marca.get("colores_marca", [])
     colores_str = " ".join(colores_raw) if isinstance(colores_raw, list) else str(colores_raw or "")
     hex_codes = re.findall(r"#[0-9A-Fa-f]{6}", colores_str)
-    colors_line = f"Brand colors: {', '.join(hex_codes)}." if hex_codes else ""
+    hex_colors = ", ".join(hex_codes) if hex_codes else "#FF6B00"
 
-    industria = perfil_marca.get("industria") or "technology"
-    publico = perfil_marca.get("publico_objetivo") or "Small business owners"
+    estilo_visual = "vibrant colors, high contrast" if style == "vivid" else "clean minimal"
 
     prompt = (
-        f"{descripcion_usuario}\n\n"
-        f"Visual style: Professional marketing image for a SaaS company.\n"
-        f"{colors_line}\n"
-        f"Industry: {industria}.\n"
-        f"Aesthetic: Clean, modern, dark background with orange accents.\n"
-        f"Target audience: {publico}.\n"
-        f"No faces, no people. Focus on abstract business concepts, technology, data visualization, or professional environments.\n"
-        f"High quality, suitable for Instagram marketing post."
+        f"{descripcion_usuario}.\n\n"
+        f"Style: {estilo_visual}. Dark background with orange (#FF6B00) accent elements.\n"
+        f"Brand colors: {hex_colors}.\n"
+        f"Abstract digital marketing concept. Technology, data flow, AI neural networks, "
+        f"smartphone screens, social media icons, growth charts, automation gears.\n"
+        f"No people, no faces, no humans, no hands.\n"
+        f"Clean minimal composition. Professional quality.\n"
+        f"Instagram marketing post for a SaaS AI marketing platform targeting small businesses."
     ).strip()
 
     logger.debug("[leonardo] prompt enriquecido: %s", prompt[:150])
