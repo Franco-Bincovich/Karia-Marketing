@@ -9,6 +9,7 @@ Endpoints principales:
 - Webhooks: confirmación de publicación (callback)
 """
 
+import json
 import logging
 from datetime import datetime
 from typing import Optional
@@ -108,6 +109,47 @@ def list_accounts() -> dict:
     return _request("GET", "/accounts")
 
 
+# --- Helpers de media ---
+
+def _upload_media(image_url: str) -> Optional[str]:
+    """Sube una imagen a Zernio Storage y retorna la URL de Zernio."""
+    try:
+        # 1. Get upload token
+        token_data = _request("POST", "/media/upload-token", {})
+        token = token_data["token"]
+
+        # 2. Download image from our URL
+        import requests as req
+        img_resp = req.get(image_url, timeout=30)
+        if img_resp.status_code != 200:
+            logger.error("[zernio] No se pudo descargar imagen: %s → HTTP %s", image_url, img_resp.status_code)
+            return None
+
+        # 3. Upload to Zernio
+        settings = get_settings()
+        upload_resp = req.post(
+            f"{settings.ZERNIO_BASE_URL}/media/upload?token={token}",
+            headers={"Authorization": f"Bearer {settings.ZERNIO_API_KEY}"},
+            files={"files": ("image.png", img_resp.content, img_resp.headers.get("Content-Type", "image/png"))},
+            timeout=30,
+        )
+        if upload_resp.status_code != 200:
+            logger.error("[zernio] Upload falló: HTTP %s — %s", upload_resp.status_code, upload_resp.text[:200])
+            return None
+
+        files = upload_resp.json().get("files", [])
+        if not files:
+            logger.error("[zernio] Upload OK pero sin files en respuesta")
+            return None
+
+        zernio_url = files[0]["url"]
+        logger.info("[zernio] Media uploaded: %s → %s", image_url[:60], zernio_url)
+        return zernio_url
+    except Exception as e:
+        logger.error("[zernio] Error uploading media: %s", e)
+        return None
+
+
 # --- Publicación ---
 
 def publish_now(
@@ -118,22 +160,26 @@ def publish_now(
     platform: str = "instagram",
 ) -> dict:
     """
-    Publica un post de forma inmediata via POST /posts con publishNow: true.
+    Publica un post de forma inmediata.
 
-    Returns:
-        {"id": "zernio_post_id", "status": "published",
-         "external_post_id": "...", "url": "..."}
+    Flow: upload media → single POST with content + media + publishNow.
     """
+    # 1. Upload media to Zernio Storage
+    zernio_urls = _upload_all_media(image_url, image_urls)
+
+    # 2. Single POST with everything
     payload = {
         "content": text,
         "publishNow": True,
         "platforms": [{"platform": platform, "accountId": account_id}],
     }
-    if image_urls and len(image_urls) > 1:
-        payload["media"] = [{"url": u} for u in image_urls]
-    elif image_url:
-        payload["media"] = [{"url": image_url}]
-    return _request("POST", "/posts", payload)
+    if zernio_urls:
+        payload["mediaItems"] = [{"type": "image", "url": u} for u in zernio_urls]
+    logger.info("[zernio] publish_now POST payload: %s", json.dumps(payload, default=str))
+
+    result = _request("POST", "/posts", payload)
+    post = result.get("post", {})
+    return {"id": post.get("_id"), "status": post.get("status", "published"), **post}
 
 
 def schedule_post(
@@ -145,28 +191,39 @@ def schedule_post(
     platform: str = "instagram",
 ) -> dict:
     """
-    Programa un post para fecha futura via POST /posts con scheduledFor.
+    Programa un post para fecha futura.
 
-    Args:
-        scheduled_at: datetime con timezone (se envía como ISO 8601)
-        image_url: URL de imagen única (post/story/reel)
-        image_urls: lista de URLs de imágenes (carrusel)
-        platform: red social destino
-
-    Returns:
-        {"id": "zernio_post_id", "status": "scheduled", "scheduled_at": "..."}
+    Flow: upload media → single POST with content + media + scheduledFor.
     """
+    # 1. Upload media
+    zernio_urls = _upload_all_media(image_url, image_urls)
+
+    # 2. Single POST with everything
     payload = {
         "content": text,
         "scheduledFor": scheduled_at.isoformat(),
         "timezone": "America/Argentina/Buenos_Aires",
         "platforms": [{"platform": platform, "accountId": account_id}],
     }
-    if image_urls and len(image_urls) > 1:
-        payload["media"] = [{"url": u} for u in image_urls]
-    elif image_url:
-        payload["media"] = [{"url": image_url}]
-    return _request("POST", "/posts", payload)
+    if zernio_urls:
+        payload["mediaItems"] = [{"type": "image", "url": u} for u in zernio_urls]
+    logger.info("[zernio] schedule_post POST payload: %s", json.dumps(payload, default=str))
+
+    result = _request("POST", "/posts", payload)
+    post = result.get("post", {})
+    return {"id": post.get("_id"), "status": post.get("status", "scheduled"), **post}
+
+
+def _upload_all_media(image_url: Optional[str], image_urls: Optional[list]) -> list:
+    """Upload all images to Zernio Storage, return list of Zernio URLs."""
+    urls_to_upload = image_urls if (image_urls and len(image_urls) > 1) else ([image_url] if image_url else [])
+    zernio_urls = []
+    for url in urls_to_upload:
+        if url and url.strip():
+            z_url = _upload_media(url)
+            if z_url:
+                zernio_urls.append(z_url)
+    return zernio_urls
 
 
 def get_post_status(zernio_post_id: str) -> dict:

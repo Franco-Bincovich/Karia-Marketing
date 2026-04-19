@@ -86,6 +86,13 @@ def programar_manual(
     is_carrusel = formato == "carrusel" and imagenes_urls and len(imagenes_urls) >= 2
     primera_imagen = imagenes_urls[0] if is_carrusel else imagen_url
 
+    # Instagram requiere imagen obligatoriamente
+    if red_social == "instagram" and not primera_imagen and not is_carrusel:
+        raise AppError("Seleccioná una imagen antes de programar en Instagram", "NO_IMAGE", 400)
+
+    logger.info("[calendario] programar_manual — red=%s, imagen=%s, carrusel=%s",
+                red_social, bool(primera_imagen), is_carrusel)
+
     pub_data = {
         "marca_id": marca_id,
         "red_social": red_social,
@@ -98,6 +105,7 @@ def programar_manual(
     pub = pub_repo.crear(db, pub_data)
     db.flush()
 
+    logger.info("[calendario] imagen_url que se envía a Zernio: %s", primera_imagen)
     try:
         result = zernio_client.schedule_post(
             account_id=cuenta.account_id_externo,
