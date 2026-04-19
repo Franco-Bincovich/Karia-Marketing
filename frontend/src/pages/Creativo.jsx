@@ -12,10 +12,12 @@ const btn        = { padding: "10px 20px", background: "var(--primary)", color: 
 const btnSmall   = { padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "var(--surface)", color: "var(--text-secondary)" };
 const btnDanger  = { ...btnSmall, borderColor: "var(--danger)", color: "var(--danger-text)" };
 
-const SIZES = [
-  { value: "1024x1024", label: "Cuadrado (1024x1024)" },
-  { value: "1792x1024", label: "Horizontal (1792x1024)" },
-  { value: "1024x1792", label: "Vertical (1024x1792)" },
+const FORMATOS = [
+  { value: "post", label: "Post (1080×1080)" },
+  { value: "historia", label: "Historia (1080×1920)" },
+  { value: "reel", label: "Reel (1080×1920)" },
+  { value: "carrusel", label: "Carrusel (1080×1080)" },
+  { value: "facebook_post", label: "Facebook Post (1200×630)" },
 ];
 
 const ACCEPTED_IMG = ".jpg,.jpeg,.png,.webp,.gif";
@@ -29,7 +31,7 @@ function formatDate(iso) {
 export default function Creativo() {
   const { get, post } = useApi();
   const [tab, setTab] = useState("ia");
-  const [form, setForm] = useState({ descripcion: "", tamano: "1024x1024", estilo: "vivid", usar_perfil_marca: true });
+  const [form, setForm] = useState({ descripcion: "", formato: "post", estilo: "vivid", usar_perfil_marca: true, tipo: "elaborada" });
   const [generada, setGenerada] = useState(null);
   const [galeria, setGaleria] = useState([]);
   const [biblioteca, setBiblioteca] = useState([]);
@@ -131,10 +133,17 @@ export default function Creativo() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div style={card}>
               <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: "var(--text)" }}>Generar Imagen</h3>
-              <label style={{ fontSize: 12, color: "var(--text-muted)" }}>Descripción de la imagen</label>
-              <textarea style={{ ...inputStyle, minHeight: 80, resize: "vertical" }} value={form.descripcion} onChange={set("descripcion")} placeholder="Describí la imagen que querés generar..." />
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: "var(--text-muted)" }}>Tipo de imagen</label>
+                <select style={selectStyle} value={form.tipo} onChange={set("tipo")}>
+                  <option value="elaborada">Imagen elaborada (foto/ilustración)</option>
+                  <option value="placa">Placa con texto (cartel minimalista)</option>
+                </select>
+              </div>
+              <label style={{ fontSize: 12, color: "var(--text-muted)" }}>{form.tipo === "placa" ? "Texto principal de la placa" : "Descripción de la imagen"}</label>
+              <textarea style={{ ...inputStyle, minHeight: 80, resize: "vertical" }} value={form.descripcion} onChange={set("descripcion")} placeholder={form.tipo === "placa" ? "Escribí el texto principal que querés mostrar en la placa..." : "Describí la imagen que querés generar..."} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div><label style={{ fontSize: 12, color: "var(--text-muted)" }}>Tamaño</label><select style={selectStyle} value={form.tamano} onChange={set("tamano")}>{SIZES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select></div>
+                <div><label style={{ fontSize: 12, color: "var(--text-muted)" }}>Formato</label><select style={selectStyle} value={form.formato} onChange={set("formato")}>{FORMATOS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}</select></div>
                 <div><label style={{ fontSize: 12, color: "var(--text-muted)" }}>Estilo</label><select style={selectStyle} value={form.estilo} onChange={set("estilo")}><option value="vivid">Vivid (vibrante)</option><option value="natural">Natural (realista)</option></select></div>
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)", marginBottom: 16, cursor: "pointer" }}>
@@ -149,9 +158,8 @@ export default function Creativo() {
               {generada ? (
                 <div>
                   <div style={{ borderRadius: 10, overflow: "hidden", marginBottom: 12, background: "var(--surface-2)" }}>
-                    <img src={generada.imagen_url} alt={generada.prompt} style={{ width: "100%", height: "auto", display: "block" }} onError={e => { e.target.style.display = "none"; }} />
+                    <img src={generada.imagen_url} alt="" style={{ width: "100%", height: "auto", display: "block" }} onError={e => { e.target.style.display = "none"; }} />
                   </div>
-                  <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.4 }}>{generada.prompt}</p>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button style={btnSmall} onClick={() => { setGenerada(null); generar(); }}>Regenerar</button>
                     {generada.imagen_url && <a href={generada.imagen_url} target="_blank" rel="noreferrer" style={{ ...btnSmall, textDecoration: "none" }}>Descargar</a>}

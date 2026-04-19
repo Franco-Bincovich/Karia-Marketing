@@ -313,3 +313,87 @@ def autocompletar_perfil_marca(nombre_marca: str) -> dict:
     except (ValueError, json.JSONDecodeError):
         logger.warning("[claude_client] No se pudo parsear respuesta de autocompletado")
         return {}
+
+
+def traducir_concepto_a_prompt_visual(
+    descripcion_usuario: str,
+    perfil_marca: dict,
+    formato: str = "post",
+) -> str:
+    """
+    Traduce una descripción conceptual del usuario a un prompt visual
+    concreto para Leonardo, pensado como escena realista de marketing.
+
+    Usa Claude Haiku (barato y rápido) porque es una tarea de
+    reescritura corta.
+
+    Args:
+        descripcion_usuario: lo que escribió el usuario (puede ser
+            una frase, pregunta, concepto abstracto, etc.)
+        perfil_marca: dict del perfil de marca con colores_marca,
+            estetica_visual, etc.
+        formato: 'post', 'historia', 'reel', 'facebook_post'
+
+    Returns:
+        Prompt en inglés listo para enviar a Leonardo Lucid Origin.
+    """
+    import re
+    client = _get_client()
+
+    colores_raw = perfil_marca.get("colores_marca", [])
+    colores_str = " ".join(colores_raw) if isinstance(colores_raw, list) else str(colores_raw or "")
+    hex_codes = re.findall(r"#[0-9A-Fa-f]{6}", colores_str)
+    palette = hex_codes if hex_codes else ["#09090B", "#FF6B00", "#FFFFFF"]
+
+    estetica = perfil_marca.get("estetica_visual", "") or ""
+    industria = perfil_marca.get("industria", "") or "marketing"
+    audiencia = perfil_marca.get("audiencia", "") or "small business owners"
+
+    system = (
+        "Sos un art director de una agencia de marketing. Tu trabajo es "
+        "traducir un concepto o frase del cliente en una descripción "
+        "visual concreta en inglés, pensada para generar una imagen "
+        "realista de marketing con IA (Leonardo Lucid Origin).\n\n"
+        "REGLAS ESTRICTAS:\n"
+        "1. NUNCA incluyas el texto literal del cliente en la imagen. "
+        "Si el cliente escribe 'cuantas veces dijiste veamos las metricas', "
+        "NO debe aparecer ese texto escrito en la imagen. Traducís el "
+        "CONCEPTO detrás de la frase a una ESCENA visual.\n"
+        "2. Priorizá escenas realistas: fotografía editorial, personas reales, "
+        "objetos cotidianos del trabajo (laptops, teléfonos, oficinas, "
+        "cafés, reuniones, manos escribiendo, pantallas con UI, etc.).\n"
+        "3. La paleta de marca se aplica como ATMÓSFERA E ILUMINACIÓN "
+        "(luz cálida naranja, fondos oscuros, acentos sutiles), NO "
+        "convierte toda la imagen en monocromática.\n"
+        "4. Output: SOLO el prompt visual final en inglés, sin preamble, "
+        "sin explicaciones, sin comillas, sin markdown. Máximo 100 palabras.\n"
+        "5. Incluí siempre al final: 'professional marketing photography, "
+        "cinematic lighting, shot on 35mm, high detail, natural composition'."
+    )
+
+    user = (
+        f"CONCEPTO DEL CLIENTE: {descripcion_usuario}\n\n"
+        f"PERFIL DE MARCA:\n"
+        f"- Industria: {industria}\n"
+        f"- Audiencia: {audiencia}\n"
+        f"- Paleta HEX: {', '.join(palette[:4])}\n"
+        f"- Estética: {estetica[:200]}\n\n"
+        f"FORMATO: {formato}\n\n"
+        f"Devolvé el prompt visual en inglés."
+    )
+
+    message = client.messages.create(
+        model="claude-haiku-4-5",
+        max_tokens=300,
+        system=system,
+        messages=[{"role": "user", "content": user}],
+    )
+
+    text_blocks = [b for b in message.content if b.type == "text"]
+    if not text_blocks:
+        return f"Professional marketing photograph related to: {descripcion_usuario}. Cinematic lighting, shot on 35mm, natural composition."
+
+    visual_prompt = text_blocks[0].text.strip()
+    # limpiar markdown accidental
+    visual_prompt = visual_prompt.strip('`').strip('"').strip("'")
+    return visual_prompt

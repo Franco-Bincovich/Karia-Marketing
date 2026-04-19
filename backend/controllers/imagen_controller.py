@@ -15,6 +15,8 @@ class GenerarImagenRequest(BaseModel):
     tamano: str = "1024x1024"
     estilo: str = "vivid"
     usar_perfil_marca: bool = True
+    tipo: str = "elaborada"
+    formato: Optional[str] = None
 
 
 class GenerarParaContenidoRequest(BaseModel):
@@ -51,6 +53,7 @@ class ImagenController:
             self.db, marca_id, body.descripcion,
             tamano=body.tamano, estilo=body.estilo,
             usar_perfil=body.usar_perfil_marca, rol=rol,
+            tipo=body.tipo, formato=body.formato,
         )
 
     def generar_para_contenido(self, contenido_id: UUID, body: GenerarParaContenidoRequest,

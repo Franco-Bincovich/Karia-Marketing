@@ -35,13 +35,13 @@ def _resolve_leonardo_key(db: Session, cliente_id: UUID):
     return None
 
 
-def _gen_imagen(db: Session, cliente_id: UUID, prompt: str, size: str, style: str, openai_key=None):
+def _gen_imagen(db: Session, cliente_id: UUID, prompt: str, size: str, style: str, openai_key=None, tipo: str = "elaborada"):
     """Genera imagen con Leonardo (preferido) o OpenAI (fallback)."""
     leo_key = _resolve_leonardo_key(db, cliente_id)
     if leo_key:
         from integrations.leonardo_client import generar_imagen, LeonardoError
         try:
-            return generar_imagen(prompt, size=size, style=style, custom_api_key=leo_key)
+            return generar_imagen(prompt, size=size, style=style, custom_api_key=leo_key, tipo=tipo)
         except LeonardoError as e:
             raise AppError(f"Error al generar imagen: {e.message}", "IMAGE_GEN_ERROR", e.status_code)
 
@@ -55,13 +55,13 @@ def _gen_imagen(db: Session, cliente_id: UUID, prompt: str, size: str, style: st
     )
 
 
-def _gen_imagen_marca(db: Session, cliente_id: UUID, descripcion: str, perfil: dict, size: str, style: str, openai_key=None):
+def _gen_imagen_marca(db: Session, cliente_id: UUID, descripcion: str, perfil: dict, size: str, style: str, openai_key=None, tipo: str = "elaborada"):
     """Genera imagen con perfil de marca — Leonardo o OpenAI."""
     leo_key = _resolve_leonardo_key(db, cliente_id)
     if leo_key:
         from integrations.leonardo_client import generar_imagen_desde_marca, LeonardoError
         try:
-            return generar_imagen_desde_marca(descripcion, perfil, size=size, style=style, custom_api_key=leo_key)
+            return generar_imagen_desde_marca(descripcion, perfil, size=size, style=style, custom_api_key=leo_key, tipo=tipo)
         except LeonardoError as e:
             raise AppError(f"Error al generar imagen: {e.message}", "IMAGE_GEN_ERROR", e.status_code)
 
@@ -144,18 +144,57 @@ def generar(
     estilo: str = "vivid",
     usar_perfil: bool = True,
     rol: str = "",
+    tipo: str = "elaborada",
+    formato: Optional[str] = None,
 ) -> dict:
     """Genera imagen desde descripción libre, opcionalmente enriquecida con perfil de marca."""
+    import uuid as uuid_mod
+    import base64 as b64_mod
+
     cliente, marca = _get_context(db, marca_id)
+
+    # Resolver tamaño: formato tiene prioridad sobre tamano manual
+    if formato and formato in TAMANOS:
+        w, h = TAMANOS[formato]
+        leo_size = _FORMATO_LEO_SIZE.get(formato, "1024x1024")
+    else:
+        w, h = (1080, 1080)
+        leo_size = tamano
+
+    # Placa con texto — fondo Leonardo + texto Pillow (fallback: sólido)
+    if tipo == "placa":
+        from integrations.placa_client import generar_placa
+        import re
+        perfil = memoria_repo.obtener_o_crear(db, marca_id)
+        colores_raw = perfil.get("colores_marca", [])
+        colores_str = " ".join(colores_raw) if isinstance(colores_raw, list) else str(colores_raw or "")
+        hex_codes = re.findall(r"#[0-9A-Fa-f]{6}", colores_str)
+        leo_key = _resolve_leonardo_key(db, cliente.id)
+        png_bytes = generar_placa(
+            descripcion, colores_hex=hex_codes, width=w, height=h,
+            leonardo_api_key=leo_key, size_key=leo_size,
+        )
+        filename = f"{uuid_mod.uuid4().hex}.png"
+        b64_data = b64_mod.b64encode(png_bytes).decode()
+        imagen_url = _upload_to_supabase(b64_data, marca_id, filename)
+
+        img = repo.crear(db, {
+            "marca_id": marca_id, "prompt": descripcion,
+            "imagen_url": imagen_url, "tamano": f"{w}x{h}",
+            "estilo": "placa", "origen": "ia",
+        })
+        db.commit()
+        return img
+
+    # Imagen elaborada — Leonardo o OpenAI
     openai_key = _custom_openai_key(cliente, rol)
 
     if usar_perfil:
         perfil = memoria_repo.obtener_o_crear(db, marca_id)
-        result = _gen_imagen_marca(db, cliente.id, descripcion, perfil, size=tamano, style=estilo, openai_key=openai_key)
+        result = _gen_imagen_marca(db, cliente.id, descripcion, perfil, size=leo_size, style=estilo, openai_key=openai_key, tipo=tipo)
     else:
-        result = _gen_imagen(db, cliente.id, descripcion, size=tamano, style=estilo, openai_key=openai_key)
+        result = _gen_imagen(db, cliente.id, descripcion, size=leo_size, style=estilo, openai_key=openai_key)
 
-    import uuid as uuid_mod
     filename = f"{uuid_mod.uuid4().hex}.png"
 
     if result.get("b64_data"):
@@ -167,26 +206,43 @@ def generar(
         "marca_id": marca_id,
         "prompt": result.get("revised_prompt") or descripcion,
         "imagen_url": imagen_url,
-        "tamano": tamano,
+        "tamano": f"{w}x{h}",
         "estilo": estilo,
     })
     db.commit()
     return img
 
 
-FORMAT_SIZE_MAP = {
+TAMANOS = {
+    "post": (1080, 1080),
+    "carrusel": (1080, 1080),
+    "historia": (1080, 1920),
+    "reel": (1080, 1920),
+    "facebook_post": (1200, 630),
+}
+
+# Mapeo formato → size key para Leonardo (closest supported)
+_FORMATO_LEO_SIZE = {
     "post": "1024x1024",
     "carrusel": "1024x1024",
+    "historia": "1024x1792",
     "reel": "1024x1792",
-    "story": "1024x1792",
+    "facebook_post": "1792x1024",
 }
 
 
 def _size_for_format(formato: str, tamano_override: Optional[str] = None) -> str:
-    """Retorna el tamaño de imagen adecuado según formato, o el override si se provee."""
+    """Retorna el size key de Leonardo según formato, o el override si se provee."""
     if tamano_override and tamano_override != "auto":
         return tamano_override
-    return FORMAT_SIZE_MAP.get(formato, "1024x1024")
+    return _FORMATO_LEO_SIZE.get(formato, "1024x1024")
+
+
+def _pixels_for_format(formato: Optional[str]) -> tuple:
+    """Retorna (width, height) en px según formato. Default 1080x1080."""
+    if formato and formato in TAMANOS:
+        return TAMANOS[formato]
+    return (1080, 1080)
 
 
 def generar_para_contenido(
