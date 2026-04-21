@@ -33,6 +33,23 @@ def _s(m: MemoriaMarcaMkt) -> dict:
         "icp_industria": m.icp_industria or [],
         "icp_tamano_empresa": m.icp_tamano_empresa,
         "objetivos_periodo": m.objetivos_periodo,
+        # Campos expandidos (migration 035)
+        "ciudad_zona": m.ciudad_zona,
+        "dolor_cliente": m.dolor_cliente,
+        "cta_principal": m.cta_principal,
+        "frecuencia_publicacion": m.frecuencia_publicacion,
+        "aprobacion_contenido": m.aprobacion_contenido,
+        "redes_activas": m.redes_activas or [],
+        "adjetivos_marca": m.adjetivos_marca or [],
+        "ventaja_competitiva": m.ventaja_competitiva,
+        "testimonios_resultados": m.testimonios_resultados,
+        "temporada_alta_baja": m.temporada_alta_baja,
+        "fechas_especiales": m.fechas_especiales,
+        "tiene_fotos_propias": m.tiene_fotos_propias,
+        "preferencia_imagenes": m.preferencia_imagenes,
+        "personalidad_marca": m.personalidad_marca,
+        "marcas_referencia": m.marcas_referencia,
+        "estetica_visual": m.estetica_visual,
         "updated_at": m.updated_at.isoformat() if m.updated_at else None,
     }
 
@@ -89,6 +106,20 @@ def obtener_para_agente(db: Session, marca_id: UUID) -> str:
         partes.append(f"Diferenciadores: {', '.join(obj.diferenciadores)}")
     if obj.sitio_web:
         partes.append(f"Sitio web: {obj.sitio_web}")
+    if obj.ciudad_zona:
+        partes.append(f"Ubicación: {obj.ciudad_zona}")
+    if obj.dolor_cliente:
+        partes.append(f"Dolor del cliente: {obj.dolor_cliente}")
+    if obj.cta_principal:
+        partes.append(f"CTA principal: {obj.cta_principal}")
+    if obj.frecuencia_publicacion:
+        partes.append(f"Frecuencia: {obj.frecuencia_publicacion}")
+    if obj.redes_activas:
+        partes.append(f"Redes activas: {', '.join(obj.redes_activas)}")
+    if obj.estetica_visual:
+        partes.append(f"Estética visual: {obj.estetica_visual}")
+    if obj.personalidad_marca:
+        partes.append(f"Personalidad: {obj.personalidad_marca}")
     return ". ".join(partes)
 
 
