@@ -20,6 +20,7 @@ import Creativo from "./pages/Creativo";
 import Reporting from "./pages/Reporting";
 import SocialListening from "./pages/SocialListening";
 import AgentesIA from "./pages/AgentesIA";
+import Organigrama from "./pages/Organigrama";
 import PerfilMarca from "./pages/PerfilMarca";
 import Automatizaciones from "./pages/Automatizaciones";
 import ConfiguracionAPIs from "./pages/ConfiguracionAPIs";
@@ -67,6 +68,7 @@ export default function App() {
       <Route path="/reporting" element={<P><Reporting /></P>} />
       <Route path="/social-listening" element={<P><SocialListening /></P>} />
       <Route path="/agentes-ia" element={<P><AgentesIA /></P>} />
+      <Route path="/organigrama" element={<P><Organigrama /></P>} />
       <Route path="/marca/perfil" element={<P><PerfilMarca /></P>} />
       <Route path="/automatizaciones" element={<P><Automatizaciones /></P>} />
       <Route path="/configuracion" element={<ProtectedRoute requireSuperadmin allowNoMarca><ConfiguracionAPIs /></ProtectedRoute>} />

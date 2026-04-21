@@ -13,6 +13,7 @@ const sections = [
     { path: "/prospeccion",       label: "Prospección",      icon: "⊙", badge: true },
     { path: "/estrategia",        label: "Estrategia",       icon: "◈" },
     { path: "/agentes-ia",        label: "Agentes IA",       icon: "✦" },
+    { path: "/organigrama",       label: "Organigrama",      icon: "⊟" },
   ]},
   { title: "CONTENIDO", items: [
     { path: "/contenido",         label: "Generar Contenido",icon: "✎" },

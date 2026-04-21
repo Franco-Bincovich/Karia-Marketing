@@ -75,6 +75,7 @@ export const ENDPOINTS = {
   AGENTES: `${BASE_URL}/agentes`,
   AGENTE_CONFIG: (nombre) => `${BASE_URL}/agentes/${nombre}`,
   AGENTE_EJECUTAR: (nombre) => `${BASE_URL}/agentes/${nombre}/ejecutar`,
+  ORGANIGRAMA: `${BASE_URL}/organigrama`,
   IMAGENES: `${BASE_URL}/imagenes`,
   IMAGENES_GENERAR: `${BASE_URL}/imagenes/generar`,
   IMAGENES_PARA_CONTENIDO: (id) => `${BASE_URL}/imagenes/generar-para-contenido/${id}`,

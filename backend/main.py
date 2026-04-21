@@ -13,7 +13,8 @@ from middleware.error_handler import register_error_handlers
 from routes import (
     ads, agentes, analytics, api_keys, auth, automatizaciones, calendario,
     clientes, comunidad, contactos, contenido, estrategia, feature_flags,
-    imagenes, listening, onboarding, reporting, seo, social, usuarios,
+    imagenes, listening, onboarding, organigrama, reporting, seo, social,
+    usuarios,
 )
 
 logger = logging.getLogger(__name__)
@@ -217,6 +218,7 @@ def create_app() -> FastAPI:
     app.include_router(reporting.router)
     app.include_router(comunidad.router)
     app.include_router(onboarding.router)
+    app.include_router(organigrama.router)
 
     @app.get("/health", tags=["system"])
     def health():

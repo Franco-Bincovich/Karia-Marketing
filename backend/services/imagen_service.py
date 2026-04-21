@@ -186,14 +186,17 @@ def generar(
         db.commit()
         return img
 
-    # Imagen elaborada — Leonardo o OpenAI
-    openai_key = _custom_openai_key(cliente, rol)
-
+    # Con perfil de marca → delegar al Área Creativa (Director de Arte + Visual + Copy)
     if usar_perfil:
-        perfil = memoria_repo.obtener_o_crear(db, marca_id)
-        result = _gen_imagen_marca(db, cliente.id, descripcion, perfil, size=leo_size, style=estilo, openai_key=openai_key, tipo=tipo)
-    else:
-        result = _gen_imagen(db, cliente.id, descripcion, size=leo_size, style=estilo, openai_key=openai_key)
+        try:
+            from services.agentes.area_creativa_service import generar_pieza
+            return generar_pieza(db, marca_id, descripcion, formato=formato or "post", rol=rol)
+        except Exception as e:
+            logger.warning("[imagen_svc] area_creativa falló, fallback directo: %s", e)
+
+    # Fallback: generación directa sin Director de Arte
+    openai_key = _custom_openai_key(cliente, rol)
+    result = _gen_imagen(db, cliente.id, descripcion, size=leo_size, style=estilo, openai_key=openai_key)
 
     filename = f"{uuid_mod.uuid4().hex}.png"
 
