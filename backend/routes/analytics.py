@@ -1,4 +1,5 @@
 """Rutas del módulo Analytics y Reporting."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -9,8 +10,10 @@ from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.orm import Session
 
 from controllers.analytics_controller import (
-    AnalyticsController, ConfigReportesRequest,
-    GenerarReporteRequest, KpiToggleRequest,
+    AnalyticsController,
+    ConfigReportesRequest,
+    GenerarReporteRequest,
+    KpiToggleRequest,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user

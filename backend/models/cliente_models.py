@@ -1,12 +1,15 @@
 """Modelos SQLAlchemy para clientes_mkt y marcas_mkt."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from datetime import datetime, timezone
+from typing import Optional
+
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from integrations.database import Base
 
 

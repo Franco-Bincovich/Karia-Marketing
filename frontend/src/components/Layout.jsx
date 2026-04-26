@@ -5,21 +5,21 @@ import ToastContainer from "./ui/Toast";
 import { useViewport } from "../hooks/useViewport";
 
 const SIDEBAR_FULL = 240;
-const SIDEBAR_COL  =  64;
+const SIDEBAR_COL = 64;
 
 export default function Layout({ title, children }) {
   const { isMobile, isTablet } = useViewport();
-  const [collapsed, setCollapsed]     = useState(false);
-  const [mobileOpen, setMobileOpen]   = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const sidebarVisible    = isMobile ? mobileOpen : true;
-  const effectiveCollapsed = isMobile ? false : (isTablet ? true : collapsed);
-  const sidebarW           = effectiveCollapsed ? SIDEBAR_COL : SIDEBAR_FULL;
-  const marginLeft         = isMobile ? 0 : sidebarW;
+  const sidebarVisible = isMobile ? mobileOpen : true;
+  const effectiveCollapsed = isMobile ? false : isTablet ? true : collapsed;
+  const sidebarW = effectiveCollapsed ? SIDEBAR_COL : SIDEBAR_FULL;
+  const marginLeft = isMobile ? 0 : sidebarW;
 
   function toggleSidebar() {
-    if (isMobile) setMobileOpen(v => !v);
-    else setCollapsed(v => !v);
+    if (isMobile) setMobileOpen((v) => !v);
+    else setCollapsed((v) => !v);
   }
 
   function closeMobile() {
@@ -54,26 +54,26 @@ export default function Layout({ title, children }) {
       )}
 
       {/* Main content */}
-      <div style={{
-        marginLeft,
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        minWidth: 0,
-        transition: "margin-left var(--t)",
-      }}>
-        <Header
-          title={title}
-          onMenuClick={toggleSidebar}
-          showMenu={isMobile && !mobileOpen}
-        />
-        <main style={{
+      <div
+        style={{
+          marginLeft,
           flex: 1,
-          padding: isMobile ? "16px 12px 24px" : "24px 28px 32px",
-          background: "var(--bg)",
-          overflowX: "auto",
-          transition: "background var(--t-slow)",
-        }}>
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          transition: "margin-left var(--t)",
+        }}
+      >
+        <Header title={title} onMenuClick={toggleSidebar} showMenu={isMobile && !mobileOpen} />
+        <main
+          style={{
+            flex: 1,
+            padding: isMobile ? "16px 12px 24px" : "24px 28px 32px",
+            background: "var(--bg)",
+            overflowX: "auto",
+            transition: "background var(--t-slow)",
+          }}
+        >
           {children}
         </main>
       </div>

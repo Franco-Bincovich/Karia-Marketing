@@ -1,9 +1,10 @@
 """Modelo SQLAlchemy para contactos_mkt."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -20,12 +21,8 @@ class ContactoMkt(Base):
     __tablename__ = "contactos_mkt"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    marca_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("marcas_mkt.id", ondelete="CASCADE"), nullable=False
-    )
-    cliente_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("clientes_mkt.id", ondelete="CASCADE"), nullable=False
-    )
+    marca_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("marcas_mkt.id", ondelete="CASCADE"), nullable=False)
+    cliente_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("clientes_mkt.id", ondelete="CASCADE"), nullable=False)
     nombre: Mapped[Optional[str]] = mapped_column(Text)
     empresa: Mapped[str] = mapped_column(Text, nullable=False)
     cargo: Mapped[Optional[str]] = mapped_column(Text)

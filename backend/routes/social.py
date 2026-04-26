@@ -26,6 +26,7 @@ def _ctrl(db: Session = Depends(get_db)) -> SocialController:
 
 # --- OAuth Zernio ---
 
+
 @router.post("/conectar")
 def iniciar_oauth(
     body: IniciarOAuthRequest,
@@ -50,6 +51,7 @@ def completar_oauth(
 
 # --- Publicación ---
 
+
 @router.post("/publicar")
 def publicar(
     body: PublicarRequest,
@@ -73,6 +75,7 @@ def programar(
 
 
 # --- Cuentas (manual + legacy) ---
+
 
 @router.get("/cuentas")
 def listar_cuentas(
@@ -109,6 +112,7 @@ def desconectar_cuenta(
 
 # --- Publicaciones ---
 
+
 @router.get("/publicaciones")
 def listar_publicaciones(
     x_marca_id: Optional[str] = Header(default=None),
@@ -128,9 +132,11 @@ def cancelar_publicacion(
 ):
     """Cancela una publicación programada."""
     from repositories import publicaciones_repository as pub_repo
+
     result = pub_repo.actualizar_estado(db, publicacion_id, "cancelado")
     if not result:
         from middleware.error_handler import AppError
+
         raise AppError("Publicación no encontrada", "NOT_FOUND", 404)
     db.commit()
     return result
@@ -148,6 +154,7 @@ def monitorear(
 
 
 # --- Webhook ---
+
 
 @router.post("/webhook/zernio")
 async def webhook_zernio(

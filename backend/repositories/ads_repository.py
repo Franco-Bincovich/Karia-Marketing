@@ -1,4 +1,5 @@
 """Repositorio CRUD para ads_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -13,11 +14,16 @@ logger = logging.getLogger(__name__)
 
 def _s(a: AdMkt) -> dict:
     return {
-        "id": str(a.id), "campana_id": str(a.campana_id),
-        "marca_id": str(a.marca_id), "nombre": a.nombre,
-        "copy_titulo": a.copy_titulo, "copy_descripcion": a.copy_descripcion,
-        "imagen_url": a.imagen_url, "ad_id_externo": a.ad_id_externo,
-        "variante": a.variante, "estado": a.estado,
+        "id": str(a.id),
+        "campana_id": str(a.campana_id),
+        "marca_id": str(a.marca_id),
+        "nombre": a.nombre,
+        "copy_titulo": a.copy_titulo,
+        "copy_descripcion": a.copy_descripcion,
+        "imagen_url": a.imagen_url,
+        "ad_id_externo": a.ad_id_externo,
+        "variante": a.variante,
+        "estado": a.estado,
         "created_at": a.created_at.isoformat() if a.created_at else None,
     }
 
@@ -31,12 +37,7 @@ def crear(db: Session, data: dict) -> dict:
 
 
 def listar_por_campana(db: Session, campana_id: UUID) -> list:
-    rows = (
-        db.query(AdMkt)
-        .filter(AdMkt.campana_id == campana_id)
-        .order_by(AdMkt.created_at.desc())
-        .all()
-    )
+    rows = db.query(AdMkt).filter(AdMkt.campana_id == campana_id).order_by(AdMkt.created_at.desc()).all()
     return [_s(r) for r in rows]
 
 

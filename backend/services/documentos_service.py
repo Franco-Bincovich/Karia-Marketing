@@ -27,12 +27,14 @@ def _extract_text(content: bytes, filename: str) -> str:
 
     if ext == ".pdf":
         from pypdf import PdfReader
+
         reader = PdfReader(io.BytesIO(content))
         pages = [page.extract_text() or "" for page in reader.pages]
         return "\n".join(pages).strip()
 
     if ext in (".docx", ".doc"):
         from docx import Document
+
         doc = Document(io.BytesIO(content))
         return "\n".join(p.text for p in doc.paragraphs).strip()
 
@@ -63,7 +65,8 @@ def _upload_to_storage(content: bytes, marca_id: UUID, filename: str) -> Optiona
     resp = requests.post(
         storage_url,
         headers={"Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}", "Content-Type": "application/octet-stream"},
-        data=content, timeout=30,
+        data=content,
+        timeout=30,
     )
 
     if resp.status_code in (200, 201):
@@ -94,7 +97,7 @@ def subir(db: Session, marca_id: UUID, filename: str, content: bytes) -> dict:
         raise AppError(f"Formato no soportado: {ext}. Usar PDF, DOCX o TXT.", "INVALID_FILE_TYPE", 400)
 
     if len(content) > MAX_SIZE:
-        raise AppError(f"El archivo excede el límite de 10MB.", "FILE_TOO_LARGE", 400)
+        raise AppError("El archivo excede el límite de 10MB.", "FILE_TOO_LARGE", 400)
 
     texto = _extract_text(content, filename)
     url = _upload_to_storage(content, marca_id, filename)
@@ -115,16 +118,26 @@ def subir(db: Session, marca_id: UUID, filename: str, content: bytes) -> dict:
 
 
 def listar(db: Session, marca_id: UUID) -> list[dict]:
-    rows = db.query(DocumentoMarcaMkt).filter(
-        DocumentoMarcaMkt.marca_id == marca_id,
-    ).order_by(DocumentoMarcaMkt.created_at.desc()).all()
+    rows = (
+        db.query(DocumentoMarcaMkt)
+        .filter(
+            DocumentoMarcaMkt.marca_id == marca_id,
+        )
+        .order_by(DocumentoMarcaMkt.created_at.desc())
+        .all()
+    )
     return [_s(r) for r in rows]
 
 
 def eliminar(db: Session, doc_id: UUID, marca_id: UUID) -> bool:
-    obj = db.query(DocumentoMarcaMkt).filter(
-        DocumentoMarcaMkt.id == doc_id, DocumentoMarcaMkt.marca_id == marca_id,
-    ).first()
+    obj = (
+        db.query(DocumentoMarcaMkt)
+        .filter(
+            DocumentoMarcaMkt.id == doc_id,
+            DocumentoMarcaMkt.marca_id == marca_id,
+        )
+        .first()
+    )
     if not obj:
         raise AppError("Documento no encontrado", "NOT_FOUND", 404)
     _delete_from_storage(obj.url_storage)
@@ -135,21 +148,25 @@ def eliminar(db: Session, doc_id: UUID, marca_id: UUID) -> bool:
 
 def obtener_textos(db: Session, marca_id: UUID) -> str:
     """Retorna todos los textos extraídos concatenados para contexto de agentes."""
-    rows = db.query(DocumentoMarcaMkt).filter(
-        DocumentoMarcaMkt.marca_id == marca_id,
-        DocumentoMarcaMkt.texto_extraido.isnot(None),
-    ).all()
+    rows = (
+        db.query(DocumentoMarcaMkt)
+        .filter(
+            DocumentoMarcaMkt.marca_id == marca_id,
+            DocumentoMarcaMkt.texto_extraido.isnot(None),
+        )
+        .all()
+    )
     if not rows:
         return ""
-    return "\n\n---\n\n".join(
-        f"[{r.nombre_archivo}]\n{r.texto_extraido}" for r in rows if r.texto_extraido
-    )
+    return "\n\n---\n\n".join(f"[{r.nombre_archivo}]\n{r.texto_extraido}" for r in rows if r.texto_extraido)
 
 
 def _s(d: DocumentoMarcaMkt) -> dict:
     return {
-        "id": str(d.id), "marca_id": str(d.marca_id),
-        "nombre_archivo": d.nombre_archivo, "tipo": d.tipo,
+        "id": str(d.id),
+        "marca_id": str(d.marca_id),
+        "nombre_archivo": d.nombre_archivo,
+        "tipo": d.tipo,
         "url_storage": d.url_storage,
         "tiene_texto": bool(d.texto_extraido),
         "chars_extraidos": len(d.texto_extraido) if d.texto_extraido else 0,

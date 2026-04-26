@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/organigrama", tags=["organigrama"])
 
 def _marca(x_marca_id: Optional[str]):
     from uuid import UUID
+
     if not x_marca_id:
         raise AppError("Header X-Marca-ID requerido", "MISSING_MARCA_ID", 400)
     return UUID(x_marca_id)

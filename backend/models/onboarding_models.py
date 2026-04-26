@@ -1,4 +1,5 @@
 """Modelos SQLAlchemy para Memoria de Marca e Historial de Onboarding."""
+
 from __future__ import annotations
 
 import uuid

@@ -7,9 +7,14 @@ from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy.orm import Session
 
 from controllers.contenido_controller import (
-    AprobarRequest, ContenidoController, EditarRequest,
-    GenerarRequest, GuardarApiKeyRequest, PublicarDirectoRequest,
-    RechazarRequest, TemplateRequest,
+    AprobarRequest,
+    ContenidoController,
+    EditarRequest,
+    GenerarRequest,
+    GuardarApiKeyRequest,
+    PublicarDirectoRequest,
+    RechazarRequest,
+    TemplateRequest,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user

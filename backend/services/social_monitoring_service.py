@@ -56,6 +56,7 @@ def monitorear_publicacion(db: Session, publicacion_id: UUID, marca_id: UUID) ->
         return pub
 
     from utils.security import decrypt_token
+
     access_token = decrypt_token(cuenta.access_token_encrypted)
     if not access_token:
         logger.error("[monitoring] Token vacío para %s — marca=%s", pub["red_social"], marca_id)

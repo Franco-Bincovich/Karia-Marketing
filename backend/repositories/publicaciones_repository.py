@@ -14,18 +14,23 @@ logger = logging.getLogger(__name__)
 
 def _s(p: PublicacionesMkt) -> dict:
     return {
-        "id": str(p.id), "marca_id": str(p.marca_id),
+        "id": str(p.id),
+        "marca_id": str(p.marca_id),
         "calendario_id": str(p.calendario_id) if p.calendario_id else None,
         "contenido_id": str(p.contenido_id) if p.contenido_id else None,
         "red_social": p.red_social,
+        "formato": p.formato,
         "post_id_externo": p.post_id_externo,
         "url_publicacion": p.url_publicacion,
         "copy_publicado": p.copy_publicado,
         "imagen_url": p.imagen_url,
-        "estado": p.estado, "intentos": p.intentos,
+        "estado": p.estado,
+        "intentos": p.intentos,
         "error_detalle": p.error_detalle,
-        "likes_2hs": p.likes_2hs, "comentarios_2hs": p.comentarios_2hs,
-        "alcance_2hs": p.alcance_2hs, "engagement_bajo": p.engagement_bajo,
+        "likes_2hs": p.likes_2hs,
+        "comentarios_2hs": p.comentarios_2hs,
+        "alcance_2hs": p.alcance_2hs,
+        "engagement_bajo": p.engagement_bajo,
         "programado_para": p.programado_para.isoformat() if p.programado_para else None,
         "zernio_post_id": p.zernio_post_id,
         "publicado_at": p.publicado_at.isoformat() if p.publicado_at else None,
@@ -43,12 +48,7 @@ def crear(db: Session, data: dict) -> dict:
 
 def listar(db: Session, marca_id: UUID) -> list[dict]:
     """Lista todas las publicaciones de una marca, más recientes primero."""
-    rows = (
-        db.query(PublicacionesMkt)
-        .filter(PublicacionesMkt.marca_id == marca_id)
-        .order_by(PublicacionesMkt.publicado_at.desc())
-        .all()
-    )
+    rows = db.query(PublicacionesMkt).filter(PublicacionesMkt.marca_id == marca_id).order_by(PublicacionesMkt.publicado_at.desc()).all()
     return [_s(r) for r in rows]
 
 
@@ -88,19 +88,26 @@ def contar_mes_actual(db: Session, marca_id: UUID) -> int:
     """Cuenta publicaciones (publicadas + programadas) del mes actual para la marca."""
     ahora = datetime.now(timezone.utc)
     inicio_mes = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    return db.query(func.count(PublicacionesMkt.id)).filter(
-        PublicacionesMkt.marca_id == marca_id,
-        PublicacionesMkt.created_at >= inicio_mes,
-        PublicacionesMkt.estado.in_(["publicado", "programado"]),
-    ).scalar() or 0
+    return (
+        db.query(func.count(PublicacionesMkt.id))
+        .filter(
+            PublicacionesMkt.marca_id == marca_id,
+            PublicacionesMkt.created_at >= inicio_mes,
+            PublicacionesMkt.estado.in_(["publicado", "programado"]),
+        )
+        .scalar()
+        or 0
+    )
 
 
 def promedio_engagement(db: Session, marca_id: UUID) -> float:
     """Calcula el promedio histórico de engagement (likes+comentarios) por publicación."""
-    result = db.query(
-        func.avg(PublicacionesMkt.likes_2hs + PublicacionesMkt.comentarios_2hs)
-    ).filter(
-        PublicacionesMkt.marca_id == marca_id,
-        PublicacionesMkt.estado == "publicado",
-    ).scalar()
+    result = (
+        db.query(func.avg(PublicacionesMkt.likes_2hs + PublicacionesMkt.comentarios_2hs))
+        .filter(
+            PublicacionesMkt.marca_id == marca_id,
+            PublicacionesMkt.estado == "publicado",
+        )
+        .scalar()
+    )
     return float(result or 0)

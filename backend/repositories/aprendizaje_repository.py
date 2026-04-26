@@ -13,11 +13,16 @@ logger = logging.getLogger(__name__)
 
 def _s(a: AprendizajeMkt) -> dict:
     return {
-        "id": str(a.id), "marca_id": str(a.marca_id),
+        "id": str(a.id),
+        "marca_id": str(a.marca_id),
         "contenido_id": str(a.contenido_id) if a.contenido_id else None,
-        "tipo": a.tipo, "red_social": a.red_social, "formato": a.formato,
-        "tono": a.tono, "comentario": a.comentario,
-        "copy_original": a.copy_original, "copy_final": a.copy_final,
+        "tipo": a.tipo,
+        "red_social": a.red_social,
+        "formato": a.formato,
+        "tono": a.tono,
+        "comentario": a.comentario,
+        "copy_original": a.copy_original,
+        "copy_final": a.copy_final,
         "created_at": a.created_at.isoformat() if a.created_at else None,
     }
 
@@ -41,12 +46,7 @@ def registrar(db: Session, evento: dict) -> dict:
 
 def listar_por_marca(db: Session, marca_id: UUID) -> list[dict]:
     """Lista todos los eventos de aprendizaje de una marca, más recientes primero."""
-    rows = (
-        db.query(AprendizajeMkt)
-        .filter(AprendizajeMkt.marca_id == marca_id)
-        .order_by(AprendizajeMkt.created_at.desc())
-        .all()
-    )
+    rows = db.query(AprendizajeMkt).filter(AprendizajeMkt.marca_id == marca_id).order_by(AprendizajeMkt.created_at.desc()).all()
     return [_s(r) for r in rows]
 
 
@@ -61,11 +61,7 @@ def obtener_preferencias(db: Session, marca_id: UUID) -> dict:
     """
     base = db.query(AprendizajeMkt).filter(AprendizajeMkt.marca_id == marca_id)
 
-    totales = (
-        base.with_entities(AprendizajeMkt.tipo, func.count().label("n"))
-        .group_by(AprendizajeMkt.tipo)
-        .all()
-    )
+    totales = base.with_entities(AprendizajeMkt.tipo, func.count().label("n")).group_by(AprendizajeMkt.tipo).all()
 
     tono_top = (
         base.filter(AprendizajeMkt.tipo == "aprobacion", AprendizajeMkt.tono.isnot(None))

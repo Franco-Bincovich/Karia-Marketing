@@ -1,8 +1,8 @@
 """Cliente Semrush API para investigación de keywords y competidores."""
+
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 import requests
 
@@ -33,8 +33,7 @@ def buscar_keywords(query: str, database: str = "ar") -> list:
 
     r = requests.get(
         f"{_BASE_URL}/",
-        params={"type": "phrase_related", "key": get_settings().SEMRUSH_API_KEY,
-                "phrase": query, "database": database, "export_columns": "Ph,Nq,Kd"},
+        params={"type": "phrase_related", "key": get_settings().SEMRUSH_API_KEY, "phrase": query, "database": database, "export_columns": "Ph,Nq,Kd"},
         timeout=30,
     )
     r.raise_for_status()
@@ -46,16 +45,23 @@ def analizar_competidor(dominio: str, marca_dominio: str) -> dict:
     if _is_mock():
         logger.debug("[semrush] analizar_competidor — modo mock")
         return {
-            "dominio": dominio, "keywords_exclusivas": [
+            "dominio": dominio,
+            "keywords_exclusivas": [
                 {"keyword": f"servicio {dominio.split('.')[0]}", "volumen_mensual": 1100, "posicion": 3},
                 {"keyword": f"{dominio.split('.')[0]} alternativa", "volumen_mensual": 650, "posicion": 5},
-            ], "total_keywords_competidor": 145, "mock": True,
+            ],
+            "total_keywords_competidor": 145,
+            "mock": True,
         }
 
     r = requests.get(
         f"{_BASE_URL}/",
-        params={"type": "domain_domains", "key": get_settings().SEMRUSH_API_KEY,
-                "domains": f"{marca_dominio}|or|{dominio}|or", "export_columns": "Ph,Nq,Po"},
+        params={
+            "type": "domain_domains",
+            "key": get_settings().SEMRUSH_API_KEY,
+            "domains": f"{marca_dominio}|or|{dominio}|or",
+            "export_columns": "Ph,Nq,Po",
+        },
         timeout=30,
     )
     r.raise_for_status()
@@ -70,8 +76,7 @@ def obtener_posiciones(dominio: str, keywords: list) -> list:
 
     r = requests.get(
         f"{_BASE_URL}/",
-        params={"type": "domain_organic", "key": get_settings().SEMRUSH_API_KEY,
-                "domain": dominio, "export_columns": "Ph,Po"},
+        params={"type": "domain_organic", "key": get_settings().SEMRUSH_API_KEY, "domain": dominio, "export_columns": "Ph,Po"},
         timeout=30,
     )
     r.raise_for_status()

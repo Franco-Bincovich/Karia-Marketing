@@ -40,31 +40,39 @@ class ClientesService:
             raise AppError("El email ya tiene un usuario asociado", "EMAIL_EXISTS", 409)
 
         ahora = datetime.now(timezone.utc)
-        cliente = self.repo.create_cliente({
-            "nombre": data["nombre"],
-            "email_admin": data["email_admin"],
-            "pais": data.get("pais", "AR"),
-            "plan": data.get("plan", "Basic"),
-            "fecha_vencimiento": ahora + timedelta(days=CICLO_DIAS),
-            "fecha_ultimo_pago": ahora,
-        })
+        cliente = self.repo.create_cliente(
+            {
+                "nombre": data["nombre"],
+                "email_admin": data["email_admin"],
+                "pais": data.get("pais", "AR"),
+                "plan": data.get("plan", "Basic"),
+                "fecha_vencimiento": ahora + timedelta(days=CICLO_DIAS),
+                "fecha_ultimo_pago": ahora,
+            }
+        )
         self.db.flush()
 
         temp_password = _generate_temp_password()
-        self.auth_repo.create_usuario({
-            "email": data["email_admin"],
-            "password_hash": hash_password(temp_password),
-            "nombre": data["nombre"],
-            "rol": "admin",
-            "cliente_id": cliente.id,
-        })
+        self.auth_repo.create_usuario(
+            {
+                "email": data["email_admin"],
+                "password_hash": hash_password(temp_password),
+                "nombre": data["nombre"],
+                "rol": "admin",
+                "cliente_id": cliente.id,
+            }
+        )
 
         from integrations.email_client import send_welcome_email
+
         send_welcome_email(data["email_admin"], temp_password, data["nombre"])
 
         registrar_auditoria(
-            self.db, "crear_cliente", "clientes",
-            usuario_id=actor_id, recurso_id=str(cliente.id),
+            self.db,
+            "crear_cliente",
+            "clientes",
+            usuario_id=actor_id,
+            recurso_id=str(cliente.id),
         )
         self.db.commit()
         self.db.refresh(cliente)
@@ -82,8 +90,11 @@ class ClientesService:
         cliente = self.repo.update_cliente(cliente_id, {"activo": activo})
         accion = "reactivar_cliente" if activo else "pausar_cliente"
         registrar_auditoria(
-            self.db, accion, "clientes",
-            usuario_id=actor_id, recurso_id=str(cliente_id),
+            self.db,
+            accion,
+            "clientes",
+            usuario_id=actor_id,
+            recurso_id=str(cliente_id),
         )
         self.db.commit()
         self.db.refresh(cliente)
@@ -96,16 +107,22 @@ class ClientesService:
             raise AppError("Cliente no encontrado", "CLIENT_NOT_FOUND", 404)
 
         ahora = datetime.now(timezone.utc)
-        cliente = self.repo.update_cliente(cliente_id, {
-            "fecha_ultimo_pago": ahora,
-            "fecha_vencimiento": ahora + timedelta(days=CICLO_DIAS),
-            "activo": True,
-            "notificacion_enviada": False,
-        })
+        cliente = self.repo.update_cliente(
+            cliente_id,
+            {
+                "fecha_ultimo_pago": ahora,
+                "fecha_vencimiento": ahora + timedelta(days=CICLO_DIAS),
+                "activo": True,
+                "notificacion_enviada": False,
+            },
+        )
 
         registrar_auditoria(
-            self.db, "renovar_cliente", "clientes",
-            usuario_id=actor_id, recurso_id=str(cliente_id),
+            self.db,
+            "renovar_cliente",
+            "clientes",
+            usuario_id=actor_id,
+            recurso_id=str(cliente_id),
         )
         self.db.commit()
         self.db.refresh(cliente)
@@ -118,12 +135,17 @@ class ClientesService:
         data["cliente_id"] = cliente_id
         marca = self.repo.create_marca(data)
         registrar_auditoria(
-            self.db, "crear_marca", "marcas",
-            usuario_id=actor_id, cliente_id=cliente_id, recurso_id=str(marca.id),
+            self.db,
+            "crear_marca",
+            "marcas",
+            usuario_id=actor_id,
+            cliente_id=cliente_id,
+            recurso_id=str(marca.id),
         )
         self.db.flush()
         # Iniciar onboarding y memoria de marca automáticamente
         from services.onboarding_service import iniciar_onboarding
+
         iniciar_onboarding(self.db, marca.id)
         self.db.commit()
         self.db.refresh(marca)
@@ -142,8 +164,12 @@ class ClientesService:
         data["password_hash"] = hash_password(data.pop("password"))
         usuario = self.auth_repo.create_usuario(data)
         registrar_auditoria(
-            self.db, "crear_usuario", "usuarios",
-            usuario_id=actor_id, cliente_id=usuario.cliente_id, recurso_id=str(usuario.id),
+            self.db,
+            "crear_usuario",
+            "usuarios",
+            usuario_id=actor_id,
+            cliente_id=usuario.cliente_id,
+            recurso_id=str(usuario.id),
         )
         self.db.commit()
         self.db.refresh(usuario)
@@ -157,8 +183,11 @@ class ClientesService:
         """Asigna un usuario a una marca."""
         asignacion = self.auth_repo.assign_marca(usuario_id, marca_id)
         registrar_auditoria(
-            self.db, "asignar_usuario_marca", "usuarios",
-            usuario_id=actor_id, recurso_id=str(asignacion.id),
+            self.db,
+            "asignar_usuario_marca",
+            "usuarios",
+            usuario_id=actor_id,
+            recurso_id=str(asignacion.id),
         )
         self.db.commit()
         return {"usuario_id": str(usuario_id), "marca_id": str(marca_id)}

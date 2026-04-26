@@ -1,8 +1,8 @@
 """Adaptador HTTP para el módulo de Ads."""
+
 from __future__ import annotations
 
 import logging
-from datetime import date
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -58,49 +58,57 @@ class AdsController:
         items = campanas_service.listar(self.db, marca_id)
         return {"data": items, "count": len(items)}
 
-    def crear_campana(self, body: CrearCampanaRequest, x_marca_id: Optional[str],
-                      current_user: dict) -> dict:
+    def crear_campana(self, body: CrearCampanaRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return campanas_service.crear_campana(
-            self.db, marca_id, UUID(current_user["cliente_id"]),
-            body.model_dump(), UUID(current_user["sub"]),
+            self.db,
+            marca_id,
+            UUID(current_user["cliente_id"]),
+            body.model_dump(),
+            UUID(current_user["sub"]),
         )
 
-    def obtener_campana(self, campana_id: UUID, x_marca_id: Optional[str],
-                        current_user: dict) -> dict:
+    def obtener_campana(self, campana_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return campanas_service.obtener_con_metricas(self.db, campana_id, marca_id)
 
-    def aprobar_campana(self, campana_id: UUID, x_marca_id: Optional[str],
-                        current_user: dict) -> dict:
+    def aprobar_campana(self, campana_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return campanas_service.aprobar_campana(
-            self.db, campana_id, marca_id, UUID(current_user["sub"]), access_token="mock",
+            self.db,
+            campana_id,
+            marca_id,
+            UUID(current_user["sub"]),
+            access_token="mock",
         )
 
-    def pausar_campana(self, campana_id: UUID, body: PausarRequest,
-                       x_marca_id: Optional[str], current_user: dict) -> dict:
+    def pausar_campana(self, campana_id: UUID, body: PausarRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return campanas_service.pausar_campana(
-            self.db, campana_id, marca_id, UUID(current_user["sub"]),
-            access_token="mock", motivo=body.motivo,
+            self.db,
+            campana_id,
+            marca_id,
+            UUID(current_user["sub"]),
+            access_token="mock",
+            motivo=body.motivo,
         )
 
     def obtener_umbrales(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return umbrales_repository.obtener_o_crear(self.db, marca_id)
 
-    def actualizar_umbrales(self, body: ActualizarUmbralesRequest,
-                            x_marca_id: Optional[str], current_user: dict) -> dict:
+    def actualizar_umbrales(self, body: ActualizarUmbralesRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         data = {k: v for k, v in body.model_dump().items() if v is not None}
         return umbrales_repository.actualizar(self.db, marca_id, data)
 
-    def verificar_umbrales(self, body: VerificarUmbralesRequest,
-                           x_marca_id: Optional[str], current_user: dict) -> dict:
+    def verificar_umbrales(self, body: VerificarUmbralesRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         alertas = monitoreo_ads_service.verificar_umbrales(
-            self.db, marca_id, UUID(current_user["sub"]),
-            body.access_token, body.modo,
+            self.db,
+            marca_id,
+            UUID(current_user["sub"]),
+            body.access_token,
+            body.modo,
         )
         return {"alertas": alertas, "count": len(alertas)}

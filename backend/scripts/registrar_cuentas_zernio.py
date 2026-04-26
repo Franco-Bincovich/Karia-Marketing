@@ -8,12 +8,13 @@ Ejecutar desde backend/:
   source venv/bin/activate && python scripts/registrar_cuentas_zernio.py
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import requests
+
 from config.settings import get_settings
 from integrations.database import SessionLocal
 from models.cliente_models import MarcaMkt
@@ -79,10 +80,14 @@ def main():
             nombre = username or display_name or f"{platform}-{zernio_id[:8]}"
 
             # Check if already exists
-            existing = db.query(CuentasSocialesMkt).filter(
-                CuentasSocialesMkt.marca_id == marca.id,
-                CuentasSocialesMkt.red_social == platform,
-            ).first()
+            existing = (
+                db.query(CuentasSocialesMkt)
+                .filter(
+                    CuentasSocialesMkt.marca_id == marca.id,
+                    CuentasSocialesMkt.red_social == platform,
+                )
+                .first()
+            )
 
             if existing:
                 print(f"  SKIP: {platform} — {nombre} (ya existe, id={existing.id})")

@@ -1,28 +1,33 @@
 """Estructura jerárquica de la agencia NEXO — organigrama de agentes IA."""
+
 from __future__ import annotations
+
 import logging
 from uuid import UUID
+
 from sqlalchemy.orm import Session
+
 from services import agentes_service as agentes_svc
 
 logger = logging.getLogger(__name__)
 
 AREAS = {
-    "Dirección":  {"color": "#FF6B00", "orden": 0},
-    "Creativa":   {"color": "#EC4899", "orden": 1},
-    "Medios":     {"color": "#3B82F6", "orden": 2},
-    "Comunidad":  {"color": "#10B981", "orden": 3},
+    "Dirección": {"color": "#FF6B00", "orden": 0},
+    "Creativa": {"color": "#EC4899", "orden": 1},
+    "Medios": {"color": "#3B82F6", "orden": 2},
+    "Comunidad": {"color": "#10B981", "orden": 3},
     "Estrategia": {"color": "#8B5CF6", "orden": 4},
-    "Datos":      {"color": "#F59E0B", "orden": 5},
+    "Datos": {"color": "#F59E0B", "orden": 5},
 }
 
-_ALL_AGENTS = ["contenido", "creativo", "social_media", "ads", "seo",
-               "comunidad", "listening", "estrategia", "analytics", "reporting", "prospeccion"]
+_ALL_AGENTS = ["contenido", "creativo", "social_media", "ads", "seo", "comunidad", "listening", "estrategia", "analytics", "reporting", "prospeccion"]
 
 JERARQUIA = {
     "orquestador": {
-        "area": "Dirección", "reporta_a": None,
-        "supervisa": _ALL_AGENTS, "dependencias": [],
+        "area": "Dirección",
+        "reporta_a": None,
+        "supervisa": _ALL_AGENTS,
+        "dependencias": [],
     },
     "contenido": {
         "area": "Creativa",
@@ -113,9 +118,9 @@ JERARQUIA = {
 
 # Colaboradores internos del Área Creativa (no son agentes configurables)
 _COLABORADORES = {
-    "director_arte":  {"label": "Director de Arte", "icon": "🎬", "rol": "Analiza briefs y toma decisiones creativas"},
-    "agente_visual":  {"label": "Agente Visual",    "icon": "🖼️", "rol": "Genera imágenes desde instrucciones del Director"},
-    "copy_visual":    {"label": "Copy Visual",      "icon": "✏️", "rol": "Aplica texto y tipografía sobre imágenes"},
+    "director_arte": {"label": "Director de Arte", "icon": "🎬", "rol": "Analiza briefs y toma decisiones creativas"},
+    "agente_visual": {"label": "Agente Visual", "icon": "🖼️", "rol": "Genera imágenes desde instrucciones del Director"},
+    "copy_visual": {"label": "Copy Visual", "icon": "✏️", "rol": "Aplica texto y tipografía sobre imágenes"},
 }
 
 

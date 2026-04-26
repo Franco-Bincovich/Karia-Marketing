@@ -1,4 +1,5 @@
 """Rutas del módulo Comunidad y Social Listening."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -8,8 +9,11 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from controllers.comunidad_controller import (
-    ConfigComunidadRequest, ConfigListeningRequest,
-    ComunidadController, MensajeRequest, ResponderRequest,
+    ComunidadController,
+    ConfigComunidadRequest,
+    ConfigListeningRequest,
+    MensajeRequest,
+    ResponderRequest,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user
@@ -22,30 +26,33 @@ def _ctrl(db: Session = Depends(get_db)) -> ComunidadController:
 
 
 @router.get("/mensajes")
-def listar_mensajes(x_marca_id: Optional[str] = Header(default=None),
-                    current_user: dict = Depends(get_current_user),
-                    ctrl: ComunidadController = Depends(_ctrl)):
+def listar_mensajes(
+    x_marca_id: Optional[str] = Header(default=None), current_user: dict = Depends(get_current_user), ctrl: ComunidadController = Depends(_ctrl)
+):
     return ctrl.listar_mensajes(x_marca_id, current_user)
 
 
 @router.get("/mensajes/pendientes")
-def mensajes_pendientes(x_marca_id: Optional[str] = Header(default=None),
-                        current_user: dict = Depends(get_current_user),
-                        ctrl: ComunidadController = Depends(_ctrl)):
+def mensajes_pendientes(
+    x_marca_id: Optional[str] = Header(default=None), current_user: dict = Depends(get_current_user), ctrl: ComunidadController = Depends(_ctrl)
+):
     return ctrl.mensajes_pendientes(x_marca_id, current_user)
 
 
 @router.post("/mensajes")
-def recibir_mensaje(body: MensajeRequest,
-                    x_marca_id: Optional[str] = Header(default=None),
-                    current_user: dict = Depends(get_current_user),
-                    ctrl: ComunidadController = Depends(_ctrl)):
+def recibir_mensaje(
+    body: MensajeRequest,
+    x_marca_id: Optional[str] = Header(default=None),
+    current_user: dict = Depends(get_current_user),
+    ctrl: ComunidadController = Depends(_ctrl),
+):
     return ctrl.recibir_mensaje(body, x_marca_id, current_user)
 
 
 @router.post("/mensajes/{msg_id}/responder")
 def responder_mensaje(
-    msg_id: UUID, body: ResponderRequest,
+    msg_id: UUID,
+    body: ResponderRequest,
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),
     ctrl: ComunidadController = Depends(_ctrl),

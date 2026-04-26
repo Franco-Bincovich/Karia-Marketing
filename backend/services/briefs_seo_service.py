@@ -1,4 +1,5 @@
 """Servicio de generación de briefs SEO para el Agente Contenido."""
+
 from __future__ import annotations
 
 import json
@@ -35,8 +36,7 @@ _JSON_SCHEMA = """{
 }"""
 
 
-def generar_brief(db: Session, marca_id: UUID, keyword_principal: str,
-                  keywords_secundarias: str = "") -> dict:
+def generar_brief(db: Session, marca_id: UUID, keyword_principal: str, keywords_secundarias: str = "") -> dict:
     """Genera un brief SEO completo usando Claude."""
     prompt = (
         f"Generá un brief SEO para posicionar la keyword: {keyword_principal!r}\n"
@@ -46,7 +46,8 @@ def generar_brief(db: Session, marca_id: UUID, keyword_principal: str,
 
     try:
         message = _get_client().messages.create(
-            model=_SEO_MODEL, max_tokens=1024,
+            model=_SEO_MODEL,
+            max_tokens=1024,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -104,6 +105,8 @@ def _brief_fallback(keyword: str, secundarias: str) -> dict:
     """Brief mínimo si Claude no está disponible."""
     return {
         "estructura_sugerida": f"H1: {keyword}\nH2: Beneficios\nH2: Cómo funciona\nH2: FAQ",
-        "longitud_minima": 800, "intencion_busqueda": "informacional",
-        "meta_title": keyword[:57] + "...", "meta_description": f"Todo sobre {keyword}. Guía completa.",
+        "longitud_minima": 800,
+        "intencion_busqueda": "informacional",
+        "meta_title": keyword[:57] + "...",
+        "meta_description": f"Todo sobre {keyword}. Guía completa.",
     }

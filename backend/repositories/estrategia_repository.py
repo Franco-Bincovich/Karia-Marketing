@@ -38,11 +38,18 @@ def listar(db: Session, marca_id: UUID, tipo: Optional[str] = None) -> list[dict
 def activar_plan(db: Session, estrategia_id: UUID, marca_id: UUID) -> Optional[dict]:
     """Activa un plan y desactiva todos los anteriores de la marca."""
     db.query(EstrategiaMkt).filter(
-        EstrategiaMkt.marca_id == marca_id, EstrategiaMkt.tipo == "plan", EstrategiaMkt.activo == True,
+        EstrategiaMkt.marca_id == marca_id,
+        EstrategiaMkt.tipo == "plan",
+        EstrategiaMkt.activo == True,
     ).update({"activo": False})
-    obj = db.query(EstrategiaMkt).filter(
-        EstrategiaMkt.id == estrategia_id, EstrategiaMkt.marca_id == marca_id,
-    ).first()
+    obj = (
+        db.query(EstrategiaMkt)
+        .filter(
+            EstrategiaMkt.id == estrategia_id,
+            EstrategiaMkt.marca_id == marca_id,
+        )
+        .first()
+    )
     if not obj:
         return None
     obj.activo = True
@@ -52,17 +59,27 @@ def activar_plan(db: Session, estrategia_id: UUID, marca_id: UUID) -> Optional[d
 
 def obtener_plan_activo(db: Session, marca_id: UUID) -> Optional[dict]:
     """Retorna el plan de contenido activo de la marca."""
-    obj = db.query(EstrategiaMkt).filter(
-        EstrategiaMkt.marca_id == marca_id, EstrategiaMkt.tipo == "plan", EstrategiaMkt.activo == True,
-    ).first()
+    obj = (
+        db.query(EstrategiaMkt)
+        .filter(
+            EstrategiaMkt.marca_id == marca_id,
+            EstrategiaMkt.tipo == "plan",
+            EstrategiaMkt.activo == True,
+        )
+        .first()
+    )
     return _s(obj) if obj else None
 
 
 def marcar_implementada(db: Session, estrategia_id: UUID, marca_id: UUID) -> Optional[dict]:
-    obj = db.query(EstrategiaMkt).filter(
-        EstrategiaMkt.id == estrategia_id,
-        EstrategiaMkt.marca_id == marca_id,
-    ).first()
+    obj = (
+        db.query(EstrategiaMkt)
+        .filter(
+            EstrategiaMkt.id == estrategia_id,
+            EstrategiaMkt.marca_id == marca_id,
+        )
+        .first()
+    )
     if not obj:
         return None
     obj.implementada = True

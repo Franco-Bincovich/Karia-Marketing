@@ -3,12 +3,15 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, UploadFile, File
+from fastapi import APIRouter, Depends, File, Header, UploadFile
 from sqlalchemy.orm import Session
 
 from controllers.imagen_controller import (
-    GenerarCarruselRequest, GenerarImagenRequest, GenerarParaContenidoRequest,
-    GuardarOpenAIKeyRequest, ImagenController,
+    GenerarCarruselRequest,
+    GenerarImagenRequest,
+    GenerarParaContenidoRequest,
+    GuardarOpenAIKeyRequest,
+    ImagenController,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user
@@ -89,6 +92,7 @@ def guardar_key(
 
 # --- Biblioteca (upload manual) ---
 
+
 @router.post("/biblioteca/subir")
 async def biblioteca_subir(
     file: UploadFile = File(...),
@@ -97,8 +101,9 @@ async def biblioteca_subir(
     db: Session = Depends(get_db),
 ):
     """Sube imagen manualmente a la biblioteca."""
-    from services import imagen_service
     from controllers.imagen_controller import _marca
+    from services import imagen_service
+
     content = await file.read()
     return imagen_service.biblioteca_subir(db, _marca(x_marca_id), file.filename, content)
 
@@ -110,8 +115,9 @@ def biblioteca_listar(
     db: Session = Depends(get_db),
 ):
     """Lista imágenes subidas manualmente."""
-    from services import imagen_service
     from controllers.imagen_controller import _marca
+    from services import imagen_service
+
     items = imagen_service.biblioteca_listar(db, _marca(x_marca_id))
     return {"data": items, "count": len(items)}
 
@@ -124,7 +130,8 @@ def biblioteca_eliminar(
     db: Session = Depends(get_db),
 ):
     """Elimina imagen de la biblioteca."""
-    from services import imagen_service
     from controllers.imagen_controller import _marca
+    from services import imagen_service
+
     imagen_service.biblioteca_eliminar(db, _marca(x_marca_id), imagen_id)
     return {"message": "Imagen eliminada"}

@@ -4,7 +4,10 @@ import { useApi } from "../hooks/useApi";
 import { ENDPOINTS } from "../constants/endpoints";
 
 const card = {
-  background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20,
+  background: "var(--surface)",
+  border: "1px solid var(--border)",
+  borderRadius: 12,
+  padding: 20,
 };
 const metricVal = { fontSize: 26, fontWeight: 800, color: "var(--text)" };
 const metricLabel = { fontSize: 13, color: "var(--text-muted)", marginTop: 4 };
@@ -32,7 +35,12 @@ const agentesV1 = [
 function formatDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function Dashboard() {
@@ -42,27 +50,40 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    get(ENDPOINTS.ANALYTICS_DASHBOARD).then(r => setData(r.data)).catch(() => {});
+    get(ENDPOINTS.ANALYTICS_DASHBOARD)
+      .then((r) => setData(r.data))
+      .catch(() => {});
 
     // Fetch actividad reciente real de múltiples fuentes
     Promise.all([
       get(ENDPOINTS.CONTENIDO + "?estado=aprobado").catch(() => ({ data: { data: [] } })),
       get(ENDPOINTS.CONTENIDO + "?estado=publicado").catch(() => ({ data: { data: [] } })),
       get(ENDPOINTS.SOCIAL_PUBLICACIONES).catch(() => ({ data: { data: [] } })),
-    ]).then(([aprobados, publicados, pubs]) => {
-      const items = [];
-      for (const c of (aprobados.data.data || []).slice(0, 3)) {
-        items.push({ texto: `Contenido aprobado: ${c.tema || c.red_social} — ${c.formato}`, fecha: c.updated_at || c.created_at });
-      }
-      for (const c of (publicados.data.data || []).slice(0, 3)) {
-        items.push({ texto: `Contenido publicado: ${c.tema || c.red_social}`, fecha: c.updated_at || c.created_at });
-      }
-      for (const p of (pubs.data.data || []).slice(0, 3)) {
-        items.push({ texto: `Post ${p.estado} en ${p.red_social}`, fecha: p.publicado_at || p.created_at });
-      }
-      items.sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
-      setActividad(items.slice(0, 6));
-    }).finally(() => setLoading(false));
+    ])
+      .then(([aprobados, publicados, pubs]) => {
+        const items = [];
+        for (const c of (aprobados.data.data || []).slice(0, 3)) {
+          items.push({
+            texto: `Contenido aprobado: ${c.tema || c.red_social} — ${c.formato}`,
+            fecha: c.updated_at || c.created_at,
+          });
+        }
+        for (const c of (publicados.data.data || []).slice(0, 3)) {
+          items.push({
+            texto: `Contenido publicado: ${c.tema || c.red_social}`,
+            fecha: c.updated_at || c.created_at,
+          });
+        }
+        for (const p of (pubs.data.data || []).slice(0, 3)) {
+          items.push({
+            texto: `Post ${p.estado} en ${p.red_social}`,
+            fecha: p.publicado_at || p.created_at,
+          });
+        }
+        items.sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
+        setActividad(items.slice(0, 6));
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const m30 = data?.metricas_30d || {};
@@ -75,42 +96,102 @@ export default function Dashboard() {
 
   return (
     <Layout title="Dashboard">
-      {loading ? <p style={{ color: "var(--text-muted)" }}>Cargando...</p> : (
+      {loading ? (
+        <p style={{ color: "var(--text-muted)" }}>Cargando...</p>
+      ) : (
         <>
           <div style={grid4}>
-            {metricas.map(m => (
+            {metricas.map((m) => (
               <div key={m.key} style={card}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <span style={{ width: 36, height: 36, borderRadius: 10, background: m.color,
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{m.icon}</span>
+                  <span
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: m.color,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 18,
+                    }}
+                  >
+                    {m.icon}
+                  </span>
                   <span style={metricLabel}>{m.label}</span>
                 </div>
-                <div style={metricVal}>
-                  {(vals[m.key] || 0).toLocaleString()}
-                </div>
+                <div style={metricVal}>{(vals[m.key] || 0).toLocaleString()}</div>
               </div>
             ))}
           </div>
           <div style={grid2}>
             <div style={card}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: "var(--text)" }}>Actividad Reciente</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: "var(--text)" }}>
+                Actividad Reciente
+              </h3>
               {actividad.length === 0 ? (
                 <p style={{ color: "var(--text-muted)", fontSize: 13 }}>Sin actividad reciente</p>
-              ) : actividad.map((a, i) => (
-                <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--border-subtle)", fontSize: 13, color: "var(--text-secondary)", display: "flex", justifyContent: "space-between" }}>
-                  <span><span style={{ marginRight: 8 }}>•</span>{a.texto}</span>
-                  <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0, marginLeft: 8 }}>{formatDate(a.fecha)}</span>
-                </div>
-              ))}
+              ) : (
+                actividad.map((a, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "10px 0",
+                      borderBottom: "1px solid var(--border-subtle)",
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span>
+                      <span style={{ marginRight: 8 }}>•</span>
+                      {a.texto}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "var(--text-muted)",
+                        flexShrink: 0,
+                        marginLeft: 8,
+                      }}
+                    >
+                      {formatDate(a.fecha)}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
             <div style={card}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: "var(--text)" }}>Agentes V1</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: "var(--text)" }}>
+                Agentes V1
+              </h3>
               {agentesV1.map((a, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0",
-                  borderBottom: "1px solid var(--border-subtle)", fontSize: 13 }}>
-                  <span style={{ color: "var(--text-secondary)" }}>{a.icon} {a.nombre}</span>
-                  <span style={{ background: "var(--success-bg)", color: "var(--success-text)", padding: "2px 8px",
-                    borderRadius: 6, fontSize: 11, fontWeight: 600 }}>Activo</span>
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    padding: "8px 0",
+                    borderBottom: "1px solid var(--border-subtle)",
+                    fontSize: 13,
+                  }}
+                >
+                  <span style={{ color: "var(--text-secondary)" }}>
+                    {a.icon} {a.nombre}
+                  </span>
+                  <span
+                    style={{
+                      background: "var(--success-bg)",
+                      color: "var(--success-text)",
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Activo
+                  </span>
                 </div>
               ))}
             </div>

@@ -1,9 +1,8 @@
 """Cliente ManyChat API para mensajería automatizada."""
+
 from __future__ import annotations
 
 import logging
-import time
-from typing import Optional
 
 import requests
 
@@ -26,12 +25,11 @@ def enviar_mensaje(subscriber_id: str, mensaje: str) -> dict:
         logger.debug("[manychat] enviar_mensaje — modo mock")
         return {"status": "sent", "subscriber_id": subscriber_id, "mock": True}
 
-    headers = {"Authorization": f"Bearer {get_settings().MANYCHAT_API_KEY}",
-               "Content-Type": "application/json"}
+    headers = {"Authorization": f"Bearer {get_settings().MANYCHAT_API_KEY}", "Content-Type": "application/json"}
     r = requests.post(
         f"{_BASE_URL}/sending/sendContent",
-        headers=headers, json={"subscriber_id": subscriber_id,
-                                "data": {"version": "v2", "content": {"messages": [{"type": "text", "text": mensaje}]}}},
+        headers=headers,
+        json={"subscriber_id": subscriber_id, "data": {"version": "v2", "content": {"messages": [{"type": "text", "text": mensaje}]}}},
         timeout=30,
     )
     r.raise_for_status()

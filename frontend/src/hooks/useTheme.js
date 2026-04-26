@@ -18,7 +18,7 @@ export function useTheme() {
   }, [isDark]);
 
   function toggle() {
-    setIsDark(prev => !prev);
+    setIsDark((prev) => !prev);
   }
 
   return { isDark, toggle };

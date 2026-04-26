@@ -13,19 +13,42 @@ logger = logging.getLogger(__name__)
 
 # Definición de las 5 automatizaciones por defecto
 DEFAULTS = [
-    {"tipo": "vencimientos", "nombre": "Vencimientos", "descripcion": "Verifica vencimientos de clientes, pausa los vencidos y notifica a los 7 días.", "intervalo_horas": 24},
-    {"tipo": "listening", "nombre": "Social Listening", "descripcion": "Escanea menciones de la marca en redes sociales y detecta crisis.", "intervalo_horas": 6},
+    {
+        "tipo": "vencimientos",
+        "nombre": "Vencimientos",
+        "descripcion": "Verifica vencimientos de clientes, pausa los vencidos y notifica a los 7 días.",
+        "intervalo_horas": 24,
+    },
+    {
+        "tipo": "listening",
+        "nombre": "Social Listening",
+        "descripcion": "Escanea menciones de la marca en redes sociales y detecta crisis.",
+        "intervalo_horas": 6,
+    },
     {"tipo": "reporte", "nombre": "Reporte Semanal", "descripcion": "Genera reporte automático de performance cada lunes.", "intervalo_horas": 168},
-    {"tipo": "publicacion", "nombre": "Publicación Programada", "descripcion": "Revisa el calendario y publica posts programados via Zernio.", "intervalo_horas": 0.25},
-    {"tipo": "orquestador", "nombre": "Orquestador", "descripcion": "Analiza métricas y ajusta plan de contenido y sugerencias estratégicas.", "intervalo_horas": 24},
+    {
+        "tipo": "publicacion",
+        "nombre": "Publicación Programada",
+        "descripcion": "Revisa el calendario y publica posts programados via Zernio.",
+        "intervalo_horas": 0.25,
+    },
+    {
+        "tipo": "orquestador",
+        "nombre": "Orquestador",
+        "descripcion": "Analiza métricas y ajusta plan de contenido y sugerencias estratégicas.",
+        "intervalo_horas": 24,
+    },
 ]
 
 
 def _s(a: AutomatizacionMkt) -> dict:
     return {
-        "id": str(a.id), "marca_id": str(a.marca_id),
-        "nombre": a.nombre, "descripcion": a.descripcion,
-        "tipo": a.tipo, "activa": a.activa,
+        "id": str(a.id),
+        "marca_id": str(a.marca_id),
+        "nombre": a.nombre,
+        "descripcion": a.descripcion,
+        "tipo": a.tipo,
+        "activa": a.activa,
         "ultima_ejecucion": a.ultima_ejecucion.isoformat() if a.ultima_ejecucion else None,
         "proxima_ejecucion": a.proxima_ejecucion.isoformat() if a.proxima_ejecucion else None,
         "intervalo_horas": a.intervalo_horas,
@@ -33,15 +56,20 @@ def _s(a: AutomatizacionMkt) -> dict:
     }
 
 
-def inicializar_defaults(db: Session, marca_id: UUID):
+def inicializar_defaults(db: Session, marca_id: UUID) -> None:
     """Crea las 5 automatizaciones por defecto si no existen para la marca."""
     existentes = db.query(AutomatizacionMkt).filter(AutomatizacionMkt.marca_id == marca_id).count()
     if existentes >= 5:
         return
     for d in DEFAULTS:
-        exists = db.query(AutomatizacionMkt).filter(
-            AutomatizacionMkt.marca_id == marca_id, AutomatizacionMkt.tipo == d["tipo"],
-        ).first()
+        exists = (
+            db.query(AutomatizacionMkt)
+            .filter(
+                AutomatizacionMkt.marca_id == marca_id,
+                AutomatizacionMkt.tipo == d["tipo"],
+            )
+            .first()
+        )
         if not exists:
             db.add(AutomatizacionMkt(marca_id=marca_id, **d))
     db.flush()
@@ -51,9 +79,14 @@ def listar(db: Session, marca_id: UUID) -> list[dict]:
     """Lista las automatizaciones de la marca, creando defaults si faltan."""
     inicializar_defaults(db, marca_id)
     db.commit()
-    rows = db.query(AutomatizacionMkt).filter(
-        AutomatizacionMkt.marca_id == marca_id,
-    ).order_by(AutomatizacionMkt.created_at).all()
+    rows = (
+        db.query(AutomatizacionMkt)
+        .filter(
+            AutomatizacionMkt.marca_id == marca_id,
+        )
+        .order_by(AutomatizacionMkt.created_at)
+        .all()
+    )
     return [_s(r) for r in rows]
 
 
@@ -73,7 +106,7 @@ def desactivar(db: Session, marca_id: UUID, tipo: str) -> dict:
 
 def ejecutar_ahora(db: Session, marca_id: UUID, tipo: str) -> dict:
     """Ejecuta manualmente una automatización."""
-    obj = _get(db, marca_id, tipo)
+    _ = _get(db, marca_id, tipo)
 
     ejecutores = {
         "vencimientos": _ejecutar_vencimientos,
@@ -92,11 +125,16 @@ def ejecutar_ahora(db: Session, marca_id: UUID, tipo: str) -> dict:
     return {"tipo": tipo, "resultado": resultado}
 
 
-def actualizar_ultima_ejecucion(db: Session, marca_id: UUID, tipo: str):
+def actualizar_ultima_ejecucion(db: Session, marca_id: UUID, tipo: str) -> None:
     """Actualiza timestamp de última ejecución y calcula próxima."""
-    obj = db.query(AutomatizacionMkt).filter(
-        AutomatizacionMkt.marca_id == marca_id, AutomatizacionMkt.tipo == tipo,
-    ).first()
+    obj = (
+        db.query(AutomatizacionMkt)
+        .filter(
+            AutomatizacionMkt.marca_id == marca_id,
+            AutomatizacionMkt.tipo == tipo,
+        )
+        .first()
+    )
     if obj:
         ahora = datetime.now(timezone.utc)
         obj.ultima_ejecucion = ahora
@@ -107,18 +145,28 @@ def actualizar_ultima_ejecucion(db: Session, marca_id: UUID, tipo: str):
 
 def esta_activa(db: Session, marca_id: UUID, tipo: str) -> bool:
     """Chequea si una automatización está activa para una marca."""
-    obj = db.query(AutomatizacionMkt).filter(
-        AutomatizacionMkt.marca_id == marca_id, AutomatizacionMkt.tipo == tipo,
-    ).first()
+    obj = (
+        db.query(AutomatizacionMkt)
+        .filter(
+            AutomatizacionMkt.marca_id == marca_id,
+            AutomatizacionMkt.tipo == tipo,
+        )
+        .first()
+    )
     return obj.activa if obj else True  # Default activa si no existe aún
 
 
 def _get(db: Session, marca_id: UUID, tipo: str) -> AutomatizacionMkt:
     inicializar_defaults(db, marca_id)
     db.commit()
-    obj = db.query(AutomatizacionMkt).filter(
-        AutomatizacionMkt.marca_id == marca_id, AutomatizacionMkt.tipo == tipo,
-    ).first()
+    obj = (
+        db.query(AutomatizacionMkt)
+        .filter(
+            AutomatizacionMkt.marca_id == marca_id,
+            AutomatizacionMkt.tipo == tipo,
+        )
+        .first()
+    )
     if not obj:
         raise AppError(f"Automatización '{tipo}' no encontrada", "NOT_FOUND", 404)
     return obj
@@ -126,20 +174,24 @@ def _get(db: Session, marca_id: UUID, tipo: str) -> AutomatizacionMkt:
 
 # --- Ejecutores ---
 
+
 def _ejecutar_vencimientos(db: Session, marca_id: UUID) -> str:
     from services.vencimiento_job import ejecutar_verificacion_vencimientos
+
     ejecutar_verificacion_vencimientos()
     return "Verificación de vencimientos ejecutada"
 
 
 def _ejecutar_listening(db: Session, marca_id: UUID) -> str:
     from services.listening_service import buscar_menciones
+
     result = buscar_menciones(db, marca_id)
     return f"Escaneo completado: {result.get('menciones', 0)} menciones encontradas"
 
 
 def _ejecutar_reporte(db: Session, marca_id: UUID) -> str:
     from services.reporting_service import generar_reporte
+
     generar_reporte(db, marca_id, "semanal")
     return "Reporte semanal generado"
 
@@ -147,16 +199,21 @@ def _ejecutar_reporte(db: Session, marca_id: UUID) -> str:
 def _ejecutar_publicacion(db: Session, marca_id: UUID) -> str:
     """Publica posts programados que ya llegaron a su hora."""
     from datetime import datetime, timezone
+
     from models.social_models import PublicacionesMkt
-    from services import zernio_service
     from repositories import cuentas_sociales_repository as cuentas_repo
 
     ahora = datetime.now(timezone.utc)
-    pendientes = db.query(PublicacionesMkt).filter(
-        PublicacionesMkt.marca_id == marca_id,
-        PublicacionesMkt.estado == "programado",
-        PublicacionesMkt.programado_para <= ahora,
-    ).all()
+    pendientes = (
+        db.query(PublicacionesMkt)
+        .filter(
+            PublicacionesMkt.marca_id == marca_id,
+            PublicacionesMkt.estado == "programado",
+            PublicacionesMkt.programado_para <= ahora,
+            PublicacionesMkt.zernio_post_id == None,  # noqa: E711 — no republicar posts ya enviados a Zernio
+        )
+        .all()
+    )
 
     publicados = 0
     for pub in pendientes:
@@ -167,11 +224,13 @@ def _ejecutar_publicacion(db: Session, marca_id: UUID) -> str:
                 pub.error_detalle = f"Sin cuenta de {pub.red_social} conectada"
                 continue
             from integrations.zernio_client import publish_now
+
             result = publish_now(
                 account_id=cuenta.account_id_externo,
                 text=pub.copy_publicado or "",
                 image_url=pub.imagen_url,
                 platform=pub.red_social,
+                formato=getattr(pub, "formato", "post") or "post",
             )
             pub.estado = "publicado"
             pub.post_id_externo = result.get("external_post_id")
@@ -190,12 +249,12 @@ def _ejecutar_publicacion(db: Session, marca_id: UUID) -> str:
 
 def _ejecutar_orquestador(db: Session, marca_id: UUID) -> str:
     """Lee último reporte y métricas, ajusta plan de contenido y sugerencias."""
-    from repositories import reportes_repository, memoria_marca_repository
+    from repositories import memoria_marca_repository, reportes_repository
     from services.estrategia_service import sugerir_acciones
 
     reportes = reportes_repository.listar(db, marca_id)
     ultimo = reportes[0] if reportes else None
-    memoria_text = memoria_marca_repository.obtener_para_agente(db, marca_id)
+    _ = memoria_marca_repository.obtener_para_agente(db, marca_id)
 
     if not ultimo:
         return "Sin reportes disponibles — ejecutá un reporte primero"

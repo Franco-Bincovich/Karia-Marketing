@@ -43,7 +43,7 @@ def generar(
 
 def _generar_elaborada(brief: dict, perfil: dict, leo_key: str, size: str) -> dict:
     """Genera imagen elaborada (escena realista de marketing)."""
-    from integrations.leonardo_client import generar_imagen_desde_marca, LeonardoError
+    from integrations.leonardo_client import LeonardoError, generar_imagen_desde_marca
 
     concepto = brief.get("concepto_visual", "")
     mood = brief.get("mood", "")
@@ -53,9 +53,12 @@ def _generar_elaborada(brief: dict, perfil: dict, leo_key: str, size: str) -> di
 
     try:
         return generar_imagen_desde_marca(
-            prompt_enriquecido, perfil,
-            size=size, style="vivid",
-            custom_api_key=leo_key, tipo="elaborada",
+            prompt_enriquecido,
+            perfil,
+            size=size,
+            style="vivid",
+            custom_api_key=leo_key,
+            tipo="elaborada",
         )
     except LeonardoError:
         raise
@@ -66,21 +69,21 @@ def _generar_elaborada(brief: dict, perfil: dict, leo_key: str, size: str) -> di
 
 def _generar_fondo_placa(brief: dict, perfil: dict, leo_key: str, size: str) -> dict:
     """Genera fondo abstracto para placa (sin texto, listo para overlay)."""
-    from integrations.leonardo_client import generar_imagen_desde_marca, LeonardoError
+    from integrations.leonardo_client import LeonardoError, generar_imagen_desde_marca
 
     concepto = brief.get("concepto_visual", "")
-    prompt_fondo = (
-        f"Abstract background inspired by: {concepto}. "
-        f"Empty central area for text overlay. No text, no letters."
-    )
+    prompt_fondo = f"Abstract background inspired by: {concepto}. Empty central area for text overlay. No text, no letters."
 
     logger.info("[agente_visual] fondo placa — prompt: %s", prompt_fondo[:100])
 
     try:
         return generar_imagen_desde_marca(
-            prompt_fondo, perfil,
-            size=size, style="vivid",
-            custom_api_key=leo_key, tipo="placa",
+            prompt_fondo,
+            perfil,
+            size=size,
+            style="vivid",
+            custom_api_key=leo_key,
+            tipo="placa",
         )
     except LeonardoError:
         raise

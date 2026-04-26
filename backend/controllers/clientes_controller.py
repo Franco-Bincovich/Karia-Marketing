@@ -86,9 +86,7 @@ class ClientesController:
         return self.service.listar_usuarios(cliente_id)
 
     def actualizar_permiso(self, usuario_id: UUID, body: ActualizarPermisoRequest) -> dict:
-        permiso = self.permisos_repo.upsert_permiso(
-            usuario_id, body.marca_id, body.modulo, body.accion, body.permitido
-        )
+        permiso = self.permisos_repo.upsert_permiso(usuario_id, body.marca_id, body.modulo, body.accion, body.permitido)
         self.db.commit()
         return {"id": str(permiso.id), "permitido": permiso.permitido}
 

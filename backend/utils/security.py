@@ -56,26 +56,28 @@ def sign_hmac(data: str) -> str:
 
 
 def encrypt_token(plaintext: str) -> str:
-    """
-    Encripta un access token con Fernet usando ENCRYPTION_KEY del .env.
-    Si ENCRYPTION_KEY no está configurada, retorna el texto sin encriptar
-    (solo válido para desarrollo — en producción ENCRYPTION_KEY es obligatoria).
-    """
+    """Encripta un access token con Fernet usando ENCRYPTION_KEY del .env."""
+    from middleware.error_handler import AppError
+
     key = get_settings().ENCRYPTION_KEY
     if not key:
-        logger.warning("[security] ENCRYPTION_KEY no configurada — token guardado sin encriptar")
-        return plaintext
+        raise AppError(
+            'ENCRYPTION_KEY no configurada. Generá una con: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"',
+            "ENCRYPTION_KEY_MISSING",
+            500,
+        )
     from cryptography.fernet import Fernet
+
     return Fernet(key.encode()).encrypt(plaintext.encode()).decode()
 
 
 def decrypt_token(ciphertext: str) -> str:
-    """
-    Desencripta un token Fernet. Si ENCRYPTION_KEY no está configurada,
-    retorna el ciphertext tal cual (consistente con encrypt_token en dev).
-    """
+    """Desencripta un token Fernet. Falla si falta ENCRYPTION_KEY."""
+    from middleware.error_handler import AppError
+
     key = get_settings().ENCRYPTION_KEY
     if not key:
-        return ciphertext
+        raise AppError("ENCRYPTION_KEY no configurada — no se puede desencriptar", "ENCRYPTION_KEY_MISSING", 500)
     from cryptography.fernet import Fernet
+
     return Fernet(key.encode()).decrypt(ciphertext.encode()).decode()

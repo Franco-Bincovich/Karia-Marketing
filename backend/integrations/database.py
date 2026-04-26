@@ -1,7 +1,8 @@
 """Conexión SQLAlchemy agnóstica al proveedor de base de datos."""
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 from config.settings import get_settings
 
 

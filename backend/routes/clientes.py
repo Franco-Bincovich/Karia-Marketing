@@ -12,7 +12,7 @@ from controllers.clientes_controller import (
     CrearMarcaRequest,
 )
 from integrations.database import get_db
-from middleware.auth import get_current_user, require_admin_or_above, require_superadmin
+from middleware.auth import require_admin_or_above, require_superadmin
 
 router = APIRouter(prefix="/api/clientes", tags=["clientes"])
 

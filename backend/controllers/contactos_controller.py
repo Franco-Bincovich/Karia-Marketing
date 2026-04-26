@@ -9,7 +9,6 @@ import logging
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 # ── Schemas de request ──────────────────────────────────────────────
+
 
 class BuscarIARequest(BaseModel):
     rubro: str
@@ -46,6 +46,7 @@ class ContactoManualRequest(BaseModel):
 
 # ── Helpers ─────────────────────────────────────────────────────────
 
+
 def _get_marca_id(x_marca_id: Optional[str]) -> UUID:
     """Extrae y valida el UUID de marca del header X-Marca-ID."""
     if not x_marca_id:
@@ -57,6 +58,7 @@ def _get_marca_id(x_marca_id: Optional[str]) -> UUID:
 
 
 # ── Controller ───────────────────────────────────────────────────────
+
 
 class ContactosController:
     """Convierte requests HTTP en llamadas al contactos_service."""

@@ -1,6 +1,7 @@
 """Middleware de autenticación JWT con control de roles."""
 
 from typing import Optional
+
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -20,10 +21,16 @@ PUBLIC_ROUTES = {
 }
 
 
-def _extract_token(credentials: Optional[HTTPAuthorizationCredentials]) -> str:
-    if not credentials or not credentials.credentials:
-        raise AppError("No autenticado", "UNAUTHORIZED", 401)
-    return credentials.credentials
+def _extract_token(request: Request, credentials: Optional[HTTPAuthorizationCredentials]) -> str:
+    """Extrae token de: 1) cookie httpOnly (prioritario) 2) header Authorization."""
+    # 1. Cookie httpOnly
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
+    # 2. Header Authorization: Bearer <token>
+    if credentials and credentials.credentials:
+        return credentials.credentials
+    raise AppError("No autenticado", "UNAUTHORIZED", 401)
 
 
 def get_current_user(
@@ -36,7 +43,7 @@ def get_current_user(
     if route_key in PUBLIC_ROUTES:
         return {}
 
-    token = _extract_token(credentials)
+    token = _extract_token(request, credentials)
     payload = decode_access_token(token)
 
     if not payload.get("sub"):

@@ -28,6 +28,7 @@ BASIC_LIMIT = 30
 def _get_context(db: Session, marca_id: UUID) -> tuple:
     """Obtiene plan, rol-equivalente info, y memoria de marca."""
     from models.cliente_models import ClienteMkt, MarcaMkt
+
     marca = db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
     if not marca:
         raise AppError("Marca no encontrada", "MARCA_NOT_FOUND", 404)
@@ -46,7 +47,8 @@ def _check_limit(db: Session, marca_id: UUID, plan: str, rol: str):
     if count >= BASIC_LIMIT:
         raise AppError(
             f"Alcanzaste el límite de {BASIC_LIMIT} contenidos/mes del plan Basic. Upgrade a Premium.",
-            "PLAN_LIMIT_CONTENT", 403,
+            "PLAN_LIMIT_CONTENT",
+            403,
         )
 
 
@@ -80,30 +82,48 @@ def generar_contenido(
     custom_key = _get_custom_api_key(cliente) if cliente.plan == "Premium" else None
 
     resultado = claude_client.generar_contenido_ia(
-        red_social=red_social, formato=formato, objetivo=objetivo,
-        tono=tono, tema=tema, memoria_marca=memoria_text,
+        red_social=red_social,
+        formato=formato,
+        objetivo=objetivo,
+        tono=tono,
+        tema=tema,
+        memoria_marca=memoria_text,
         custom_api_key=custom_key,
     )
 
     estado = "aprobado" if modo == "autopilot" else "pendiente_aprobacion"
     data = {
-        "marca_id": marca_id, "cliente_id": cliente_id,
-        "red_social": red_social, "formato": formato,
-        "objetivo": objetivo, "tono": tono, "tema": tema,
-        "copy_a": resultado["copy_a"], "copy_b": resultado["copy_b"],
+        "marca_id": marca_id,
+        "cliente_id": cliente_id,
+        "red_social": red_social,
+        "formato": formato,
+        "objetivo": objetivo,
+        "tono": tono,
+        "tema": tema,
+        "copy_a": resultado["copy_a"],
+        "copy_b": resultado["copy_b"],
         "copy_c": resultado.get("copy_c"),
-        "hashtags_a": resultado.get("hashtags_a"), "hashtags_b": resultado.get("hashtags_b"),
+        "hashtags_a": resultado.get("hashtags_a"),
+        "hashtags_b": resultado.get("hashtags_b"),
         "hashtags_c": resultado.get("hashtags_c"),
-        "cta_a": resultado.get("cta_a"), "cta_b": resultado.get("cta_b"),
+        "cta_a": resultado.get("cta_a"),
+        "cta_b": resultado.get("cta_b"),
         "cta_c": resultado.get("cta_c"),
-        "estado": estado, "modo": modo,
+        "estado": estado,
+        "modo": modo,
     }
     contenido = repo.crear(db, data)
 
-    repo.guardar_version(db, UUID(contenido["id"]), {
-        "copy_a": resultado["copy_a"], "copy_b": resultado["copy_b"],
-        "copy_c": resultado.get("copy_c"), "creado_por": "ia",
-    })
+    repo.guardar_version(
+        db,
+        UUID(contenido["id"]),
+        {
+            "copy_a": resultado["copy_a"],
+            "copy_b": resultado["copy_b"],
+            "copy_c": resultado.get("copy_c"),
+            "creado_por": "ia",
+        },
+    )
 
     db.commit()
     contenido["variable_testeada"] = resultado.get("variable_testeada")
@@ -122,7 +142,8 @@ def publicar_directo(
     if cliente.plan != "Premium" and rol != "superadmin":
         raise AppError(
             "Publicación directa solo disponible en Premium",
-            "PLAN_LIMIT", 403,
+            "PLAN_LIMIT",
+            403,
         )
 
     if variante not in ("a", "b", "c"):
@@ -137,24 +158,40 @@ def publicar_directo(
     if not copy_text:
         raise AppError(f"Variante {variante} sin contenido", "EMPTY_VARIANTE", 400)
 
-    repo.actualizar_campos(db, obj, {
-        "estado": "publicado",
-        "variante_seleccionada": variante,
-        "modo": "autopilot",
-    })
+    repo.actualizar_campos(
+        db,
+        obj,
+        {
+            "estado": "publicado",
+            "variante_seleccionada": variante,
+            "modo": "autopilot",
+        },
+    )
 
-    ap_repo.registrar(db, {
-        "marca_id": marca_id, "contenido_id": contenido_id,
-        "tipo": "aprobacion", "red_social": obj.red_social,
-        "formato": obj.formato, "tono": obj.tono,
-        "copy_final": copy_text,
-    })
+    ap_repo.registrar(
+        db,
+        {
+            "marca_id": marca_id,
+            "contenido_id": contenido_id,
+            "tipo": "aprobacion",
+            "red_social": obj.red_social,
+            "formato": obj.formato,
+            "tono": obj.tono,
+            "copy_final": copy_text,
+        },
+    )
     db.commit()
 
     from services import zernio_service
+
     try:
         pub = zernio_service.publicar_ahora(
-            db, marca_id, obj.red_social, copy_text,
+            db,
+            marca_id,
+            obj.red_social,
+            copy_text,
+            imagen_url=obj.imagen_url,
+            formato=obj.formato or "post",
         )
         return {"contenido": repo._s(obj), "publicacion": pub}
     except AppError:
@@ -167,6 +204,7 @@ def guardar_api_key(db: Session, cliente_id: UUID, api_key: str) -> dict:
     """Guarda la API key propia de Anthropic encriptada."""
     from models.cliente_models import ClienteMkt
     from utils.security import encrypt_token
+
     cliente = db.query(ClienteMkt).filter(ClienteMkt.id == cliente_id).first()
     if not cliente:
         raise AppError("Cliente no encontrado", "CLIENT_NOT_FOUND", 404)

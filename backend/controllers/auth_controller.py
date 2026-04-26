@@ -1,6 +1,7 @@
 """Adaptador HTTP para auth_service: transforma Request/Response."""
 
 from typing import Optional
+
 from fastapi import Request
 from pydantic import BaseModel, EmailStr
 

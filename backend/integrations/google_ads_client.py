@@ -1,4 +1,5 @@
 """Cliente Google Ads API para gestión de campañas publicitarias."""
+
 from __future__ import annotations
 
 import logging
@@ -42,7 +43,10 @@ def obtener_metricas(access_token: str, campaign_id: str, fecha: str) -> dict:
     """Obtiene métricas de una campaña para una fecha dada."""
     if _is_mock(access_token) or campaign_id.startswith("mock"):
         return {
-            "impresiones": 0, "clicks": 0, "conversiones": 0,
-            "gasto": 0.0, "mock": True,
+            "impresiones": 0,
+            "clicks": 0,
+            "conversiones": 0,
+            "gasto": 0.0,
+            "mock": True,
         }
     raise NotImplementedError("Google Ads API requiere configuración de producción")

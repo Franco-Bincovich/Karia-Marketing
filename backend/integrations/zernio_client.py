@@ -22,6 +22,14 @@ logger = logging.getLogger(__name__)
 
 _TIMEOUT = 30
 
+# Mapeo de formato NEXO → postType de Zernio API
+_FORMATO_MAP = {
+    "post": "feed",
+    "story": "story",
+    "reel": "reel",
+    "carrusel": "carousel",
+}
+
 
 def _headers() -> dict:
     settings = get_settings()
@@ -39,7 +47,11 @@ def _request(method: str, path: str, json: dict = None) -> dict:
     """Request genérico con manejo de errores."""
     try:
         resp = requests.request(
-            method, _url(path), headers=_headers(), json=json, timeout=_TIMEOUT,
+            method,
+            _url(path),
+            headers=_headers(),
+            json=json,
+            timeout=_TIMEOUT,
         )
         resp.raise_for_status()
         return resp.json()
@@ -71,6 +83,7 @@ class ZernioError(Exception):
 
 # --- OAuth ---
 
+
 def get_oauth_url(platform: str, callback_url: str, state: str) -> dict:
     """
     Crea un invite link de Zernio para conectar una cuenta social.
@@ -83,9 +96,13 @@ def get_oauth_url(platform: str, callback_url: str, state: str) -> dict:
     Returns:
         {"auth_url": "https://...", "state": "..."}
     """
-    return _request("POST", "/platform-invites", {
-        "platform": platform,
-    })
+    return _request(
+        "POST",
+        "/platform-invites",
+        {
+            "platform": platform,
+        },
+    )
 
 
 def exchange_oauth_token(code: str, state: str) -> dict:
@@ -96,13 +113,18 @@ def exchange_oauth_token(code: str, state: str) -> dict:
         {"access_token": "...", "account_id": "...", "account_name": "...",
          "platform": "...", "expires_at": "..."}
     """
-    return _request("POST", "/oauth/token", {
-        "code": code,
-        "state": state,
-    })
+    return _request(
+        "POST",
+        "/oauth/token",
+        {
+            "code": code,
+            "state": state,
+        },
+    )
 
 
 # --- Cuentas ---
+
 
 def list_accounts() -> dict:
     """Lista cuentas conectadas en Zernio."""
@@ -110,6 +132,7 @@ def list_accounts() -> dict:
 
 
 # --- Helpers de media ---
+
 
 def _upload_media(image_url: str) -> Optional[str]:
     """Sube una imagen a Zernio Storage y retorna la URL de Zernio."""
@@ -120,6 +143,7 @@ def _upload_media(image_url: str) -> Optional[str]:
 
         # 2. Download image from our URL
         import requests as req
+
         img_resp = req.get(image_url, timeout=30)
         if img_resp.status_code != 200:
             logger.error("[zernio] No se pudo descargar imagen: %s → HTTP %s", image_url, img_resp.status_code)
@@ -152,25 +176,30 @@ def _upload_media(image_url: str) -> Optional[str]:
 
 # --- Publicación ---
 
+
 def publish_now(
     account_id: str,
     text: str,
     image_url: Optional[str] = None,
     image_urls: Optional[list] = None,
     platform: str = "instagram",
+    formato: str = "post",
 ) -> dict:
     """
     Publica un post de forma inmediata.
 
     Flow: upload media → single POST with content + media + publishNow.
     """
-    # 1. Upload media to Zernio Storage
     zernio_urls = _upload_all_media(image_url, image_urls)
 
-    # 2. Single POST with everything
+    post_type = _FORMATO_MAP.get(formato, "feed")
+    if formato not in _FORMATO_MAP:
+        logger.warning("[zernio] formato desconocido '%s', usando 'feed'", formato)
+
     payload = {
         "content": text,
         "publishNow": True,
+        "postType": post_type,
         "platforms": [{"platform": platform, "accountId": account_id}],
     }
     if zernio_urls:
@@ -189,20 +218,24 @@ def schedule_post(
     image_url: Optional[str] = None,
     image_urls: Optional[list] = None,
     platform: str = "instagram",
+    formato: str = "post",
 ) -> dict:
     """
     Programa un post para fecha futura.
 
     Flow: upload media → single POST with content + media + scheduledFor.
     """
-    # 1. Upload media
     zernio_urls = _upload_all_media(image_url, image_urls)
 
-    # 2. Single POST with everything
+    post_type = _FORMATO_MAP.get(formato, "feed")
+    if formato not in _FORMATO_MAP:
+        logger.warning("[zernio] formato desconocido '%s', usando 'feed'", formato)
+
     payload = {
         "content": text,
         "scheduledFor": scheduled_at.isoformat(),
         "timezone": "America/Argentina/Buenos_Aires",
+        "postType": post_type,
         "platforms": [{"platform": platform, "accountId": account_id}],
     }
     if zernio_urls:

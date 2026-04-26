@@ -7,10 +7,14 @@ from sqlalchemy.orm import Session
 
 from models.permisos_models import AuditoriaMkt
 
-
 ACCIONES_SENSIBLES = {
-    "login", "logout", "crear_usuario", "eliminar_usuario",
-    "cambiar_permisos", "crear_cliente", "crear_marca",
+    "login",
+    "logout",
+    "crear_usuario",
+    "eliminar_usuario",
+    "cambiar_permisos",
+    "crear_cliente",
+    "crear_marca",
     "actualizar_feature_flag",
 }
 

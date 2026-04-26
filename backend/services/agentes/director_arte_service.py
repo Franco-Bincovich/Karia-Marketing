@@ -45,7 +45,7 @@ def analizar_brief(
         f"PALETA: {', '.join(palette[:4])}\n"
         f"FORMATO: {formato}\n\n"
         f"Analizá el brief y devolvé un JSON con esta estructura exacta:\n"
-        f'{{\n'
+        f"{{\n"
         f'  "tipo": "placa" | "elaborada" | "carrusel",\n'
         f'  "concepto_visual": "descripción concreta de la escena",\n'
         f'  "texto_principal": "texto para overlay (solo si tipo=placa, sino vacío)",\n'
@@ -53,7 +53,7 @@ def analizar_brief(
         f'  "mood": "descripción del ambiente/feeling",\n'
         f'  "referencia_formato": "{formato}",\n'
         f'  "razonamiento": "por qué tomaste estas decisiones"\n'
-        f'}}\n\n'
+        f"}}\n\n"
         f"REGLAS:\n"
         f"- Si el brief pide texto visible en la imagen → tipo=placa\n"
         f"- Si el brief describe una escena o concepto visual → tipo=elaborada\n"
@@ -92,9 +92,17 @@ def analizar_brief(
 
 def _fallback_brief(descripcion: str, formato: str) -> dict:
     """Brief básico cuando Claude no responde."""
-    tiene_texto = any(w in descripcion.lower() for w in [
-        "texto", "frase", "dice", "escribí", "título", "cartel",
-    ])
+    tiene_texto = any(
+        w in descripcion.lower()
+        for w in [
+            "texto",
+            "frase",
+            "dice",
+            "escribí",
+            "título",
+            "cartel",
+        ]
+    )
     return {
         "tipo": "placa" if tiene_texto else "elaborada",
         "concepto_visual": descripcion[:280],

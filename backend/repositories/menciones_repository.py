@@ -1,4 +1,5 @@
 """Repositorio CRUD para menciones_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -16,12 +17,18 @@ logger = logging.getLogger(__name__)
 def _s(m: MencionMkt) -> dict:
     """Serializa un MencionMkt a dict."""
     return {
-        "id": str(m.id), "marca_id": str(m.marca_id),
-        "tipo": m.tipo, "fuente": m.fuente, "url": m.url,
-        "autor": m.autor, "contenido": m.contenido,
-        "sentimiento": m.sentimiento, "score_sentimiento": m.score_sentimiento,
+        "id": str(m.id),
+        "marca_id": str(m.marca_id),
+        "tipo": m.tipo,
+        "fuente": m.fuente,
+        "url": m.url,
+        "autor": m.autor,
+        "contenido": m.contenido,
+        "sentimiento": m.sentimiento,
+        "score_sentimiento": m.score_sentimiento,
         "alcance_estimado": m.alcance_estimado,
-        "urgente": m.urgente, "procesado": m.procesado,
+        "urgente": m.urgente,
+        "procesado": m.procesado,
         "alerta_generada": m.alerta_generada,
         "created_at": m.created_at.isoformat() if m.created_at else None,
     }
@@ -41,24 +48,28 @@ def crear_bulk(db: Session, menciones: list) -> list:
 
 def listar(db: Session, marca_id: UUID) -> list:
     """Lista todas las menciones de una marca."""
-    rows = db.query(MencionMkt).filter(
-        MencionMkt.marca_id == marca_id
-    ).order_by(MencionMkt.created_at.desc()).all()
+    rows = db.query(MencionMkt).filter(MencionMkt.marca_id == marca_id).order_by(MencionMkt.created_at.desc()).all()
     return [_s(r) for r in rows]
 
 
 def listar_urgentes(db: Session, marca_id: UUID) -> list:
     """Lista menciones urgentes no procesadas."""
-    rows = db.query(MencionMkt).filter(
-        MencionMkt.marca_id == marca_id,
-        MencionMkt.urgente == True,
-        MencionMkt.procesado == False,
-    ).order_by(MencionMkt.created_at.desc()).all()
+    rows = (
+        db.query(MencionMkt)
+        .filter(
+            MencionMkt.marca_id == marca_id,
+            MencionMkt.urgente == True,
+            MencionMkt.procesado == False,
+        )
+        .order_by(MencionMkt.created_at.desc())
+        .all()
+    )
     return [_s(r) for r in rows]
 
 
 def listar_filtrado(
-    db: Session, marca_id: UUID,
+    db: Session,
+    marca_id: UUID,
     sentimiento: Optional[str] = None,
     plataforma: Optional[str] = None,
     desde: Optional[datetime] = None,
@@ -77,16 +88,21 @@ def listar_filtrado(
 def contar_por_sentimiento(db: Session, marca_id: UUID) -> dict:
     """Cuenta menciones por tipo de sentimiento."""
     from sqlalchemy import func
-    rows = db.query(
-        MencionMkt.sentimiento, func.count().label("n")
-    ).filter(
-        MencionMkt.marca_id == marca_id,
-    ).group_by(MencionMkt.sentimiento).all()
+
+    rows = (
+        db.query(MencionMkt.sentimiento, func.count().label("n"))
+        .filter(
+            MencionMkt.marca_id == marca_id,
+        )
+        .group_by(MencionMkt.sentimiento)
+        .all()
+    )
     return {s: n for s, n in rows}
 
 
 def total_menciones(db: Session, marca_id: UUID) -> int:
     from sqlalchemy import func
+
     return db.query(func.count(MencionMkt.id)).filter(MencionMkt.marca_id == marca_id).scalar() or 0
 
 

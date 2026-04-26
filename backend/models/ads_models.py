@@ -1,4 +1,5 @@
 """Modelos SQLAlchemy para el módulo de Ads (Meta Ads + Google Ads)."""
+
 from __future__ import annotations
 
 import uuid

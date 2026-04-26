@@ -1,4 +1,5 @@
 """Modelos SQLAlchemy para el módulo de Comunidad y Social Listening."""
+
 from __future__ import annotations
 
 import uuid

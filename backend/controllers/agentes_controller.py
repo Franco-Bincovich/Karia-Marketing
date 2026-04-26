@@ -35,14 +35,17 @@ class AgentesController:
         items = svc.obtener_config(self.db, marca_id, rol=rol)
         return {"data": items, "count": len(items)}
 
-    def actualizar(self, nombre: str, body: ActualizarAgenteRequest,
-                   x_marca_id: Optional[str], current_user: dict) -> dict:
+    def actualizar(self, nombre: str, body: ActualizarAgenteRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         rol = current_user.get("rol", "")
         return svc.actualizar_config(
-            self.db, marca_id, nombre,
-            activo=body.activo, modo=body.modo,
-            system_prompt=body.system_prompt, rol=rol,
+            self.db,
+            marca_id,
+            nombre,
+            activo=body.activo,
+            modo=body.modo,
+            system_prompt=body.system_prompt,
+            rol=rol,
         )
 
     def ejecutar(self, nombre: str, x_marca_id: Optional[str], current_user: dict) -> dict:

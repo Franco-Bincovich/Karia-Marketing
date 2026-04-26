@@ -27,7 +27,8 @@ def ejecutar_verificacion_vencimientos():
             cliente.notificacion_enviada = True
             logger.info(
                 "Cliente %s (%s) vence en 7 días — enviando notificación",
-                cliente.nombre, cliente.email_admin,
+                cliente.nombre,
+                cliente.email_admin,
             )
             send_expiration_warning_email(
                 cliente.email_admin,
@@ -41,14 +42,16 @@ def ejecutar_verificacion_vencimientos():
             cliente.activo = False
             logger.info(
                 "Cliente %s (%s) vencido — pausado automáticamente",
-                cliente.nombre, cliente.email_admin,
+                cliente.nombre,
+                cliente.email_admin,
             )
             send_account_paused_email(cliente.email_admin, cliente.nombre)
 
         db.commit()
         logger.info(
             "Verificación de vencimientos: %d notificados, %d pausados",
-            len(por_vencer), len(vencidos),
+            len(por_vencer),
+            len(vencidos),
         )
     except Exception:
         db.rollback()

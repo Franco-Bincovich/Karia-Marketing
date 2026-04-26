@@ -1,4 +1,5 @@
 """Repositorio para memoria_marca_mkt."""
+
 from __future__ import annotations
 
 import json
@@ -17,19 +18,27 @@ _CAMPOS_MINIMOS = {"nombre_marca", "industria", "descripcion", "tono_voz"}
 def _s(m: MemoriaMarcaMkt) -> dict:
     """Serializa un MemoriaMarcaMkt a dict."""
     return {
-        "id": str(m.id), "marca_id": str(m.marca_id),
-        "nombre_marca": m.nombre_marca, "industria": m.industria,
-        "descripcion": m.descripcion, "propuesta_valor": m.propuesta_valor,
+        "id": str(m.id),
+        "marca_id": str(m.marca_id),
+        "nombre_marca": m.nombre_marca,
+        "industria": m.industria,
+        "descripcion": m.descripcion,
+        "propuesta_valor": m.propuesta_valor,
         "productos_servicios": m.productos_servicios,
-        "publico_objetivo": m.publico_objetivo, "tono_voz": m.tono_voz,
+        "publico_objetivo": m.publico_objetivo,
+        "tono_voz": m.tono_voz,
         "palabras_clave": m.palabras_clave or [],
         "palabras_prohibidas": m.palabras_prohibidas or [],
-        "colores_marca": m.colores_marca or [], "tipografia": m.tipografia,
+        "colores_marca": m.colores_marca or [],
+        "tipografia": m.tipografia,
         "ejemplos_contenido_aprobado": m.ejemplos_contenido_aprobado or [],
-        "competidores": m.competidores, "diferenciadores": m.diferenciadores or [],
-        "sitio_web": m.sitio_web, "preguntas_frecuentes": m.preguntas_frecuentes,
+        "competidores": m.competidores,
+        "diferenciadores": m.diferenciadores or [],
+        "sitio_web": m.sitio_web,
+        "preguntas_frecuentes": m.preguntas_frecuentes,
         "politica_respuestas": m.politica_respuestas,
-        "icp_descripcion": m.icp_descripcion, "icp_cargo": m.icp_cargo or [],
+        "icp_descripcion": m.icp_descripcion,
+        "icp_cargo": m.icp_cargo or [],
         "icp_industria": m.icp_industria or [],
         "icp_tamano_empresa": m.icp_tamano_empresa,
         "objetivos_periodo": m.objetivos_periodo,
@@ -120,6 +129,25 @@ def obtener_para_agente(db: Session, marca_id: UUID) -> str:
         partes.append(f"Estética visual: {obj.estetica_visual}")
     if obj.personalidad_marca:
         partes.append(f"Personalidad: {obj.personalidad_marca}")
+    if obj.testimonios_resultados:
+        partes.append(f"Testimonios y resultados reales: {obj.testimonios_resultados}")
+    if obj.competidores:
+        partes.append(f"Competidores: {json.dumps(obj.competidores, ensure_ascii=False)}")
+    if obj.objetivos_periodo:
+        partes.append(f"Objetivos del periodo: {json.dumps(obj.objetivos_periodo, ensure_ascii=False)}")
+    icp_parts = []
+    if obj.icp_descripcion:
+        icp_parts.append(obj.icp_descripcion)
+    if obj.icp_cargo:
+        icp_parts.append(f"cargos: {', '.join(obj.icp_cargo)}")
+    if obj.icp_industria:
+        icp_parts.append(f"industrias: {', '.join(obj.icp_industria)}")
+    if obj.icp_tamano_empresa:
+        icp_parts.append(f"tamaño: {obj.icp_tamano_empresa}")
+    if icp_parts:
+        partes.append(f"Cliente ideal (ICP): {'. '.join(icp_parts)}")
+    if obj.fechas_especiales:
+        partes.append(f"Fechas especiales relevantes: {obj.fechas_especiales}")
     return ". ".join(partes)
 
 

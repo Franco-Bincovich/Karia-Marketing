@@ -1,4 +1,5 @@
 """Servicio de Reporting — genera y envía reportes de datos puros."""
+
 from __future__ import annotations
 
 import logging
@@ -30,17 +31,20 @@ def generar_reporte(db: Session, marca_id: UUID, tipo: str) -> dict:
     kpis = kpis_repo.obtener_activos(db, marca_id)
 
     # Conteo de publicaciones del período
-    from repositories import publicaciones_repository as pub_repo
-    from repositories import contenido_repository as cont_repo
     from repositories import menciones_repository as menc_repo
 
     posts_count = 0
     contenido_count = 0
     menciones_count = menc_repo.total_menciones(db, marca_id)
 
-    contenido_data = {"totales": totales, "kpis": kpis, "periodo": tipo,
-                      "posts_publicados": posts_count, "contenido_generado": contenido_count,
-                      "menciones": menciones_count}
+    contenido_data = {
+        "totales": totales,
+        "kpis": kpis,
+        "periodo": tipo,
+        "posts_publicados": posts_count,
+        "contenido_generado": contenido_count,
+        "menciones": menciones_count,
+    }
 
     if config["incluir_comparacion"]:
         comp_inicio, comp_fin = _periodo_comparacion(inicio, fin, config["periodo_comparacion"])
@@ -52,15 +56,25 @@ def generar_reporte(db: Session, marca_id: UUID, tipo: str) -> dict:
     resumen = _generar_resumen_ejecutivo(contenido_data, tipo)
 
     formato = config["formatos"][0] if config["formatos"] else "panel"
-    reporte = reportes_repo.crear(db, {
-        "marca_id": marca_id, "tipo": tipo,
-        "periodo_inicio": inicio, "periodo_fin": fin,
-        "contenido": contenido_data, "resumen_ejecutivo": resumen,
-        "formato": formato,
-    })
+    reporte = reportes_repo.crear(
+        db,
+        {
+            "marca_id": marca_id,
+            "tipo": tipo,
+            "periodo_inicio": inicio,
+            "periodo_fin": fin,
+            "contenido": contenido_data,
+            "resumen_ejecutivo": resumen,
+            "formato": formato,
+        },
+    )
     registrar_auditoria(
-        db, accion="generar_reporte", modulo="analytics", marca_id=marca_id,
-        recurso_id=reporte["id"], detalle={"tipo": tipo, "formato": formato},
+        db,
+        accion="generar_reporte",
+        modulo="analytics",
+        marca_id=marca_id,
+        recurso_id=reporte["id"],
+        detalle={"tipo": tipo, "formato": formato},
     )
     db.commit()
     return reporte
@@ -79,8 +93,12 @@ def enviar_reporte(db: Session, reporte_id: UUID, marca_id: UUID) -> dict:
 
     resultado = reportes_repo.marcar_enviado(db, reporte_id)
     registrar_auditoria(
-        db, accion="enviar_reporte", modulo="analytics", marca_id=marca_id,
-        recurso_id=str(reporte_id), detalle={"canal": canal, "formato": reporte["formato"]},
+        db,
+        accion="enviar_reporte",
+        modulo="analytics",
+        marca_id=marca_id,
+        recurso_id=str(reporte_id),
+        detalle={"canal": canal, "formato": reporte["formato"]},
     )
     db.commit()
     return {**resultado, "canal_envio": canal}
@@ -104,19 +122,26 @@ def _periodo_comparacion(inicio: date, fin: date, tipo: str):
 def _generar_resumen_ejecutivo(datos: dict, tipo: str) -> str:
     """Genera resumen ejecutivo del reporte con Claude."""
     try:
-        from integrations.claude_client import _get_client, _SEARCH_MODEL
         import json
+
+        from integrations.claude_client import _SEARCH_MODEL, _get_client
+
         client = _get_client()
         message = client.messages.create(
             model=_SEARCH_MODEL,
             max_tokens=500,
             system="Sos un analista de marketing. Generás resúmenes ejecutivos concisos y accionables.",
-            messages=[{"role": "user", "content": (
-                f"Generá un resumen ejecutivo de este reporte {tipo} de marketing.\n\n"
-                f"Datos: {json.dumps(datos, default=str)}\n\n"
-                f"El resumen debe: ser de 3-5 oraciones, destacar los insights más relevantes, "
-                f"incluir una recomendación accionable. Respondé solo con el texto del resumen."
-            )}],
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        f"Generá un resumen ejecutivo de este reporte {tipo} de marketing.\n\n"
+                        f"Datos: {json.dumps(datos, default=str)}\n\n"
+                        f"El resumen debe: ser de 3-5 oraciones, destacar los insights más relevantes, "
+                        f"incluir una recomendación accionable. Respondé solo con el texto del resumen."
+                    ),
+                }
+            ],
         )
         blocks = [b for b in message.content if b.type == "text"]
         return blocks[-1].text.strip() if blocks else ""

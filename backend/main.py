@@ -5,51 +5,78 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import date
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from config.settings import get_settings
 from middleware.error_handler import register_error_handlers
 from routes import (
-    ads, agentes, analytics, api_keys, auth, automatizaciones, calendario,
-    clientes, comunidad, contactos, contenido, estrategia, feature_flags,
-    imagenes, listening, onboarding, organigrama, reporting, seo, social,
+    ads,
+    agentes,
+    analytics,
+    api_keys,
+    auth,
+    automatizaciones,
+    calendario,
+    clientes,
+    comunidad,
+    contactos,
+    contenido,
+    estrategia,
+    feature_flags,
+    imagenes,
+    listening,
+    onboarding,
+    organigrama,
+    reporting,
+    seo,
+    social,
     usuarios,
 )
 
 logger = logging.getLogger(__name__)
+limiter = Limiter(key_func=get_remote_address)
 
 # Intervalos de automatizaciones (en segundos)
-INTERVAL_VENCIMIENTOS = 86400    # 24 horas
-INTERVAL_LISTENING = 21600       # 6 horas
-INTERVAL_REPORTE = 86400         # 24 horas (ejecuta solo lunes)
-INTERVAL_PUBLICACION = 900       # 15 minutos
-INTERVAL_ORQUESTADOR = 86400     # 24 horas
+INTERVAL_VENCIMIENTOS = 86400  # 24 horas
+INTERVAL_LISTENING = 21600  # 6 horas
+INTERVAL_REPORTE = 86400  # 24 horas (ejecuta solo lunes)
+INTERVAL_PUBLICACION = 900  # 15 minutos
+INTERVAL_ORQUESTADOR = 86400  # 24 horas
 
 
 def _get_marcas_activas(db):
     """Helper: obtiene todas las marcas activas."""
-    from models.cliente_models import MarcaMkt
-    return db.query(MarcaMkt).filter(MarcaMkt.activa == True).all()  # noqa: E712
+    from repositories.clientes_repository import listar_marcas_activas
+
+    return listar_marcas_activas(db)
 
 
 def _check_activa(db, marca_id, tipo: str) -> bool:
     """Chequea si la automatización está activa para la marca."""
     from services.automatizaciones_service import esta_activa
+
     return esta_activa(db, marca_id, tipo)
 
 
 def _actualizar_ejecucion(db, marca_id, tipo: str):
     """Actualiza timestamp de última ejecución."""
     from services.automatizaciones_service import actualizar_ultima_ejecucion
+
     actualizar_ultima_ejecucion(db, marca_id, tipo)
 
 
 # --- Automatización: Vencimientos (24h) ---
 
+
 async def _automatizacion_vencimientos():
     """Automatización de verificación de vencimientos cada 24 horas."""
     from services.vencimiento_job import ejecutar_verificacion_vencimientos
+
     await asyncio.sleep(60)
     while True:
         try:
@@ -62,6 +89,7 @@ async def _automatizacion_vencimientos():
 
 # --- Automatización: Social Listening (6h) ---
 
+
 async def _automatizacion_listening():
     """Automatización de escaneo de menciones cada 6 horas."""
     await asyncio.sleep(120)
@@ -70,6 +98,7 @@ async def _automatizacion_listening():
             logger.info("[automatización] Ejecutando listening...")
             from integrations.database import SessionLocal
             from services.listening_service import buscar_menciones
+
             db = SessionLocal()
             try:
                 for marca in _get_marcas_activas(db):
@@ -88,6 +117,7 @@ async def _automatizacion_listening():
 
 # --- Automatización: Reporte Semanal (lunes) ---
 
+
 async def _automatizacion_reporte():
     """Automatización de reporte semanal cada lunes."""
     await asyncio.sleep(180)
@@ -97,6 +127,7 @@ async def _automatizacion_reporte():
                 logger.info("[automatización] Lunes — generando reportes semanales...")
                 from integrations.database import SessionLocal
                 from services.reporting_service import generar_reporte
+
                 db = SessionLocal()
                 try:
                     for marca in _get_marcas_activas(db):
@@ -115,6 +146,7 @@ async def _automatizacion_reporte():
 
 # --- Automatización: Publicación Programada (15 min) ---
 
+
 async def _automatizacion_publicacion():
     """Automatización de publicación de posts programados cada 15 minutos."""
     await asyncio.sleep(90)
@@ -122,6 +154,7 @@ async def _automatizacion_publicacion():
         try:
             from integrations.database import SessionLocal
             from services.automatizaciones_service import _ejecutar_publicacion
+
             db = SessionLocal()
             try:
                 for marca in _get_marcas_activas(db):
@@ -140,6 +173,7 @@ async def _automatizacion_publicacion():
 
 # --- Automatización: Orquestador (24h) ---
 
+
 async def _automatizacion_orquestador():
     """Automatización del orquestador cada 24 horas."""
     await asyncio.sleep(240)
@@ -148,6 +182,7 @@ async def _automatizacion_orquestador():
             logger.info("[automatización] Ejecutando orquestador...")
             from integrations.database import SessionLocal
             from services.automatizaciones_service import _ejecutar_orquestador
+
             db = SessionLocal()
             try:
                 for marca in _get_marcas_activas(db):
@@ -178,22 +213,37 @@ async def lifespan(app: FastAPI):
         t.cancel()
 
 
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"message": "Demasiados intentos. Esperá un momento.", "code": "RATE_LIMITED"},
+    )
+
+
 def create_app() -> FastAPI:
     """Factory de la aplicación FastAPI."""
     settings = get_settings()
+    is_prod = settings.ENV == "production"
 
     app = FastAPI(
         title="Nexo Marketing API",
         version="1.0.0",
         lifespan=lifespan,
+        docs_url=None if is_prod else "/docs",
+        redoc_url=None if is_prod else "/redoc",
+        openapi_url=None if is_prod else "/openapi.json",
     )
+
+    # Rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", "X-Marca-ID", "X-Request-ID"],
     )
 
     register_error_handlers(app)

@@ -1,4 +1,5 @@
 """Repositorio CRUD para keywords_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -14,12 +15,19 @@ logger = logging.getLogger(__name__)
 def _s(k: KeywordMkt) -> dict:
     """Serializa un KeywordMkt a dict."""
     return {
-        "id": str(k.id), "marca_id": str(k.marca_id), "keyword": k.keyword,
-        "volumen_mensual": k.volumen_mensual, "dificultad": k.dificultad,
+        "id": str(k.id),
+        "marca_id": str(k.marca_id),
+        "keyword": k.keyword,
+        "volumen_mensual": k.volumen_mensual,
+        "dificultad": k.dificultad,
         "intencion": k.intencion,
-        "posicion_actual": k.posicion_actual, "posicion_anterior": k.posicion_anterior,
-        "clicks_organicos": k.clicks_organicos, "impresiones": k.impresiones,
-        "ctr": float(k.ctr), "url_objetivo": k.url_objetivo, "estado": k.estado,
+        "posicion_actual": k.posicion_actual,
+        "posicion_anterior": k.posicion_anterior,
+        "clicks_organicos": k.clicks_organicos,
+        "impresiones": k.impresiones,
+        "ctr": float(k.ctr),
+        "url_objetivo": k.url_objetivo,
+        "estado": k.estado,
         "created_at": k.created_at.isoformat() if k.created_at else None,
         "updated_at": k.updated_at.isoformat() if k.updated_at else None,
     }
@@ -27,9 +35,14 @@ def _s(k: KeywordMkt) -> dict:
 
 def crear_o_actualizar(db: Session, marca_id: UUID, data: dict) -> dict:
     """Crea keyword o actualiza si ya existe para la marca."""
-    obj = db.query(KeywordMkt).filter(
-        KeywordMkt.marca_id == marca_id, KeywordMkt.keyword == data["keyword"],
-    ).first()
+    obj = (
+        db.query(KeywordMkt)
+        .filter(
+            KeywordMkt.marca_id == marca_id,
+            KeywordMkt.keyword == data["keyword"],
+        )
+        .first()
+    )
     if obj:
         for k, v in data.items():
             if hasattr(obj, k) and k not in ("id", "marca_id", "keyword"):

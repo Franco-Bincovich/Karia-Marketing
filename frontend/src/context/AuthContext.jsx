@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
       const list = Array.isArray(data) ? data : data.data || [];
       setMarcas(list);
       const savedId = localStorage.getItem("marca_activa_id");
-      const saved = list.find(m => m.id === savedId);
+      const saved = list.find((m) => m.id === savedId);
       if (saved) {
         setMarcaActiva(saved);
       } else if (list.length > 0) {
@@ -77,15 +77,20 @@ export function AuthProvider({ children }) {
     else setLoading(false);
   }, [fetchMe]);
 
-  const login = useCallback(async (email, password) => {
-    const { data } = await api.post(ENDPOINTS.LOGIN, { email, password });
-    localStorage.setItem("access_token", data.access_token);
-    await fetchMe();
-    return data;
-  }, [fetchMe]);
+  const login = useCallback(
+    async (email, password) => {
+      const { data } = await api.post(ENDPOINTS.LOGIN, { email, password });
+      localStorage.setItem("access_token", data.access_token);
+      await fetchMe();
+      return data;
+    },
+    [fetchMe]
+  );
 
   const logout = useCallback(async () => {
-    try { await api.post(ENDPOINTS.LOGOUT); } finally {
+    try {
+      await api.post(ENDPOINTS.LOGOUT);
+    } finally {
       localStorage.removeItem("access_token");
       localStorage.removeItem("marca_activa_id");
       setUser(null);
@@ -95,7 +100,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const addMarca = useCallback((marca) => {
-    setMarcas(prev => [...prev, marca]);
+    setMarcas((prev) => [...prev, marca]);
     setMarcaActiva(marca);
   }, []);
 
@@ -103,11 +108,26 @@ export function AuthProvider({ children }) {
   const isAdmin = user?.rol === "admin" || isSuperadmin;
 
   return (
-    <AuthContext.Provider value={{
-      user, loading, login, logout, isSuperadmin, isAdmin,
-      marcas, marcaActiva, setMarcaActiva, addMarca,
-      modo, setModo, completitud, setCompletitud, fetchCompletitud, fetchMarcas,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        isSuperadmin,
+        isAdmin,
+        marcas,
+        marcaActiva,
+        setMarcaActiva,
+        addMarca,
+        modo,
+        setModo,
+        completitud,
+        setCompletitud,
+        fetchCompletitud,
+        fetchMarcas,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,5 @@
 """Repositorio para umbrales_ads_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -13,8 +14,10 @@ logger = logging.getLogger(__name__)
 
 def _s(u: UmbralesAdsMkt) -> dict:
     return {
-        "id": str(u.id), "marca_id": str(u.marca_id),
-        "cpa_maximo": float(u.cpa_maximo), "roas_minimo": float(u.roas_minimo),
+        "id": str(u.id),
+        "marca_id": str(u.marca_id),
+        "cpa_maximo": float(u.cpa_maximo),
+        "roas_minimo": float(u.roas_minimo),
         "gasto_diario_maximo": float(u.gasto_diario_maximo),
         "updated_at": u.updated_at.isoformat() if u.updated_at else None,
     }
@@ -25,9 +28,12 @@ def obtener_o_crear(db: Session, marca_id: UUID) -> dict:
     obj = db.query(UmbralesAdsMkt).filter(UmbralesAdsMkt.marca_id == marca_id).first()
     if not obj:
         return {
-            "id": None, "marca_id": str(marca_id),
-            "cpa_maximo": None, "roas_minimo": None,
-            "gasto_diario_maximo": None, "updated_at": None,
+            "id": None,
+            "marca_id": str(marca_id),
+            "cpa_maximo": None,
+            "roas_minimo": None,
+            "gasto_diario_maximo": None,
+            "updated_at": None,
         }
     return _s(obj)
 

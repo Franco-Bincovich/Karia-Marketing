@@ -20,14 +20,10 @@ export default function PlanGate({ children, required, userPlan, comingSoon, lab
   if (comingSoon) {
     return (
       <div style={{ position: "relative" }}>
-        <div style={{ pointerEvents: "none", userSelect: "none", opacity: 0.45 }}>
-          {children}
-        </div>
+        <div style={{ pointerEvents: "none", userSelect: "none", opacity: 0.45 }}>{children}</div>
         <div className="plan-gate-overlay">
           <span className="plan-gate-icon">🔜</span>
-          <span className="plan-gate-text">
-            {label || "Próximamente"}
-          </span>
+          <span className="plan-gate-text">{label || "Próximamente"}</span>
           <span className="badge-soon">PRÓXIMAMENTE</span>
         </div>
       </div>
@@ -41,9 +37,7 @@ export default function PlanGate({ children, required, userPlan, comingSoon, lab
   return (
     <Tooltip text={`Disponible en ${required}`} delay={200}>
       <div style={{ position: "relative" }}>
-        <div style={{ pointerEvents: "none", userSelect: "none", opacity: 0.35 }}>
-          {children}
-        </div>
+        <div style={{ pointerEvents: "none", userSelect: "none", opacity: 0.35 }}>{children}</div>
         <div
           className="plan-gate-overlay"
           onClick={() => navigate("/onboarding")}

@@ -35,6 +35,7 @@ PLAN_LIMITS = {
 def _get_plan_limits(db: Session, marca_id: UUID) -> dict:
     """Obtiene los límites del plan del cliente que posee la marca."""
     from models.cliente_models import ClienteMkt, MarcaMkt
+
     marca = db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
     if not marca:
         raise AppError("Marca no encontrada", "MARCA_NOT_FOUND", 404)
@@ -50,7 +51,8 @@ def _check_red_permitida(limits: dict, red_social: str):
         redes = ", ".join(limits["redes"])
         raise AppError(
             f"Tu plan solo permite publicar en: {redes}. Upgrade a Premium para más redes.",
-            "PLAN_LIMIT_RED", 403,
+            "PLAN_LIMIT_RED",
+            403,
         )
 
 
@@ -62,11 +64,13 @@ def _check_limite_posts(db: Session, marca_id: UUID, limits: dict):
     if conteo >= limits["posts_mes"]:
         raise AppError(
             f"Alcanzaste el límite de {limits['posts_mes']} publicaciones/mes de tu plan. Upgrade a Premium.",
-            "PLAN_LIMIT_POSTS", 403,
+            "PLAN_LIMIT_POSTS",
+            403,
         )
 
 
 # --- OAuth ---
+
 
 def iniciar_oauth(db: Session, marca_id: UUID, platform: str, callback_url: str) -> dict:
     """Genera la URL de OAuth para conectar una cuenta social vía Zernio."""
@@ -91,18 +95,22 @@ def completar_oauth(db: Session, marca_id: UUID, code: str, state: str, actor_id
     expires_at = None
     if token_data.get("expires_at"):
         import re
-        clean = re.sub(r'\.\d+', '', token_data["expires_at"]).replace('Z', '+00:00')
+
+        clean = re.sub(r"\.\d+", "", token_data["expires_at"]).replace("Z", "+00:00")
         expires_at = datetime.fromisoformat(clean)
 
-    cuenta = cuentas_repo.crear_o_actualizar(db, {
-        "marca_id": marca_id,
-        "red_social": token_data.get("platform", state),
-        "nombre_cuenta": token_data.get("account_name", ""),
-        "account_id_externo": token_data.get("account_id"),
-        "access_token_encrypted": encrypted,
-        "token_expires_at": expires_at,
-        "activa": True,
-    })
+    cuenta = cuentas_repo.crear_o_actualizar(
+        db,
+        {
+            "marca_id": marca_id,
+            "red_social": token_data.get("platform", state),
+            "nombre_cuenta": token_data.get("account_name", ""),
+            "account_id_externo": token_data.get("account_id"),
+            "access_token_encrypted": encrypted,
+            "token_expires_at": expires_at,
+            "activa": True,
+        },
+    )
 
     registrar_auditoria(db, "conectar_cuenta_social", "social", usuario_id=actor_id)
     db.commit()
@@ -110,6 +118,7 @@ def completar_oauth(db: Session, marca_id: UUID, code: str, state: str, actor_id
 
 
 # --- Publicación ---
+
 
 def publicar_ahora(
     db: Session,
@@ -119,6 +128,7 @@ def publicar_ahora(
     imagen_url: Optional[str] = None,
     contenido_id: Optional[UUID] = None,
     actor_id: Optional[UUID] = None,
+    formato: str = "post",
 ) -> dict:
     """Publica un post de forma inmediata a través de Zernio."""
     limits = _get_plan_limits(db, marca_id)
@@ -129,7 +139,8 @@ def publicar_ahora(
     if not cuenta:
         raise AppError(
             f"No hay cuenta de {red_social} conectada. Conectá una primero.",
-            "NO_ACCOUNT", 400,
+            "NO_ACCOUNT",
+            400,
         )
 
     pub_data = {
@@ -139,6 +150,7 @@ def publicar_ahora(
         "imagen_url": imagen_url,
         "contenido_id": contenido_id,
         "estado": "publicando",
+        "formato": formato,
     }
     pub = pub_repo.crear(db, pub_data)
     db.flush()
@@ -149,11 +161,10 @@ def publicar_ahora(
             text=copy,
             image_url=imagen_url,
             platform=red_social,
+            formato=formato,
         )
         pub = pub_repo.actualizar_estado(db, UUID(pub["id"]), "publicado")
-        pub_obj = db.query(pub_repo.PublicacionesMkt).filter(
-            pub_repo.PublicacionesMkt.id == UUID(pub["id"])
-        ).first()
+        pub_obj = db.query(pub_repo.PublicacionesMkt).filter(pub_repo.PublicacionesMkt.id == UUID(pub["id"])).first()
         if pub_obj:
             pub_obj.post_id_externo = result.get("external_post_id")
             pub_obj.url_publicacion = result.get("url")
@@ -180,6 +191,7 @@ def programar_publicacion(
     imagen_url: Optional[str] = None,
     contenido_id: Optional[UUID] = None,
     actor_id: Optional[UUID] = None,
+    formato: str = "post",
 ) -> dict:
     """Programa un post para fecha futura a través de Zernio."""
     limits = _get_plan_limits(db, marca_id)
@@ -193,7 +205,8 @@ def programar_publicacion(
     if not cuenta:
         raise AppError(
             f"No hay cuenta de {red_social} conectada. Conectá una primero.",
-            "NO_ACCOUNT", 400,
+            "NO_ACCOUNT",
+            400,
         )
 
     pub_data = {
@@ -204,6 +217,7 @@ def programar_publicacion(
         "contenido_id": contenido_id,
         "estado": "programado",
         "programado_para": programado_para,
+        "formato": formato,
     }
     pub = pub_repo.crear(db, pub_data)
     db.flush()
@@ -215,10 +229,9 @@ def programar_publicacion(
             scheduled_at=programado_para,
             image_url=imagen_url,
             platform=red_social,
+            formato=formato,
         )
-        pub_obj = db.query(pub_repo.PublicacionesMkt).filter(
-            pub_repo.PublicacionesMkt.id == UUID(pub["id"])
-        ).first()
+        pub_obj = db.query(pub_repo.PublicacionesMkt).filter(pub_repo.PublicacionesMkt.id == UUID(pub["id"])).first()
         if pub_obj:
             pub_obj.zernio_post_id = result.get("id")
             db.flush()
@@ -236,6 +249,7 @@ def programar_publicacion(
 
 # --- Webhook ---
 
+
 def procesar_webhook(payload: dict) -> dict:
     """Procesa webhook de Zernio para actualizar estado de publicaciones."""
     from integrations.database import SessionLocal
@@ -250,9 +264,13 @@ def procesar_webhook(payload: dict) -> dict:
 
     db = SessionLocal()
     try:
-        pub = db.query(PublicacionesMkt).filter(
-            PublicacionesMkt.zernio_post_id == zernio_post_id,
-        ).first()
+        pub = (
+            db.query(PublicacionesMkt)
+            .filter(
+                PublicacionesMkt.zernio_post_id == zernio_post_id,
+            )
+            .first()
+        )
 
         if not pub:
             logger.warning("[zernio_webhook] Publicación no encontrada: zernio_id=%s", zernio_post_id)

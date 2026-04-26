@@ -9,7 +9,7 @@ export function ToastProvider({ children }) {
 
   const addToast = useCallback((message, type = "info", duration = 3000) => {
     const id = ++toastId;
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type }]);
     if (duration > 0) {
       setTimeout(() => removeToast(id), duration);
     }
@@ -17,20 +17,18 @@ export function ToastProvider({ children }) {
   }, []);
 
   const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const toast = {
     success: (msg, dur) => addToast(msg, "success", dur),
-    error:   (msg, dur) => addToast(msg, "error",   dur ?? 5000),
+    error: (msg, dur) => addToast(msg, "error", dur ?? 5000),
     warning: (msg, dur) => addToast(msg, "warning", dur),
-    info:    (msg, dur) => addToast(msg, "info",    dur),
+    info: (msg, dur) => addToast(msg, "info", dur),
   };
 
   return (
-    <ToastContext.Provider value={{ toasts, toast, removeToast }}>
-      {children}
-    </ToastContext.Provider>
+    <ToastContext.Provider value={{ toasts, toast, removeToast }}>{children}</ToastContext.Provider>
   );
 }
 

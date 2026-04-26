@@ -30,18 +30,22 @@ export default function Modal({ open, onClose, title, children, size = "default"
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal ${size === "lg" ? "modal-lg" : ""}`}>
         {(title || onClose) && (
           <div className="modal-header">
             {title && <h2 className="modal-title">{title}</h2>}
-            <button className="modal-close" onClick={onClose} aria-label="Cerrar">×</button>
+            <button className="modal-close" onClick={onClose} aria-label="Cerrar">
+              ×
+            </button>
           </div>
         )}
         {children}
@@ -51,17 +55,30 @@ export default function Modal({ open, onClose, title, children, size = "default"
 }
 
 /** Confirmación destructiva rápida */
-export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmLabel = "Confirmar", dangerous = false }) {
+export function ConfirmModal({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmLabel = "Confirmar",
+  dangerous = false,
+}) {
   return (
     <Modal open={open} onClose={onClose} title={title || "Confirmar acción"}>
       <p style={{ fontSize: "var(--text-base)", color: "var(--text-secondary)", lineHeight: 1.5 }}>
         {message || "¿Estás seguro? Esta acción no se puede deshacer."}
       </p>
       <div className="modal-footer">
-        <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-secondary" onClick={onClose}>
+          Cancelar
+        </button>
         <button
           className={`btn ${dangerous ? "btn-danger" : "btn-primary"}`}
-          onClick={() => { onConfirm(); onClose(); }}
+          onClick={() => {
+            onConfirm();
+            onClose();
+          }}
         >
           {confirmLabel}
         </button>

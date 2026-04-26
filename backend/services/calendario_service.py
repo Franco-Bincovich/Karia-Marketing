@@ -12,7 +12,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from integrations import meta_client, linkedin_client
+from integrations import linkedin_client, meta_client
 from middleware.error_handler import AppError
 from repositories import calendario_repository as repo
 from repositories import cuentas_sociales_repository as cuentas_repo
@@ -57,13 +57,19 @@ def eliminar_evento(db: Session, evento_id: UUID, marca_id: UUID) -> bool:
 
 
 def programar_manual(
-    db: Session, marca_id: UUID, red_social: str, copy_text: str,
-    fecha_hora: str, formato: str = "post", imagen_url: str = None,
+    db: Session,
+    marca_id: UUID,
+    red_social: str,
+    copy_text: str,
+    fecha_hora: str,
+    formato: str = "post",
+    imagen_url: str = None,
     imagenes_urls: list = None,
 ) -> dict:
     """Programa una publicación para fecha/hora exacta vía Zernio.
     Para carrusel, recibe imagenes_urls con múltiples imágenes en orden."""
     from datetime import datetime, timezone
+
     from integrations import zernio_client
 
     cuenta = cuentas_repo.obtener_por_red(db, marca_id, red_social)
@@ -71,9 +77,10 @@ def programar_manual(
         raise AppError(f"No hay cuenta de {red_social} conectada", "NO_SOCIAL_ACCOUNT", 400)
 
     import re
+
     try:
-        clean = re.sub(r'\.\d+', '', fecha_hora)  # Remove milliseconds
-        clean = clean.replace('Z', '+00:00')       # Python 3.9 compat
+        clean = re.sub(r"\.\d+", "", fecha_hora)  # Remove milliseconds
+        clean = clean.replace("Z", "+00:00")  # Python 3.9 compat
         programado_para = datetime.fromisoformat(clean)
         if programado_para.tzinfo is None:
             programado_para = programado_para.replace(tzinfo=timezone.utc)
@@ -90,12 +97,12 @@ def programar_manual(
     if red_social == "instagram" and not primera_imagen and not is_carrusel:
         raise AppError("Seleccioná una imagen antes de programar en Instagram", "NO_IMAGE", 400)
 
-    logger.info("[calendario] programar_manual — red=%s, imagen=%s, carrusel=%s",
-                red_social, bool(primera_imagen), is_carrusel)
+    logger.info("[calendario] programar_manual — red=%s, imagen=%s, carrusel=%s", red_social, bool(primera_imagen), is_carrusel)
 
     pub_data = {
         "marca_id": marca_id,
         "red_social": red_social,
+        "formato": formato,
         "copy_publicado": copy_text,
         "imagen_url": primera_imagen,
         "estado": "programado",
@@ -114,15 +121,22 @@ def programar_manual(
             image_url=primera_imagen if not is_carrusel else None,
             image_urls=imagenes_urls if is_carrusel else None,
             platform=red_social,
+            formato=formato,
         )
         from models.social_models import PublicacionesMkt
+
         obj = db.query(PublicacionesMkt).filter(PublicacionesMkt.id == pub["id"]).first()
         if obj:
             obj.zernio_post_id = result.get("id")
             db.flush()
             pub = pub_repo._s(obj)
-        logger.info("[calendario] programado en Zernio — %s %s a las %s (%s imágenes)",
-                     formato, red_social, programado_para, len(imagenes_urls) if is_carrusel else 1)
+        logger.info(
+            "[calendario] programado en Zernio — %s %s a las %s (%s imágenes)",
+            formato,
+            red_social,
+            programado_para,
+            len(imagenes_urls) if is_carrusel else 1,
+        )
     except Exception as e:
         logger.warning("[calendario] Zernio schedule falló, queda pendiente para automatización: %s", e)
         # Se queda como "programado" en DB — la automatización lo publicará
@@ -154,21 +168,25 @@ def publicar_ahora(db: Session, evento_id: UUID, marca_id: UUID) -> dict:
     if not cuenta:
         raise AppError(
             f"No hay cuenta activa de {evento.red_social} para esta marca",
-            "NO_SOCIAL_ACCOUNT", 400,
+            "NO_SOCIAL_ACCOUNT",
+            400,
         )
 
     if not cuenta.access_token_encrypted:
         raise AppError(
             f"La cuenta de {evento.red_social} no tiene token de acceso. Reconectala desde Redes Sociales.",
-            "NO_SOCIAL_TOKEN", 400,
+            "NO_SOCIAL_TOKEN",
+            400,
         )
     if not cuenta.account_id_externo:
         raise AppError(
             f"La cuenta de {evento.red_social} no tiene ID externo. Reconectala desde Redes Sociales.",
-            "NO_SOCIAL_ACCOUNT_ID", 400,
+            "NO_SOCIAL_ACCOUNT_ID",
+            400,
         )
 
     from utils.security import decrypt_token
+
     access_token = decrypt_token(cuenta.access_token_encrypted)
     account_id = cuenta.account_id_externo
 
@@ -176,17 +194,21 @@ def publicar_ahora(db: Session, evento_id: UUID, marca_id: UUID) -> dict:
     for intento in range(1, MAX_INTENTOS + 1):
         try:
             resultado = _llamar_api(evento.red_social, access_token, account_id, evento)
-            pub = pub_repo.crear(db, {
-                "marca_id": marca_id,
-                "calendario_id": evento.id,
-                "contenido_id": evento.contenido_id,
-                "red_social": evento.red_social,
-                "post_id_externo": resultado["post_id_externo"],
-                "url_publicacion": resultado["url_publicacion"],
-                "copy_publicado": evento.descripcion,
-                "estado": "publicado",
-                "intentos": intento,
-            })
+            pub = pub_repo.crear(
+                db,
+                {
+                    "marca_id": marca_id,
+                    "calendario_id": evento.id,
+                    "contenido_id": evento.contenido_id,
+                    "red_social": evento.red_social,
+                    "formato": evento.formato,
+                    "post_id_externo": resultado["post_id_externo"],
+                    "url_publicacion": resultado["url_publicacion"],
+                    "copy_publicado": evento.descripcion,
+                    "estado": "publicado",
+                    "intentos": intento,
+                },
+            )
             repo.actualizar_estado(db, evento.id, "publicado")
             db.commit()
             logger.info(f"[calendario_service] publicado en intento {intento} — {evento.red_social}")
@@ -197,11 +219,17 @@ def publicar_ahora(db: Session, evento_id: UUID, marca_id: UUID) -> dict:
             if intento < MAX_INTENTOS:
                 time.sleep(RETRY_DELAY_SEG)
 
-    pub = pub_repo.crear(db, {
-        "marca_id": marca_id, "calendario_id": evento.id,
-        "red_social": evento.red_social, "estado": "fallido",
-        "intentos": MAX_INTENTOS, "error_detalle": ultimo_error,
-    })
+    pub = pub_repo.crear(
+        db,
+        {
+            "marca_id": marca_id,
+            "calendario_id": evento.id,
+            "red_social": evento.red_social,
+            "estado": "fallido",
+            "intentos": MAX_INTENTOS,
+            "error_detalle": ultimo_error,
+        },
+    )
     repo.actualizar_estado(db, evento.id, "fallido")
     db.commit()
     raise AppError(f"Publicación fallida tras {MAX_INTENTOS} intentos: {ultimo_error}", "PUBLISH_FAILED", 502)

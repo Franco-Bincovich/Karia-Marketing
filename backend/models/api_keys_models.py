@@ -1,9 +1,10 @@
 """Modelos SQLAlchemy para api_keys_config_mkt."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID

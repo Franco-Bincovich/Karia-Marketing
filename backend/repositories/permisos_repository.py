@@ -16,12 +16,16 @@ class PermisosRepository:
 
     def get_permiso(self, usuario_id: UUID, marca_id: UUID, modulo: str, accion: str) -> Optional[PermisoMkt]:
         """Obtiene un permiso específico."""
-        return self.db.query(PermisoMkt).filter(
-            PermisoMkt.usuario_id == usuario_id,
-            PermisoMkt.marca_id == marca_id,
-            PermisoMkt.modulo == modulo,
-            PermisoMkt.accion == accion,
-        ).first()
+        return (
+            self.db.query(PermisoMkt)
+            .filter(
+                PermisoMkt.usuario_id == usuario_id,
+                PermisoMkt.marca_id == marca_id,
+                PermisoMkt.modulo == modulo,
+                PermisoMkt.accion == accion,
+            )
+            .first()
+        )
 
     def list_permisos_usuario(self, usuario_id: UUID) -> List[PermisoMkt]:
         """Lista todos los permisos de un usuario."""

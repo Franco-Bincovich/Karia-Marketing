@@ -1,4 +1,5 @@
 """Repositorio para onboarding_mkt (tabla existente en permisos_models)."""
+
 from __future__ import annotations
 
 import logging
@@ -12,9 +13,15 @@ from models.permisos_models import OnboardingMkt
 logger = logging.getLogger(__name__)
 
 _PASOS = [
-    "paso_1_info_basica", "paso_2_identidad_marca", "paso_3_tono_voz",
-    "paso_4_audiencia", "paso_5_competidores", "paso_6_productos",
-    "paso_7_objetivos", "paso_8_integraciones", "paso_9_notificaciones",
+    "paso_1_info_basica",
+    "paso_2_identidad_marca",
+    "paso_3_tono_voz",
+    "paso_4_audiencia",
+    "paso_5_competidores",
+    "paso_6_productos",
+    "paso_7_objetivos",
+    "paso_8_integraciones",
+    "paso_9_notificaciones",
     "paso_10_subusuarios",
 ]
 
@@ -23,8 +30,10 @@ def _s(o: OnboardingMkt) -> dict:
     """Serializa un OnboardingMkt a dict."""
     pasos = {p: getattr(o, p, False) for p in _PASOS}
     return {
-        "id": str(o.id), "marca_id": str(o.marca_id),
-        "pasos": pasos, "completitud": o.completitud,
+        "id": str(o.id),
+        "marca_id": str(o.marca_id),
+        "pasos": pasos,
+        "completitud": o.completitud,
         "respuestas": o.respuestas or {},
         "completado": o.completado or False,
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
@@ -96,13 +105,14 @@ def marcar_completado(db: Session, marca_id: UUID) -> dict:
     return _s(obj)
 
 
-def registrar_historial(db: Session, marca_id: UUID, paso: int,
-                        campo: str, valor_anterior: str, valor_nuevo: str,
-                        usuario_id: UUID) -> None:
+def registrar_historial(db: Session, marca_id: UUID, paso: int, campo: str, valor_anterior: str, valor_nuevo: str, usuario_id: UUID) -> None:
     """Registra un cambio en el historial de onboarding."""
     obj = HistorialOnboardingMkt(
-        marca_id=marca_id, paso=paso, campo=campo,
-        valor_anterior=valor_anterior, valor_nuevo=valor_nuevo,
+        marca_id=marca_id,
+        paso=paso,
+        campo=campo,
+        valor_anterior=valor_anterior,
+        valor_nuevo=valor_nuevo,
         modificado_por=usuario_id,
     )
     db.add(obj)

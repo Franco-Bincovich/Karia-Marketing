@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 import requests
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ def _generate_leonardo_background(
     size_key: str = "1024x1024",
 ) -> Optional[Image.Image]:
     """Genera fondo abstracto con Leonardo AI y lo retorna como PIL Image."""
-    from integrations.leonardo_client import generar_imagen, LeonardoError
+    from integrations.leonardo_client import LeonardoError, generar_imagen
 
     accent = colores_hex[0] if colores_hex else _ACCENT_COLOR
     prompt = (
@@ -102,7 +102,7 @@ def _generate_leonardo_background(
 
 def _hex_to_rgb(h: str) -> tuple:
     h = h.lstrip("#")
-    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def _resolve_colors(colores_hex: list) -> dict:
@@ -193,7 +193,9 @@ def _overlay_text(
     logo_w = logo_bbox[2] - logo_bbox[0]
     draw.text(
         (width - logo_w - width * 0.04, height - height * 0.06),
-        logo_text, fill=palette["logo"], font=font_logo,
+        logo_text,
+        fill=palette["logo"],
+        font=font_logo,
     )
 
     return img
@@ -229,7 +231,12 @@ def generar_placa(
     bg_img = None
     if leonardo_api_key:
         bg_img = _generate_leonardo_background(
-            texto, hex_list, width, height, leonardo_api_key, size_key,
+            texto,
+            hex_list,
+            width,
+            height,
+            leonardo_api_key,
+            size_key,
         )
 
     if bg_img is None:

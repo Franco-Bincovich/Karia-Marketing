@@ -25,12 +25,20 @@ class ListeningController:
     def escanear(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         return svc.buscar_menciones(self.db, _marca(x_marca_id))
 
-    def menciones(self, x_marca_id: Optional[str], current_user: dict,
-                  sentimiento: Optional[str] = None, plataforma: Optional[str] = None,
-                  desde: Optional[str] = None) -> dict:
+    def menciones(
+        self,
+        x_marca_id: Optional[str],
+        current_user: dict,
+        sentimiento: Optional[str] = None,
+        plataforma: Optional[str] = None,
+        desde: Optional[str] = None,
+    ) -> dict:
         items = svc.listar_menciones(
-            self.db, _marca(x_marca_id),
-            sentimiento=sentimiento, plataforma=plataforma, desde=desde,
+            self.db,
+            _marca(x_marca_id),
+            sentimiento=sentimiento,
+            plataforma=plataforma,
+            desde=desde,
         )
         return {"data": items, "count": len(items)}
 

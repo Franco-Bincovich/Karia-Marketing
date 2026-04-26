@@ -1,4 +1,5 @@
 """Repositorio para config_comunidad_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -14,11 +15,13 @@ logger = logging.getLogger(__name__)
 def _s(c: ConfigComunidadMkt) -> dict:
     """Serializa un ConfigComunidadMkt a dict."""
     return {
-        "id": str(c.id), "marca_id": str(c.marca_id),
+        "id": str(c.id),
+        "marca_id": str(c.marca_id),
         "criterios_escalado": c.criterios_escalado or [],
         "tiempo_respuesta_max": c.tiempo_respuesta_max,
         "responder_agresivos": c.responder_agresivos,
-        "responder_spam": c.responder_spam, "modo": c.modo,
+        "responder_spam": c.responder_spam,
+        "modo": c.modo,
         "updated_at": c.updated_at.isoformat() if c.updated_at else None,
     }
 

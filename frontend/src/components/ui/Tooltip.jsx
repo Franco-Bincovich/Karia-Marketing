@@ -22,14 +22,12 @@ export default function Tooltip({ text, children, delay = 500, placement = "top"
   }
 
   return (
-    <span
-      className="tooltip-wrap"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-    >
+    <span className="tooltip-wrap" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       {children}
       {visible && text && (
-        <span className={`tooltip-box${placement === "right" ? " tooltip-right" : ""}`}>{text}</span>
+        <span className={`tooltip-box${placement === "right" ? " tooltip-right" : ""}`}>
+          {text}
+        </span>
       )}
     </span>
   );

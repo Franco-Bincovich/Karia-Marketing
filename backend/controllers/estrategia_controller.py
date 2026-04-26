@@ -32,11 +32,13 @@ class EstrategiaController:
     def analizar_competencia(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         return svc.analizar_competencia(self.db, _marca(x_marca_id))
 
-    def plan_contenido(self, body: PlanContenidoRequest,
-                       x_marca_id: Optional[str], current_user: dict) -> dict:
+    def plan_contenido(self, body: PlanContenidoRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         return svc.generar_plan_contenido(
-            self.db, _marca(x_marca_id), periodo=body.periodo,
-            red_social=body.red_social, formatos=body.formatos,
+            self.db,
+            _marca(x_marca_id),
+            periodo=body.periodo,
+            red_social=body.red_social,
+            formatos=body.formatos,
         )
 
     def sugerencias(self, x_marca_id: Optional[str], current_user: dict) -> dict:
@@ -53,6 +55,5 @@ class EstrategiaController:
         result = svc.obtener_plan_activo(self.db, _marca(x_marca_id))
         return result or {"activo": False}
 
-    def marcar_implementada(self, estrategia_id: UUID,
-                            x_marca_id: Optional[str], current_user: dict) -> dict:
+    def marcar_implementada(self, estrategia_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
         return svc.marcar_implementada(self.db, _marca(x_marca_id), estrategia_id)

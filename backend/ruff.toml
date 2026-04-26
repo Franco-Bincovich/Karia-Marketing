@@ -1,0 +1,10 @@
+line-length = 150
+target-version = "py39"
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "E712"]  # E712: SQLAlchemy requiere == True/False para filtros
+
+[format]
+quote-style = "double"
+indent-style = "space"

@@ -41,18 +41,28 @@ def aprobar(db: Session, contenido_id: UUID, marca_id: UUID, variante: str) -> d
     if not obj:
         raise AppError("Contenido no encontrado", "NOT_FOUND", 404)
 
-    contenido = repo.actualizar_campos(db, obj, {
-        "estado": "aprobado",
-        "variante_seleccionada": variante,
-    })
+    contenido = repo.actualizar_campos(
+        db,
+        obj,
+        {
+            "estado": "aprobado",
+            "variante_seleccionada": variante,
+        },
+    )
 
     copy_aprobado = obj.copy_a if variante == "a" else obj.copy_b
-    ap_repo.registrar(db, {
-        "marca_id": marca_id, "contenido_id": contenido_id,
-        "tipo": "aprobacion", "red_social": obj.red_social,
-        "formato": obj.formato, "tono": obj.tono,
-        "copy_final": copy_aprobado,
-    })
+    ap_repo.registrar(
+        db,
+        {
+            "marca_id": marca_id,
+            "contenido_id": contenido_id,
+            "tipo": "aprobacion",
+            "red_social": obj.red_social,
+            "formato": obj.formato,
+            "tono": obj.tono,
+            "copy_final": copy_aprobado,
+        },
+    )
 
     db.commit()
     logger.info(f"[feedback_service] aprobado — id={contenido_id}, variante={variante}")
@@ -78,42 +88,65 @@ def rechazar(db: Session, contenido_id: UUID, marca_id: UUID, comentario: str) -
     if not obj:
         raise AppError("Contenido no encontrado", "NOT_FOUND", 404)
 
-    ap_repo.registrar(db, {
-        "marca_id": marca_id, "contenido_id": contenido_id,
-        "tipo": "rechazo", "red_social": obj.red_social,
-        "formato": obj.formato, "tono": obj.tono,
-        "comentario": comentario,
-        "copy_original": obj.copy_a,
-    })
+    ap_repo.registrar(
+        db,
+        {
+            "marca_id": marca_id,
+            "contenido_id": contenido_id,
+            "tipo": "rechazo",
+            "red_social": obj.red_social,
+            "formato": obj.formato,
+            "tono": obj.tono,
+            "comentario": comentario,
+            "copy_original": obj.copy_a,
+        },
+    )
 
     logger.info(f"[feedback_service] rechazado — id={contenido_id}, regenerando con feedback")
 
     from repositories import memoria_marca_repository as memoria_repo
+
     memoria_text = memoria_repo.obtener_para_agente(db, marca_id)
 
     nuevo = claude_client.generar_contenido_ia(
-        red_social=obj.red_social, formato=obj.formato,
-        objetivo=obj.objetivo or "", tono=obj.tono or "",
-        tema=obj.tema or "", memoria_marca=memoria_text,
+        red_social=obj.red_social,
+        formato=obj.formato,
+        objetivo=obj.objetivo or "",
+        tono=obj.tono or "",
+        tema=obj.tema or "",
+        memoria_marca=memoria_text,
         feedback_previo=comentario,
     )
 
-    contenido = repo.actualizar_campos(db, obj, {
-        "copy_a": nuevo["copy_a"], "copy_b": nuevo["copy_b"],
-        "copy_c": nuevo.get("copy_c"),
-        "hashtags_a": nuevo.get("hashtags_a"), "hashtags_b": nuevo.get("hashtags_b"),
-        "hashtags_c": nuevo.get("hashtags_c"),
-        "cta_a": nuevo.get("cta_a"), "cta_b": nuevo.get("cta_b"),
-        "cta_c": nuevo.get("cta_c"),
-        "estado": "pendiente_aprobacion",
-        "variante_seleccionada": None,
-    })
+    contenido = repo.actualizar_campos(
+        db,
+        obj,
+        {
+            "copy_a": nuevo["copy_a"],
+            "copy_b": nuevo["copy_b"],
+            "copy_c": nuevo.get("copy_c"),
+            "hashtags_a": nuevo.get("hashtags_a"),
+            "hashtags_b": nuevo.get("hashtags_b"),
+            "hashtags_c": nuevo.get("hashtags_c"),
+            "cta_a": nuevo.get("cta_a"),
+            "cta_b": nuevo.get("cta_b"),
+            "cta_c": nuevo.get("cta_c"),
+            "estado": "pendiente_aprobacion",
+            "variante_seleccionada": None,
+        },
+    )
 
-    repo.guardar_version(db, contenido_id, {
-        "copy_a": nuevo["copy_a"], "copy_b": nuevo["copy_b"],
-        "copy_c": nuevo.get("copy_c"),
-        "motivo_rechazo": comentario, "creado_por": "ia",
-    })
+    repo.guardar_version(
+        db,
+        contenido_id,
+        {
+            "copy_a": nuevo["copy_a"],
+            "copy_b": nuevo["copy_b"],
+            "copy_c": nuevo.get("copy_c"),
+            "motivo_rechazo": comentario,
+            "creado_por": "ia",
+        },
+    )
 
     db.commit()
     return contenido
@@ -145,16 +178,28 @@ def editar(db: Session, contenido_id: UUID, marca_id: UUID, copy_editado: str, v
 
     contenido = repo.actualizar_campos(db, obj, {campo: copy_editado})
 
-    repo.guardar_version(db, contenido_id, {
-        campo: copy_editado, "creado_por": "humano",
-    })
+    repo.guardar_version(
+        db,
+        contenido_id,
+        {
+            campo: copy_editado,
+            "creado_por": "humano",
+        },
+    )
 
-    ap_repo.registrar(db, {
-        "marca_id": marca_id, "contenido_id": contenido_id,
-        "tipo": "edicion", "red_social": obj.red_social,
-        "formato": obj.formato, "tono": obj.tono,
-        "copy_original": copy_original, "copy_final": copy_editado,
-    })
+    ap_repo.registrar(
+        db,
+        {
+            "marca_id": marca_id,
+            "contenido_id": contenido_id,
+            "tipo": "edicion",
+            "red_social": obj.red_social,
+            "formato": obj.formato,
+            "tono": obj.tono,
+            "copy_original": copy_original,
+            "copy_final": copy_editado,
+        },
+    )
 
     db.commit()
     logger.info(f"[feedback_service] edicion — id={contenido_id}, variante={variante}")

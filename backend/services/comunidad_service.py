@@ -1,4 +1,5 @@
 """Servicio del Agente Comunidad — responde todo salvo criterios de escalado."""
+
 from __future__ import annotations
 
 import logging
@@ -30,12 +31,16 @@ def procesar_mensaje(db: Session, marca_id: UUID, mensaje_data: dict) -> dict:
     if _debe_escalar(clasificacion, config):
         motivo = f"Clasificación: {clasificacion}"
         msg_repo.marcar_escalado(db, UUID(msg["id"]), motivo)
-        alertas_repo.crear(db, {
-            "marca_id": marca_id, "tipo": "escalado_comunidad",
-            "mensaje": f"Mensaje escalado: {motivo}", "datos": msg,
-        })
-        registrar_auditoria(db, accion="escalar_mensaje", modulo="comunidad", marca_id=marca_id,
-                            recurso_id=msg["id"], detalle={"motivo": motivo})
+        alertas_repo.crear(
+            db,
+            {
+                "marca_id": marca_id,
+                "tipo": "escalado_comunidad",
+                "mensaje": f"Mensaje escalado: {motivo}",
+                "datos": msg,
+            },
+        )
+        registrar_auditoria(db, accion="escalar_mensaje", modulo="comunidad", marca_id=marca_id, recurso_id=msg["id"], detalle={"motivo": motivo})
         db.commit()
         return {**msg, "accion": "escalado"}
 
@@ -56,6 +61,7 @@ def procesar_mensaje(db: Session, marca_id: UUID, mensaje_data: dict) -> dict:
 def generar_respuesta(db: Session, marca_id: UUID, contenido: str, clasificacion: str) -> str:
     """Genera respuesta con Claude usando el perfil de marca completo."""
     from repositories import memoria_marca_repository as memoria_repo
+
     memoria_text = memoria_repo.obtener_para_agente(db, marca_id)
 
     system = (
@@ -69,7 +75,9 @@ def generar_respuesta(db: Session, marca_id: UUID, contenido: str, clasificacion
     )
     try:
         message = _get_client().messages.create(
-            model=_COMMUNITY_MODEL, max_tokens=512, system=system,
+            model=_COMMUNITY_MODEL,
+            max_tokens=512,
+            system=system,
             messages=[{"role": "user", "content": f"[{clasificacion}] {contenido}"}],
         )
         blocks = [b for b in message.content if b.type == "text"]
@@ -106,9 +114,14 @@ def _debe_escalar(clasificacion: str, config: dict) -> bool:
 
 def _crear_lead(db: Session, marca_id: UUID, msg: dict) -> None:
     """Crea un contacto en contactos_mkt a partir de un lead detectado en DM."""
-    contactos_repository.crear(db, {
-        "marca_id": marca_id, "cliente_id": marca_id,
-        "nombre": msg.get("autor_username", "Lead DM"),
-        "empresa": "Desconocida", "origen": "comunidad",
-        "notas": f"Lead detectado en {msg['red_social']}: {msg['contenido'][:100]}",
-    })
+    contactos_repository.crear(
+        db,
+        {
+            "marca_id": marca_id,
+            "cliente_id": marca_id,
+            "nombre": msg.get("autor_username", "Lead DM"),
+            "empresa": "Desconocida",
+            "origen": "comunidad",
+            "notas": f"Lead detectado en {msg['red_social']}: {msg['contenido'][:100]}",
+        },
+    )

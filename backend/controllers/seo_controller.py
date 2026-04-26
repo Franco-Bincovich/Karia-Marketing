@@ -1,4 +1,5 @@
 """Adaptador HTTP para el módulo de SEO."""
+
 from __future__ import annotations
 
 import logging
@@ -56,6 +57,7 @@ class SeoController:
     def listar_keywords(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista keywords monitoreadas de la marca."""
         from repositories import keywords_repository
+
         items = keywords_repository.listar(self.db, _marca(x_marca_id))
         return {"data": items, "count": len(items)}
 
@@ -91,17 +93,22 @@ class SeoController:
     def generar_brief(self, body: BriefRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Genera un nuevo brief SEO con Claude."""
         return briefs_seo_service.generar_brief(
-            self.db, _marca(x_marca_id), body.keyword_principal, body.keywords_secundarias or "",
+            self.db,
+            _marca(x_marca_id),
+            body.keyword_principal,
+            body.keywords_secundarias or "",
         )
 
     def obtener_config(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Obtiene configuración SEO de la marca."""
         from repositories import config_seo_repository
+
         return config_seo_repository.obtener_o_crear(self.db, _marca(x_marca_id))
 
     def actualizar_config(self, body: ConfigSeoRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Actualiza configuración SEO."""
         from repositories import config_seo_repository
+
         data = {k: v for k, v in body.model_dump().items() if v is not None}
         return config_seo_repository.actualizar(self.db, _marca(x_marca_id), data)
 

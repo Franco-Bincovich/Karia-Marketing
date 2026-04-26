@@ -22,7 +22,10 @@ function SkeletonMetric() {
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div className="skeleton skeleton-circle" style={{ width: 36, height: 36, borderRadius: 10 }} />
+        <div
+          className="skeleton skeleton-circle"
+          style={{ width: 36, height: 36, borderRadius: 10 }}
+        />
         <div className="skeleton" style={{ height: 13, flex: 1, maxWidth: 100 }} />
       </div>
       <div className="skeleton" style={{ height: 28, width: "50%" }} />
@@ -32,7 +35,15 @@ function SkeletonMetric() {
 
 function SkeletonList() {
   return (
-    <div style={{ padding: "12px 0", borderBottom: "1px solid var(--border-subtle)", display: "flex", alignItems: "center", gap: 12 }}>
+    <div
+      style={{
+        padding: "12px 0",
+        borderBottom: "1px solid var(--border-subtle)",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
       <div className="skeleton skeleton-circle" style={{ width: 32, height: 32, flexShrink: 0 }} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
         <div className="skeleton" style={{ height: 13, width: "55%" }} />
@@ -58,7 +69,9 @@ export default function SkeletonLoader({ type = "text", count = 1, style = {} })
   if (type === "card") {
     return (
       <div className="grid-4" style={style}>
-        {items.map((_, i) => <SkeletonCard key={i} />)}
+        {items.map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     );
   }
@@ -66,7 +79,9 @@ export default function SkeletonLoader({ type = "text", count = 1, style = {} })
   if (type === "metric") {
     return (
       <div className="grid-4" style={style}>
-        {items.map((_, i) => <SkeletonMetric key={i} />)}
+        {items.map((_, i) => (
+          <SkeletonMetric key={i} />
+        ))}
       </div>
     );
   }
@@ -74,14 +89,18 @@ export default function SkeletonLoader({ type = "text", count = 1, style = {} })
   if (type === "list") {
     return (
       <div style={style}>
-        {items.map((_, i) => <SkeletonList key={i} />)}
+        {items.map((_, i) => (
+          <SkeletonList key={i} />
+        ))}
       </div>
     );
   }
 
   return (
     <div style={style}>
-      {items.map((_, i) => <SkeletonText key={i} />)}
+      {items.map((_, i) => (
+        <SkeletonText key={i} />
+      ))}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 """Rutas del módulo SEO — keywords, auditoría, briefs y configuración."""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -8,8 +9,12 @@ from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
 from controllers.seo_controller import (
-    AuditarRequest, BriefRequest, CompetidorRequest,
-    ConfigSeoRequest, InvestigarRequest, SeoController,
+    AuditarRequest,
+    BriefRequest,
+    CompetidorRequest,
+    ConfigSeoRequest,
+    InvestigarRequest,
+    SeoController,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user

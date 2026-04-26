@@ -1,9 +1,10 @@
 """Modelos SQLAlchemy para imagenes_mkt."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID

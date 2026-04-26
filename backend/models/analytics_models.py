@@ -1,4 +1,5 @@
 """Modelos SQLAlchemy para el módulo de Analytics y Reporting."""
+
 from __future__ import annotations
 
 import uuid

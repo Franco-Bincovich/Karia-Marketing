@@ -1,15 +1,20 @@
 """Rutas del módulo Onboarding, Memoria de Marca y Perfil."""
+
 from __future__ import annotations
 
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, UploadFile, File
+from fastapi import APIRouter, Depends, File, Header, UploadFile
 from sqlalchemy.orm import Session
 
 from controllers.onboarding_controller import (
-    AutocompletarRequest, GuardarRespuestasRequest, MemoriaUpdateRequest,
-    OnboardingController, PasoRequest, SugerirRequest,
+    AutocompletarRequest,
+    GuardarRespuestasRequest,
+    MemoriaUpdateRequest,
+    OnboardingController,
+    PasoRequest,
+    SugerirRequest,
 )
 from integrations.database import get_db
 from middleware.auth import get_current_user
@@ -22,6 +27,7 @@ def _ctrl(db: Session = Depends(get_db)) -> OnboardingController:
 
 
 # --- Onboarding cuestionario ---
+
 
 @router.get("/api/onboarding/estado")
 def estado(
@@ -66,6 +72,7 @@ def completar(
 
 # --- IA Premium ---
 
+
 @router.post("/api/onboarding/sugerir")
 def sugerir(
     body: SugerirRequest,
@@ -90,6 +97,7 @@ def autocompletar(
 
 # --- Perfil de marca ---
 
+
 @router.get("/api/marca/perfil")
 def perfil_marca(
     x_marca_id: Optional[str] = Header(default=None),
@@ -102,6 +110,7 @@ def perfil_marca(
 
 # --- Documentos de marca ---
 
+
 @router.post("/api/marca/documentos/subir")
 async def subir_documento(
     file: UploadFile = File(...),
@@ -110,8 +119,9 @@ async def subir_documento(
     db: Session = Depends(get_db),
 ):
     """Sube un documento (PDF, DOCX, TXT) para contexto de marca."""
-    from services import documentos_service
     from controllers.onboarding_controller import _marca
+    from services import documentos_service
+
     content = await file.read()
     return documentos_service.subir(db, _marca(x_marca_id), file.filename, content)
 
@@ -123,8 +133,9 @@ def listar_documentos(
     db: Session = Depends(get_db),
 ):
     """Lista documentos subidos de la marca."""
-    from services import documentos_service
     from controllers.onboarding_controller import _marca
+    from services import documentos_service
+
     items = documentos_service.listar(db, _marca(x_marca_id))
     return {"data": items, "count": len(items)}
 
@@ -137,17 +148,20 @@ def eliminar_documento(
     db: Session = Depends(get_db),
 ):
     """Elimina un documento de la marca."""
-    from services import documentos_service
     from controllers.onboarding_controller import _marca
+    from services import documentos_service
+
     documentos_service.eliminar(db, doc_id, _marca(x_marca_id))
     return {"message": "Documento eliminado"}
 
 
 # --- Legacy: pasos individuales ---
 
+
 @router.post("/api/onboarding/paso/{numero}")
 def completar_paso(
-    numero: int, body: PasoRequest,
+    numero: int,
+    body: PasoRequest,
     x_marca_id: Optional[str] = Header(default=None),
     current_user: dict = Depends(get_current_user),
     ctrl: OnboardingController = Depends(_ctrl),
@@ -157,6 +171,7 @@ def completar_paso(
 
 
 # --- Memoria de marca ---
+
 
 @router.get("/api/onboarding/memoria")
 def obtener_memoria(

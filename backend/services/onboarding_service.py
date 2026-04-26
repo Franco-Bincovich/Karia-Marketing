@@ -1,4 +1,5 @@
 """Servicio de Onboarding — 15 obligatorias + ~20 opcionales, siempre editable."""
+
 from __future__ import annotations
 
 import logging
@@ -16,8 +17,10 @@ logger = logging.getLogger(__name__)
 
 # ── helpers ────────────────────────────────────────────────────
 
+
 def _get_plan(db: Session, marca_id: UUID) -> str:
     from models.cliente_models import ClienteMkt, MarcaMkt
+
     marca = db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
     if not marca:
         raise AppError("Marca no encontrada", "MARCA_NOT_FOUND", 404)
@@ -48,6 +51,7 @@ def _completitud(preguntas: list, respuestas: dict) -> dict:
 
 
 # ── API pública ────────────────────────────────────────────────
+
 
 def iniciar_onboarding(db: Session, marca_id: UUID) -> dict:
     onboarding = onboarding_repo.obtener(db, marca_id)
@@ -102,13 +106,13 @@ def completar_onboarding(db: Session, marca_id: UUID, usuario_id: UUID) -> dict:
     onboarding = onboarding_repo.obtener(db, marca_id)
     respuestas = onboarding.get("respuestas") or {}
 
-    faltantes = [p for p in PREGUNTAS_OBLIGATORIAS
-                 if str(p["id"]) not in respuestas or not respuestas[str(p["id"])]]
+    faltantes = [p for p in PREGUNTAS_OBLIGATORIAS if str(p["id"]) not in respuestas or not respuestas[str(p["id"])]]
     if faltantes:
         nombres = [p["pregunta"][:50] for p in faltantes]
         raise AppError(
             f"Faltan respuestas obligatorias: {', '.join(nombres)}",
-            "INCOMPLETE_ONBOARDING", 400,
+            "INCOMPLETE_ONBOARDING",
+            400,
         )
 
     datos_memoria = _mapear_a_memoria(PREGUNTAS, respuestas)
@@ -136,6 +140,7 @@ def sugerir_respuesta(db: Session, marca_id: UUID, pregunta_id: int, rol: str = 
     memoria = memoria_repo.obtener_o_crear(db, marca_id)
 
     from integrations.claude_client import sugerir_respuesta_onboarding
+
     sugerencia = sugerir_respuesta_onboarding(
         pregunta=pregunta["pregunta"],
         contexto_respuestas=respuestas,
@@ -151,6 +156,7 @@ def autocompletar_perfil(db: Session, marca_id: UUID, nombre_marca: str, rol: st
         raise AppError("El autocompletado de IA solo está disponible en el plan Premium", "PLAN_LIMIT", 403)
 
     from integrations.claude_client import autocompletar_perfil_marca
+
     sugerencias = autocompletar_perfil_marca(nombre_marca)
 
     onboarding = onboarding_repo.obtener(db, marca_id)
@@ -182,15 +188,19 @@ def regenerar_memoria(db: Session, marca_id: UUID) -> str:
 
 # ── Legacy (10 pasos) ─────────────────────────────────────────
 
-def completar_paso(db: Session, marca_id: UUID, paso: int, datos: dict,
-                   usuario_id: UUID) -> dict:
+
+def completar_paso(db: Session, marca_id: UUID, paso: int, datos: dict, usuario_id: UUID) -> dict:
     _PASO_CAMPOS = {
         1: ["nombre_marca", "industria", "descripcion", "sitio_web"],
         2: ["propuesta_valor", "diferenciadores", "colores_marca", "tipografia"],
         3: ["tono_voz", "palabras_clave", "palabras_prohibidas", "ejemplos_contenido_aprobado"],
         4: ["publico_objetivo", "icp_descripcion", "icp_cargo", "icp_industria", "icp_tamano_empresa"],
-        5: ["competidores"], 6: ["productos_servicios"], 7: ["objetivos_periodo"],
-        8: [], 9: [], 10: [],
+        5: ["competidores"],
+        6: ["productos_servicios"],
+        7: ["objetivos_periodo"],
+        8: [],
+        9: [],
+        10: [],
     }
     if paso < 1 or paso > 10:
         raise AppError("Paso debe estar entre 1 y 10", "INVALID_STEP", 400)
@@ -203,7 +213,13 @@ def completar_paso(db: Session, marca_id: UUID, paso: int, datos: dict,
             valor_nuevo = str(datos[campo]) if datos[campo] is not None else ""
             datos_memoria[campo] = datos[campo]
             onboarding_repo.registrar_historial(
-                db, marca_id, paso, campo, valor_anterior, valor_nuevo, usuario_id,
+                db,
+                marca_id,
+                paso,
+                campo,
+                valor_anterior,
+                valor_nuevo,
+                usuario_id,
             )
     if datos_memoria:
         memoria_repo.actualizar(db, marca_id, datos_memoria)
@@ -214,17 +230,26 @@ def completar_paso(db: Session, marca_id: UUID, paso: int, datos: dict,
 
 # ── Mapeo respuestas → memoria ─────────────────────────────────
 
+
 def _mapear_a_memoria(preguntas: list, respuestas: dict) -> dict:
     """Mapea respuestas del cuestionario a campos de memoria_marca."""
     import re
+
     datos = {}
     _LISTA_CAMPOS = {
-        "palabras_clave", "palabras_prohibidas", "diferenciadores",
-        "ejemplos_contenido_aprobado", "icp_cargo", "icp_industria",
-        "adjetivos_marca", "redes_activas",
+        "palabras_clave",
+        "palabras_prohibidas",
+        "diferenciadores",
+        "ejemplos_contenido_aprobado",
+        "icp_cargo",
+        "icp_industria",
+        "adjetivos_marca",
+        "redes_activas",
     }
     _JSONB_CAMPOS = {
-        "competidores", "productos_servicios", "objetivos_periodo",
+        "competidores",
+        "productos_servicios",
+        "objetivos_periodo",
         "preguntas_frecuentes",
     }
 
@@ -259,11 +284,13 @@ def _mapear_a_memoria(preguntas: list, respuestas: dict) -> dict:
 
 def _get_documentos_texto(db: Session, marca_id: UUID) -> str:
     from services.documentos_service import obtener_textos
+
     return obtener_textos(db, marca_id)
 
 
 def _desbloquear_features(db: Session, marca_id: UUID) -> None:
     from models.permisos_models import FeatureFlagMkt
+
     flags = db.query(FeatureFlagMkt).filter(FeatureFlagMkt.marca_id == marca_id).all()
     for flag in flags:
         flag.habilitado = True

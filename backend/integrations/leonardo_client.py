@@ -68,8 +68,7 @@ def _extract_palette(perfil_marca: dict) -> list:
     return hex_codes if hex_codes else _DEFAULT_PALETTE
 
 
-def _build_brand_prompt(descripcion: str, palette: list, is_placa: bool,
-                        perfil_marca: dict = None, formato: str = "post") -> str:
+def _build_brand_prompt(descripcion: str, palette: list, is_placa: bool, perfil_marca: dict = None, formato: str = "post") -> str:
     """
     Construye el prompt final para Leonardo.
     - Para placa: fondo texturado vacío listo para overlay.
@@ -95,8 +94,11 @@ def _build_brand_prompt(descripcion: str, palette: list, is_placa: bool,
     # Elaborada: traducir concepto a escena realista usando Claude Haiku
     try:
         from integrations.claude_client import traducir_concepto_a_prompt_visual
+
         visual_scene = traducir_concepto_a_prompt_visual(
-            descripcion, perfil_marca or {}, formato=formato,
+            descripcion,
+            perfil_marca or {},
+            formato=formato,
         )
         logger.info("[leonardo] escena traducida: %s", visual_scene[:120])
     except Exception as e:
@@ -150,7 +152,10 @@ def generar_imagen(
     }
 
     resp = requests.post(
-        f"{_BASE_URL}/generations", headers=headers, json=payload, timeout=_TIMEOUT,
+        f"{_BASE_URL}/generations",
+        headers=headers,
+        json=payload,
+        timeout=_TIMEOUT,
     )
 
     if resp.status_code != 200:
@@ -173,7 +178,9 @@ def generar_imagen(
     for _ in range(_MAX_POLLS):
         time.sleep(_POLL_INTERVAL)
         poll = requests.get(
-            f"{_BASE_URL}/generations/{generation_id}", headers=headers, timeout=_TIMEOUT,
+            f"{_BASE_URL}/generations/{generation_id}",
+            headers=headers,
+            timeout=_TIMEOUT,
         )
         if poll.status_code != 200:
             continue
@@ -212,11 +219,16 @@ def generar_imagen_desde_marca(
     }
     formato = formato_map.get(size, "post")
     prompt = _build_brand_prompt(
-        descripcion_usuario, palette,
+        descripcion_usuario,
+        palette,
         is_placa=(tipo == "placa"),
         perfil_marca=perfil_marca,
         formato=formato,
     )
     return generar_imagen(
-        prompt, size=size, style=style, custom_api_key=custom_api_key, tipo=tipo,
+        prompt,
+        size=size,
+        style=style,
+        custom_api_key=custom_api_key,
+        tipo=tipo,
     )

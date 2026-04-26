@@ -36,9 +36,9 @@ def generar_pieza(
 
     Flujo: Director de Arte → Agente Visual → Copy Visual (si placa)
     """
-    from services.agentes import director_arte_service as director
-    from services.agentes import agente_visual_service as visual
     from services.agentes import agente_copy_visual_service as copy_visual
+    from services.agentes import agente_visual_service as visual
+    from services.agentes import director_arte_service as director
 
     perfil = memoria_repo.obtener_o_crear(db, marca_id)
     leo_key = _resolve_leo_key(db, marca_id)
@@ -63,7 +63,11 @@ def generar_pieza(
     if tipo == "placa" and imagen_url and brief.get("texto_principal"):
         try:
             png_bytes = copy_visual.aplicar_texto(
-                imagen_url, brief, perfil, w, h,
+                imagen_url,
+                brief,
+                perfil,
+                w,
+                h,
             )
             filename = f"{uuid_mod.uuid4().hex}.png"
             b64_data = base64.b64encode(png_bytes).decode()
@@ -77,27 +81,32 @@ def generar_pieza(
         imagen_url = _upload_to_supabase(result["b64_data"], marca_id, filename)
 
     # 4. Guardar en DB
-    img = repo.crear(db, {
-        "marca_id": marca_id,
-        "prompt": result.get("revised_prompt") or descripcion,
-        "imagen_url": imagen_url,
-        "tamano": f"{w}x{h}",
-        "estilo": tipo,
-        "origen": "ia",
-    })
+    img = repo.crear(
+        db,
+        {
+            "marca_id": marca_id,
+            "prompt": result.get("revised_prompt") or descripcion,
+            "imagen_url": imagen_url,
+            "tamano": f"{w}x{h}",
+            "estilo": tipo,
+            "origen": "ia",
+        },
+    )
     db.commit()
     logger.info("[area_creativa] pieza generada — tipo=%s, url=%s", tipo, imagen_url[:60] if imagen_url else "?")
     return img
 
 
 def _resolve_leo_key(db: Session, marca_id: UUID) -> Optional[str]:
-    """Reutiliza la resolución de key de imagen_service."""
-    from services.imagen_service import _resolve_leonardo_key, _get_context
-    cliente, _ = _get_context(db, marca_id)
-    return _resolve_leonardo_key(db, cliente.id)
+    """Resuelve Leonardo key via helpers."""
+    from services.imagen.helpers import get_context, resolve_leonardo_key
+
+    cliente, _ = get_context(db, marca_id)
+    return resolve_leonardo_key(db, cliente.id)
 
 
 def _upload_to_supabase(b64_data: str, marca_id: UUID, filename: str) -> str:
-    """Reutiliza el upload de imagen_service."""
-    from services.imagen_service import _upload_to_supabase
-    return _upload_to_supabase(b64_data, marca_id, filename)
+    """Sube a Supabase via storage module."""
+    from services.imagen.storage import upload_to_supabase
+
+    return upload_to_supabase(b64_data, marca_id, filename)

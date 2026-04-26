@@ -16,11 +16,7 @@ export default function EmptyState({ icon, title, description, action, style = {
       {title && <h3 className="empty-state-title">{title}</h3>}
       {description && <p className="empty-state-desc">{description}</p>}
       {action && (
-        <button
-          className="btn btn-primary"
-          style={{ marginTop: 8 }}
-          onClick={action.onClick}
-        >
+        <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={action.onClick}>
           {action.label}
         </button>
       )}

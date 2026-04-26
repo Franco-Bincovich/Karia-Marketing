@@ -1,9 +1,10 @@
 """Modelos SQLAlchemy para el módulo de Contenido IA."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID

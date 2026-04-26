@@ -15,76 +15,100 @@ logger = logging.getLogger(__name__)
 
 AGENTES = {
     "contenido": {
-        "label": "Agente Contenido", "icon": "✍️",
+        "label": "Agente Contenido",
+        "icon": "✍️",
         "rol": "Genera copies y variantes A/B/C",
         "prompt_base": "Sos el agente de contenido de {marca}. Tu función es generar copies creativos y efectivos para redes sociales basándote en el perfil de marca.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "social_media": {
-        "label": "Agente Social Media", "icon": "📱",
+        "label": "Agente Social Media",
+        "icon": "📱",
         "rol": "Publica y monitorea redes",
         "prompt_base": "Sos el agente de social media de {marca}. Tu función es gestionar la publicación y el calendario editorial.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "comunidad": {
-        "label": "Agente Comunidad", "icon": "💬",
+        "label": "Agente Comunidad",
+        "icon": "💬",
         "rol": "Responde mensajes y DMs",
         "prompt_base": "Sos el agente de comunidad de {marca}. Tu función es responder mensajes y DMs de forma alineada a la voz de la marca.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "estrategia": {
-        "label": "Agente Estrategia", "icon": "🧠",
+        "label": "Agente Estrategia",
+        "icon": "🧠",
         "rol": "Planifica y analiza competencia",
         "prompt_base": "Sos el agente de estrategia de {marca}. Tu función es analizar la competencia y proponer acciones estratégicas.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "creativo": {
-        "label": "Agente Creativo", "icon": "🎨",
+        "label": "Agente Creativo",
+        "icon": "🎨",
         "rol": "Genera imágenes con IA",
         "prompt_base": "Sos el agente creativo de {marca}. Tu función es generar imágenes y creativos visuales alineados a la identidad de la marca.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "reporting": {
-        "label": "Agente Reporting", "icon": "📊",
+        "label": "Agente Reporting",
+        "icon": "📊",
         "rol": "Genera reportes periódicos",
         "prompt_base": "Sos el agente de reporting de {marca}. Tu función es generar reportes periódicos de performance.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "orquestador": {
-        "label": "Agente Orquestador", "icon": "🎭",
+        "label": "Agente Orquestador",
+        "icon": "🎭",
         "rol": "Coordina todos los agentes activos",
         "prompt_base": "Sos el orquestador de {marca}. Tu función es coordinar todos los agentes activos y asegurar coherencia en las acciones.",
-        "bloqueado_v1": False, "solo_premium": False,
+        "bloqueado_v1": False,
+        "solo_premium": False,
     },
     "analytics": {
-        "label": "Agente Analytics", "icon": "📈",
+        "label": "Agente Analytics",
+        "icon": "📈",
         "rol": "Consolida métricas y KPIs",
         "prompt_base": "Sos el agente de analytics de {marca}. Tu función es analizar métricas y KPIs de todas las plataformas conectadas.",
-        "bloqueado_v1": False, "solo_premium": True,
+        "bloqueado_v1": False,
+        "solo_premium": True,
     },
     "prospeccion": {
-        "label": "Agente Prospección", "icon": "🎯",
+        "label": "Agente Prospección",
+        "icon": "🎯",
         "rol": "Busca leads con IA",
         "prompt_base": "",
-        "bloqueado_v1": True, "solo_premium": False,
+        "bloqueado_v1": True,
+        "solo_premium": False,
     },
     "ads": {
-        "label": "Agente Ads", "icon": "📣",
+        "label": "Agente Ads",
+        "icon": "📣",
         "rol": "Gestiona campañas pagadas",
         "prompt_base": "",
-        "bloqueado_v1": True, "solo_premium": False,
+        "bloqueado_v1": True,
+        "solo_premium": False,
     },
     "seo": {
-        "label": "Agente SEO", "icon": "🔍",
+        "label": "Agente SEO",
+        "icon": "🔍",
         "rol": "Investiga keywords y audita",
         "prompt_base": "",
-        "bloqueado_v1": True, "solo_premium": False,
+        "bloqueado_v1": True,
+        "solo_premium": False,
     },
     "listening": {
-        "label": "Agente Listening", "icon": "👂",
+        "label": "Agente Listening",
+        "icon": "👂",
         "rol": "Monitorea menciones y crisis",
         "prompt_base": "",
-        "bloqueado_v1": True, "solo_premium": False,
+        "bloqueado_v1": True,
+        "solo_premium": False,
     },
 }
 
@@ -94,6 +118,7 @@ SOLO_PREMIUM = {k for k, v in AGENTES.items() if v["solo_premium"]}
 
 def _get_plan(db: Session, marca_id: UUID) -> str:
     from models.cliente_models import ClienteMkt, MarcaMkt
+
     marca = db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
     if not marca:
         raise AppError("Marca no encontrada", "MARCA_NOT_FOUND", 404)
@@ -105,6 +130,7 @@ def _get_plan(db: Session, marca_id: UUID) -> str:
 
 def _get_marca_nombre(db: Session, marca_id: UUID) -> str:
     from models.cliente_models import MarcaMkt
+
     marca = db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
     return marca.nombre if marca else "la marca"
 
@@ -125,9 +151,13 @@ def obtener_config(db: Session, marca_id: UUID, rol: str = "") -> list[dict]:
     plan = _get_plan(db, marca_id)
     marca_nombre = _get_marca_nombre(db, marca_id)
 
-    configs = db.query(AgentesConfigMkt).filter(
-        AgentesConfigMkt.marca_id == marca_id,
-    ).all()
+    configs = (
+        db.query(AgentesConfigMkt)
+        .filter(
+            AgentesConfigMkt.marca_id == marca_id,
+        )
+        .all()
+    )
     config_map = {c.agente_nombre: c for c in configs}
 
     resultado = []
@@ -136,26 +166,32 @@ def obtener_config(db: Session, marca_id: UUID, rol: str = "") -> list[dict]:
         estado = _estado_agente(nombre, plan, rol)
         prompt_base = meta["prompt_base"].replace("{marca}", marca_nombre)
 
-        resultado.append({
-            "nombre": nombre,
-            "label": meta["label"],
-            "icon": meta["icon"],
-            "rol": meta["rol"],
-            "estado": estado,
-            "activo": config.activo if config else (estado == "disponible"),
-            "modo": config.modo if config else "copilot",
-            "system_prompt": config.system_prompt_custom if config and config.system_prompt_custom else prompt_base,
-            "system_prompt_default": prompt_base,
-            "autopilot_disponible": plan == "Premium" or rol == "superadmin",
-        })
+        resultado.append(
+            {
+                "nombre": nombre,
+                "label": meta["label"],
+                "icon": meta["icon"],
+                "rol": meta["rol"],
+                "estado": estado,
+                "activo": config.activo if config else (estado == "disponible"),
+                "modo": config.modo if config else "copilot",
+                "system_prompt": config.system_prompt_custom if config and config.system_prompt_custom else prompt_base,
+                "system_prompt_default": prompt_base,
+                "autopilot_disponible": plan == "Premium" or rol == "superadmin",
+            }
+        )
 
     return resultado
 
 
 def actualizar_config(
-    db: Session, marca_id: UUID, nombre: str,
-    activo: Optional[bool] = None, modo: Optional[str] = None,
-    system_prompt: Optional[str] = None, rol: str = "",
+    db: Session,
+    marca_id: UUID,
+    nombre: str,
+    activo: Optional[bool] = None,
+    modo: Optional[str] = None,
+    system_prompt: Optional[str] = None,
+    rol: str = "",
 ) -> dict:
     """Actualiza configuración de un agente."""
     if nombre not in AGENTES:
@@ -172,10 +208,14 @@ def actualizar_config(
     if modo == "autopilot" and plan != "Premium" and rol != "superadmin":
         raise AppError("Autopilot solo disponible en Premium", "PLAN_LIMIT", 403)
 
-    config = db.query(AgentesConfigMkt).filter(
-        AgentesConfigMkt.marca_id == marca_id,
-        AgentesConfigMkt.agente_nombre == nombre,
-    ).first()
+    config = (
+        db.query(AgentesConfigMkt)
+        .filter(
+            AgentesConfigMkt.marca_id == marca_id,
+            AgentesConfigMkt.agente_nombre == nombre,
+        )
+        .first()
+    )
 
     if not config:
         config = AgentesConfigMkt(marca_id=marca_id, agente_nombre=nombre)
@@ -223,16 +263,21 @@ def ejecutar_agente(db: Session, marca_id: UUID, nombre: str, rol: str = "") -> 
     if estado == "solo_premium":
         raise AppError("Este agente solo está disponible en Premium", "PLAN_LIMIT", 403)
 
-    config = db.query(AgentesConfigMkt).filter(
-        AgentesConfigMkt.marca_id == marca_id,
-        AgentesConfigMkt.agente_nombre == nombre,
-    ).first()
+    config = (
+        db.query(AgentesConfigMkt)
+        .filter(
+            AgentesConfigMkt.marca_id == marca_id,
+            AgentesConfigMkt.agente_nombre == nombre,
+        )
+        .first()
+    )
 
     if config and not config.activo:
         raise AppError(f"El agente {nombre} está desactivado", "AGENT_INACTIVE", 400)
 
     marca_nombre = _get_marca_nombre(db, marca_id)
     from repositories import memoria_marca_repository as memoria_repo
+
     memoria_text = memoria_repo.obtener_para_agente(db, marca_id)
 
     meta = AGENTES[nombre]
@@ -242,7 +287,7 @@ def ejecutar_agente(db: Session, marca_id: UUID, nombre: str, rol: str = "") -> 
 
     # Dispatch especializados
     if nombre == "creativo":
-        return _dispatch_creativo(db, marca_id, config)
+        return _dispatch_creativo(db, marca_id, config, system_prompt)
     if nombre == "comunidad":
         return _dispatch_comunidad(db, marca_id)
     if nombre == "estrategia":
@@ -251,14 +296,17 @@ def ejecutar_agente(db: Session, marca_id: UUID, nombre: str, rol: str = "") -> 
     return _dispatch_agent(nombre, system_prompt, memoria_text, marca_nombre)
 
 
-def _dispatch_creativo(db: Session, marca_id: UUID, config) -> dict:
+def _dispatch_creativo(db: Session, marca_id: UUID, config, system_prompt: str = "") -> dict:
     """Genera imagen real usando el servicio de imágenes."""
     from services import imagen_service
+
     modo = config.modo if config else "copilot"
+    descripcion = system_prompt if system_prompt and system_prompt.strip() else "Imagen creativa para la próxima publicación de la marca"
     try:
         img = imagen_service.generar(
-            db, marca_id,
-            descripcion="Imagen creativa para la próxima publicación de la marca",
+            db,
+            marca_id,
+            descripcion=descripcion,
             usar_perfil=True,
         )
         if modo == "autopilot":
@@ -271,6 +319,7 @@ def _dispatch_creativo(db: Session, marca_id: UUID, config) -> dict:
 def _dispatch_comunidad(db: Session, marca_id: UUID) -> dict:
     """Ejecuta revisión de mensajes pendientes y genera sugerencias."""
     from services import comunidad_service
+
     pendientes = comunidad_service.listar_pendientes(db, marca_id)
     if not pendientes:
         return {"agente": "comunidad", "resultado": "No hay mensajes pendientes de respuesta."}
@@ -285,6 +334,7 @@ def _dispatch_comunidad(db: Session, marca_id: UUID) -> dict:
 def _dispatch_estrategia(db: Session, marca_id: UUID) -> dict:
     """Genera sugerencias estratégicas reales."""
     from services import estrategia_service
+
     entry = estrategia_service.sugerir_acciones(db, marca_id)
     contenido = entry.get("contenido", {})
     sugerencias = contenido.get("sugerencias", [])
@@ -299,7 +349,7 @@ def _dispatch_estrategia(db: Session, marca_id: UUID) -> dict:
 
 def _dispatch_agent(nombre: str, system_prompt: str, memoria: str, marca_nombre: str) -> dict:
     """Despacha la ejecución al agente correspondiente."""
-    from integrations.claude_client import _get_client, _SEARCH_MODEL, _parse_json_object
+    from integrations.claude_client import _SEARCH_MODEL, _get_client
 
     user_prompt = _AGENT_PROMPTS.get(nombre, f"Ejecutá tu función principal para {marca_nombre}.")
 

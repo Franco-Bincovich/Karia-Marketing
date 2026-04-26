@@ -1,4 +1,5 @@
 """Cliente Mention API para social listening."""
+
 from __future__ import annotations
 
 import logging
@@ -25,9 +26,14 @@ def buscar_menciones(terminos: list, fecha_desde: Optional[str] = None) -> list:
     if _is_mock():
         logger.debug("[mention] buscar_menciones — modo mock")
         return [
-            {"fuente": "twitter", "autor": f"user_{i}", "contenido": f"Mencion de {t}",
-             "sentimiento": "neutro", "alcance_estimado": 500 * (i + 1),
-             "url": f"https://twitter.com/user_{i}/status/mock-{int(time.time())}"}
+            {
+                "fuente": "twitter",
+                "autor": f"user_{i}",
+                "contenido": f"Mencion de {t}",
+                "sentimiento": "neutro",
+                "alcance_estimado": 500 * (i + 1),
+                "url": f"https://twitter.com/user_{i}/status/mock-{int(time.time())}",
+            }
             for i, t in enumerate(terminos[:3])
         ]
 
@@ -36,15 +42,22 @@ def buscar_menciones(terminos: list, fecha_desde: Optional[str] = None) -> list:
     for termino in terminos:
         r = requests.get(
             f"{_BASE_URL}/accounts/me/alerts",
-            headers=headers, params={"query": termino}, timeout=30,
+            headers=headers,
+            params={"query": termino},
+            timeout=30,
         )
         r.raise_for_status()
         for item in r.json().get("mentions", []):
-            results.append({
-                "fuente": item.get("source", "web"), "autor": item.get("author", ""),
-                "contenido": item.get("title", ""), "sentimiento": "neutro",
-                "alcance_estimado": item.get("reach", 0), "url": item.get("url", ""),
-            })
+            results.append(
+                {
+                    "fuente": item.get("source", "web"),
+                    "autor": item.get("author", ""),
+                    "contenido": item.get("title", ""),
+                    "sentimiento": "neutro",
+                    "alcance_estimado": item.get("reach", 0),
+                    "url": item.get("url", ""),
+                }
+            )
     return results
 
 

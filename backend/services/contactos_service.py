@@ -110,17 +110,19 @@ def guardar_seleccion(
             logger.debug(f"[contactos_service] duplicado omitido: {email}")
             continue
 
-        a_guardar.append({
-            "marca_id": marca_id,
-            "cliente_id": cliente_id,
-            "nombre": c.get("nombre"),
-            "empresa": c.get("empresa", ""),
-            "cargo": c.get("cargo"),
-            "email_empresarial": email or None,
-            "telefono_empresa": c.get("telefono_empresa"),
-            "confianza": _normalizar_confianza(c.get("confianza", 0)),
-            "origen": _normalizar_origen(c.get("origen")),
-        })
+        a_guardar.append(
+            {
+                "marca_id": marca_id,
+                "cliente_id": cliente_id,
+                "nombre": c.get("nombre"),
+                "empresa": c.get("empresa", ""),
+                "cargo": c.get("cargo"),
+                "email_empresarial": email or None,
+                "telefono_empresa": c.get("telefono_empresa"),
+                "confianza": _normalizar_confianza(c.get("confianza", 0)),
+                "origen": _normalizar_origen(c.get("origen")),
+            }
+        )
 
     guardados = repo.crear_bulk(db, a_guardar) if a_guardar else []
     db.commit()

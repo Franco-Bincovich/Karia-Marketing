@@ -1,4 +1,5 @@
 """Repositorio CRUD para reportes_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -15,10 +16,13 @@ logger = logging.getLogger(__name__)
 def _s(r: ReporteMkt) -> dict:
     """Serializa un ReporteMkt a dict."""
     return {
-        "id": str(r.id), "marca_id": str(r.marca_id), "tipo": r.tipo,
+        "id": str(r.id),
+        "marca_id": str(r.marca_id),
+        "tipo": r.tipo,
         "periodo_inicio": r.periodo_inicio.isoformat(),
         "periodo_fin": r.periodo_fin.isoformat(),
-        "contenido": r.contenido, "resumen_ejecutivo": r.resumen_ejecutivo,
+        "contenido": r.contenido,
+        "resumen_ejecutivo": r.resumen_ejecutivo,
         "formato": r.formato,
         "enviado": r.enviado,
         "enviado_at": r.enviado_at.isoformat() if r.enviado_at else None,
@@ -37,9 +41,7 @@ def crear(db: Session, data: dict) -> dict:
 
 def listar(db: Session, marca_id: UUID) -> list:
     """Lista reportes de una marca, más recientes primero."""
-    rows = db.query(ReporteMkt).filter(
-        ReporteMkt.marca_id == marca_id
-    ).order_by(ReporteMkt.created_at.desc()).all()
+    rows = db.query(ReporteMkt).filter(ReporteMkt.marca_id == marca_id).order_by(ReporteMkt.created_at.desc()).all()
     return [_s(r) for r in rows]
 
 

@@ -41,24 +41,23 @@ def _serialize(c: ContactoMkt) -> dict:
 
 def listar_emails_por_marca(db: Session, marca_id: UUID) -> set[str]:
     """Retorna el set de emails empresariales ya guardados para una marca."""
-    rows = db.execute(
-        select(ContactoMkt.email_empresarial).where(
-            ContactoMkt.marca_id == marca_id,
-            ContactoMkt.email_empresarial.isnot(None),
+    rows = (
+        db.execute(
+            select(ContactoMkt.email_empresarial).where(
+                ContactoMkt.marca_id == marca_id,
+                ContactoMkt.email_empresarial.isnot(None),
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return {e.lower().strip() for e in rows}
 
 
 def listar(db: Session, marca_id: UUID) -> list[dict]:
     """Lista todos los contactos de una marca ordenados por fecha descendente."""
     logger.debug(f"[contactos_repo] listar marca_id={marca_id}")
-    rows = (
-        db.query(ContactoMkt)
-        .filter(ContactoMkt.marca_id == marca_id)
-        .order_by(ContactoMkt.created_at.desc())
-        .all()
-    )
+    rows = db.query(ContactoMkt).filter(ContactoMkt.marca_id == marca_id).order_by(ContactoMkt.created_at.desc()).all()
     return [_serialize(r) for r in rows]
 
 
@@ -96,11 +95,7 @@ def buscar_por_email(db: Session, email: str, marca_id: UUID) -> Optional[dict]:
 
 def buscar_por_id(db: Session, contacto_id: UUID, marca_id: UUID) -> Optional[ContactoMkt]:
     """Busca un contacto por ID verificando que pertenezca a la marca."""
-    return (
-        db.query(ContactoMkt)
-        .filter(ContactoMkt.id == contacto_id, ContactoMkt.marca_id == marca_id)
-        .first()
-    )
+    return db.query(ContactoMkt).filter(ContactoMkt.id == contacto_id, ContactoMkt.marca_id == marca_id).first()
 
 
 def eliminar(db: Session, contacto_id: UUID, marca_id: UUID) -> bool:

@@ -2,14 +2,17 @@
 
 from functools import lru_cache
 from typing import List
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     DATABASE_URL: str
-    JWT_SECRET: str = "change-me-in-production"
+    JWT_SECRET: str  # Required — sin default. Debe tener >= 32 chars.
     JWT_EXPIRATION_HOURS: int = 24
-    SECRET_KEY: str = "change-me-in-production"
+    SECRET_KEY: str  # Required — sin default. Debe tener >= 32 chars.
+    ENV: str = "development"  # "development" | "production"
     ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
     KARIA_API_KEY: str = ""
@@ -32,6 +35,13 @@ class Settings(BaseSettings):
     LEONARDO_API_KEY: str = ""
     RESEND_API_KEY: str = ""
     EMAIL_FROM: str = "Nexo <noreply@nexo.marketing>"
+
+    @field_validator("JWT_SECRET", "SECRET_KEY")
+    @classmethod
+    def _validate_secrets(cls, v: str, info) -> str:
+        if not v or len(v) < 32:
+            raise ValueError(f"{info.field_name} debe tener al menos 32 caracteres. Generá uno con: openssl rand -hex 64")
+        return v
 
     model_config = SettingsConfigDict(
         env_file=".env",

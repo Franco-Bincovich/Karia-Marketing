@@ -1,4 +1,5 @@
 """Adaptador HTTP para el módulo de Comunidad y Social Listening."""
+
 from __future__ import annotations
 
 import logging
@@ -62,6 +63,7 @@ class ComunidadController:
     def listar_mensajes(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista mensajes de comunidad."""
         from repositories import mensajes_comunidad_repository
+
         items = mensajes_comunidad_repository.listar(self.db, _marca(x_marca_id))
         return {"data": items, "count": len(items)}
 
@@ -74,10 +76,10 @@ class ComunidadController:
         """Procesa un mensaje entrante."""
         return comunidad_service.procesar_mensaje(self.db, _marca(x_marca_id), body.model_dump())
 
-    def responder_mensaje(self, msg_id: UUID, body: ResponderRequest,
-                          x_marca_id: Optional[str], current_user: dict) -> dict:
+    def responder_mensaje(self, msg_id: UUID, body: ResponderRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Responde un mensaje manualmente."""
         from repositories import mensajes_comunidad_repository
+
         r = mensajes_comunidad_repository.marcar_respondido(self.db, msg_id, body.respuesta)
         if not r:
             raise AppError("Mensaje no encontrado", "NOT_FOUND", 404)
@@ -97,12 +99,14 @@ class ComunidadController:
     def menciones(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista menciones."""
         from repositories import menciones_repository
+
         items = menciones_repository.listar(self.db, _marca(x_marca_id))
         return {"data": items, "count": len(items)}
 
     def menciones_urgentes(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista menciones urgentes."""
         from repositories import menciones_repository
+
         items = menciones_repository.listar_urgentes(self.db, _marca(x_marca_id))
         return {"data": items, "count": len(items)}
 
@@ -117,23 +121,25 @@ class ComunidadController:
     def config_comunidad(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Obtiene configuración de comunidad."""
         from repositories import config_comunidad_repository
+
         return config_comunidad_repository.obtener_o_crear(self.db, _marca(x_marca_id))
 
-    def actualizar_config_comunidad(self, body: ConfigComunidadRequest,
-                                    x_marca_id: Optional[str], current_user: dict) -> dict:
+    def actualizar_config_comunidad(self, body: ConfigComunidadRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Actualiza configuración de comunidad."""
         from repositories import config_comunidad_repository
+
         data = {k: v for k, v in body.model_dump().items() if v is not None}
         return config_comunidad_repository.actualizar(self.db, _marca(x_marca_id), data)
 
     def config_listening(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Obtiene configuración de listening."""
         from repositories import config_listening_repository
+
         return config_listening_repository.obtener_o_crear(self.db, _marca(x_marca_id))
 
-    def actualizar_config_listening(self, body: ConfigListeningRequest,
-                                    x_marca_id: Optional[str], current_user: dict) -> dict:
+    def actualizar_config_listening(self, body: ConfigListeningRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Actualiza configuración de listening."""
         from repositories import config_listening_repository
+
         data = {k: v for k, v in body.model_dump().items() if v is not None}
         return config_listening_repository.actualizar(self.db, _marca(x_marca_id), data)

@@ -72,10 +72,16 @@ class ContenidoController:
         cliente_id = UUID(current_user["cliente_id"])
         rol = current_user.get("rol", "")
         return svc.generar_contenido(
-            db=self.db, marca_id=marca_id, cliente_id=cliente_id,
-            red_social=body.red_social, formato=body.formato,
-            objetivo=body.objetivo, tono=body.tono, tema=body.tema,
-            modo=body.modo, rol=rol,
+            db=self.db,
+            marca_id=marca_id,
+            cliente_id=cliente_id,
+            red_social=body.red_social,
+            formato=body.formato,
+            objetivo=body.objetivo,
+            tono=body.tono,
+            tema=body.tema,
+            modo=body.modo,
+            rol=rol,
         )
 
     def listar(self, x_marca_id: Optional[str], current_user: dict, estado: Optional[str] = None) -> dict:
@@ -105,8 +111,7 @@ class ContenidoController:
         marca_id = _marca(x_marca_id)
         return feedback_svc.editar(self.db, contenido_id, marca_id, body.copy_editado, body.variante)
 
-    def publicar_directo(self, contenido_id: UUID, body: PublicarDirectoRequest,
-                         x_marca_id: Optional[str], current_user: dict) -> dict:
+    def publicar_directo(self, contenido_id: UUID, body: PublicarDirectoRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         rol = current_user.get("rol", "")
         return svc.publicar_directo(self.db, marca_id, contenido_id, body.variante, rol=rol)

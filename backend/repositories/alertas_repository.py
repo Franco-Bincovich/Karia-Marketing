@@ -1,4 +1,5 @@
 """Repositorio CRUD para alertas_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -14,9 +15,13 @@ logger = logging.getLogger(__name__)
 def _s(a: AlertaMkt) -> dict:
     """Serializa un AlertaMkt a dict."""
     return {
-        "id": str(a.id), "marca_id": str(a.marca_id),
-        "tipo": a.tipo, "canal": a.canal, "mensaje": a.mensaje,
-        "datos": a.datos, "leida": a.leida,
+        "id": str(a.id),
+        "marca_id": str(a.marca_id),
+        "tipo": a.tipo,
+        "canal": a.canal,
+        "mensaje": a.mensaje,
+        "datos": a.datos,
+        "leida": a.leida,
         "created_at": a.created_at.isoformat() if a.created_at else None,
     }
 
@@ -32,17 +37,20 @@ def crear(db: Session, data: dict) -> dict:
 
 def listar(db: Session, marca_id: UUID) -> list:
     """Lista todas las alertas de una marca."""
-    rows = db.query(AlertaMkt).filter(
-        AlertaMkt.marca_id == marca_id
-    ).order_by(AlertaMkt.created_at.desc()).all()
+    rows = db.query(AlertaMkt).filter(AlertaMkt.marca_id == marca_id).order_by(AlertaMkt.created_at.desc()).all()
     return [_s(r) for r in rows]
 
 
 def marcar_leida(db: Session, alerta_id: UUID, marca_id: UUID) -> dict:
     """Marca una alerta como leída."""
-    obj = db.query(AlertaMkt).filter(
-        AlertaMkt.id == alerta_id, AlertaMkt.marca_id == marca_id,
-    ).first()
+    obj = (
+        db.query(AlertaMkt)
+        .filter(
+            AlertaMkt.id == alerta_id,
+            AlertaMkt.marca_id == marca_id,
+        )
+        .first()
+    )
     if not obj:
         return {}
     obj.leida = True
@@ -52,15 +60,28 @@ def marcar_leida(db: Session, alerta_id: UUID, marca_id: UUID) -> dict:
 
 def listar_por_tipo(db: Session, marca_id: UUID, tipo: str) -> list:
     """Lista alertas de un tipo específico, no leídas primero."""
-    rows = db.query(AlertaMkt).filter(
-        AlertaMkt.marca_id == marca_id, AlertaMkt.tipo == tipo,
-    ).order_by(AlertaMkt.leida, AlertaMkt.created_at.desc()).limit(20).all()
+    rows = (
+        db.query(AlertaMkt)
+        .filter(
+            AlertaMkt.marca_id == marca_id,
+            AlertaMkt.tipo == tipo,
+        )
+        .order_by(AlertaMkt.leida, AlertaMkt.created_at.desc())
+        .limit(20)
+        .all()
+    )
     return [_s(r) for r in rows]
 
 
 def listar_no_leidas(db: Session, marca_id: UUID) -> list:
     """Lista alertas no leídas de una marca."""
-    rows = db.query(AlertaMkt).filter(
-        AlertaMkt.marca_id == marca_id, AlertaMkt.leida == False,
-    ).order_by(AlertaMkt.created_at.desc()).all()
+    rows = (
+        db.query(AlertaMkt)
+        .filter(
+            AlertaMkt.marca_id == marca_id,
+            AlertaMkt.leida == False,
+        )
+        .order_by(AlertaMkt.created_at.desc())
+        .all()
+    )
     return [_s(r) for r in rows]

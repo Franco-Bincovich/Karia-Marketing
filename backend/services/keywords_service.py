@@ -1,4 +1,5 @@
 """Servicio de investigación y monitoreo de keywords — Módulo SEO."""
+
 from __future__ import annotations
 
 import logging
@@ -54,14 +55,21 @@ def monitorear_posiciones(db: Session, marca_id: UUID) -> list:
         kw_repo.actualizar_posicion(db, UUID(kw["id"]), nueva_pos)
         anterior = kw["posicion_actual"]
         if anterior and nueva_pos > anterior + CAIDA_ALERTA:
-            alertas.append({
-                "keyword": kw["keyword"], "anterior": anterior,
-                "actual": nueva_pos, "caida": nueva_pos - anterior,
-            })
+            alertas.append(
+                {
+                    "keyword": kw["keyword"],
+                    "anterior": anterior,
+                    "actual": nueva_pos,
+                    "caida": nueva_pos - anterior,
+                }
+            )
 
     if alertas:
         registrar_auditoria(
-            db, accion="alerta_caida_keywords", modulo="seo", marca_id=marca_id,
+            db,
+            accion="alerta_caida_keywords",
+            modulo="seo",
+            marca_id=marca_id,
             detalle={"alertas": alertas, "total": len(alertas)},
         )
     db.commit()
@@ -74,7 +82,10 @@ def analizar_competidor(db: Session, marca_id: UUID, dominio_competidor: str) ->
     marca_dominio = config.get("sitio_web", "")
     resultado = semrush_client.analizar_competidor(dominio_competidor, marca_dominio)
     registrar_auditoria(
-        db, accion="analizar_competidor_seo", modulo="seo", marca_id=marca_id,
+        db,
+        accion="analizar_competidor_seo",
+        modulo="seo",
+        marca_id=marca_id,
         detalle={"competidor": dominio_competidor, "keywords_encontradas": len(resultado.get("keywords_exclusivas", []))},
     )
     db.commit()

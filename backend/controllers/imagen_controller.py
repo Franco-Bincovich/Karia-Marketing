@@ -50,19 +50,27 @@ class ImagenController:
         marca_id = _marca(x_marca_id)
         rol = current_user.get("rol", "")
         return svc.generar(
-            self.db, marca_id, body.descripcion,
-            tamano=body.tamano, estilo=body.estilo,
-            usar_perfil=body.usar_perfil_marca, rol=rol,
-            tipo=body.tipo, formato=body.formato,
+            self.db,
+            marca_id,
+            body.descripcion,
+            tamano=body.tamano,
+            estilo=body.estilo,
+            usar_perfil=body.usar_perfil_marca,
+            rol=rol,
+            tipo=body.tipo,
+            formato=body.formato,
         )
 
-    def generar_para_contenido(self, contenido_id: UUID, body: GenerarParaContenidoRequest,
-                               x_marca_id: Optional[str], current_user: dict) -> dict:
+    def generar_para_contenido(self, contenido_id: UUID, body: GenerarParaContenidoRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         rol = current_user.get("rol", "")
         return svc.generar_para_contenido(
-            self.db, marca_id, contenido_id,
-            tamano=body.tamano, estilo=body.estilo, rol=rol,
+            self.db,
+            marca_id,
+            contenido_id,
+            tamano=body.tamano,
+            estilo=body.estilo,
+            rol=rol,
         )
 
     def listar(self, x_marca_id: Optional[str], current_user: dict) -> dict:
@@ -70,17 +78,19 @@ class ImagenController:
         items = svc.listar(self.db, marca_id)
         return {"data": items, "count": len(items)}
 
-    def generar_carrusel(self, contenido_id: UUID, body: GenerarCarruselRequest,
-                         x_marca_id: Optional[str], current_user: dict) -> dict:
+    def generar_carrusel(self, contenido_id: UUID, body: GenerarCarruselRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         rol = current_user.get("rol", "")
         return svc.generar_carrusel(
-            self.db, marca_id, contenido_id,
-            num_slides=body.num_slides, estilo=body.estilo, rol=rol,
+            self.db,
+            marca_id,
+            contenido_id,
+            num_slides=body.num_slides,
+            estilo=body.estilo,
+            rol=rol,
         )
 
-    def asociar(self, imagen_id: UUID, contenido_id: UUID,
-                x_marca_id: Optional[str], current_user: dict) -> dict:
+    def asociar(self, imagen_id: UUID, contenido_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
         marca_id = _marca(x_marca_id)
         return svc.asociar_contenido(self.db, marca_id, imagen_id, contenido_id)
 

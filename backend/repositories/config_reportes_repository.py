@@ -1,4 +1,5 @@
 """Repositorio para config_reportes_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -14,8 +15,10 @@ logger = logging.getLogger(__name__)
 def _s(c: ConfigReportesMkt) -> dict:
     """Serializa un ConfigReportesMkt a dict."""
     return {
-        "id": str(c.id), "marca_id": str(c.marca_id),
-        "frecuencia": c.frecuencia, "formatos": c.formatos,
+        "id": str(c.id),
+        "marca_id": str(c.marca_id),
+        "frecuencia": c.frecuencia,
+        "formatos": c.formatos,
         "canal_notificacion": c.canal_notificacion,
         "email_reporte": c.email_reporte,
         "whatsapp_reporte": c.whatsapp_reporte,

@@ -1,4 +1,5 @@
 """Repositorio para config_seo_mkt."""
+
 from __future__ import annotations
 
 import logging
@@ -14,8 +15,10 @@ logger = logging.getLogger(__name__)
 def _s(c: ConfigSeoMkt) -> dict:
     """Serializa un ConfigSeoMkt a dict."""
     return {
-        "id": str(c.id), "marca_id": str(c.marca_id),
-        "sitio_web": c.sitio_web, "frecuencia_reporte": c.frecuencia_reporte,
+        "id": str(c.id),
+        "marca_id": str(c.marca_id),
+        "sitio_web": c.sitio_web,
+        "frecuencia_reporte": c.frecuencia_reporte,
         "semrush_proyecto_id": c.semrush_proyecto_id,
         "search_console_conectado": c.search_console_conectado,
         "competidores": c.competidores,

@@ -1,4 +1,5 @@
 """Adaptador HTTP para el módulo de Analytics y Reporting."""
+
 from __future__ import annotations
 
 import logging
@@ -57,6 +58,7 @@ class AnalyticsController:
         if current_user.get("rol") == "superadmin":
             return
         from models.cliente_models import ClienteMkt, MarcaMkt
+
         marca = self.db.query(MarcaMkt).filter(MarcaMkt.id == marca_id).first()
         if marca:
             cliente = self.db.query(ClienteMkt).filter(ClienteMkt.id == marca.cliente_id).first()
@@ -80,10 +82,10 @@ class AnalyticsController:
         items = analytics_service.obtener_top_contenido(self.db, marca_id)
         return {"data": items, "count": len(items)}
 
-    def metricas(self, fecha_inicio: Optional[date], fecha_fin: Optional[date],
-                 x_marca_id: Optional[str], current_user: dict) -> dict:
+    def metricas(self, fecha_inicio: Optional[date], fecha_fin: Optional[date], x_marca_id: Optional[str], current_user: dict) -> dict:
         """Métricas sociales por período."""
         from repositories import metricas_sociales_repository
+
         fin = fecha_fin or date.today()
         inicio = fecha_inicio or (fin - timedelta(days=30))
         items = metricas_sociales_repository.listar(self.db, _marca(x_marca_id), inicio, fin)
@@ -96,36 +98,39 @@ class AnalyticsController:
     def kpis(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista KPIs disponibles y activos."""
         from repositories import kpis_repository
+
         activos = kpis_repository.obtener_activos(self.db, _marca(x_marca_id))
         disponibles = kpis_repository.listar_todos_disponibles()
         return {"activos": activos, "disponibles": disponibles}
 
-    def toggle_kpi(self, kpi: str, body: KpiToggleRequest,
-                   x_marca_id: Optional[str], current_user: dict) -> dict:
+    def toggle_kpi(self, kpi: str, body: KpiToggleRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Activa o desactiva un KPI."""
         from repositories import kpis_repository
+
         return kpis_repository.activar_desactivar(self.db, _marca(x_marca_id), kpi, body.activo)
 
     def reportes(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista reportes generados."""
         from repositories import reportes_repository
+
         items = reportes_repository.listar(self.db, _marca(x_marca_id))
         return {"data": items, "count": len(items)}
 
-    def generar_reporte(self, body: GenerarReporteRequest,
-                        x_marca_id: Optional[str], current_user: dict) -> dict:
+    def generar_reporte(self, body: GenerarReporteRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Genera un reporte manual."""
         return reporting_service.generar_reporte(self.db, _marca(x_marca_id), body.tipo)
 
     def alertas(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Lista alertas."""
         from repositories import alertas_repository
+
         items = alertas_repository.listar(self.db, _marca(x_marca_id))
         return {"data": items, "count": len(items)}
 
     def leer_alerta(self, alerta_id: UUID, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Marca alerta como leída."""
         from repositories import alertas_repository
+
         r = alertas_repository.marcar_leida(self.db, alerta_id, _marca(x_marca_id))
         if not r:
             raise AppError("Alerta no encontrada", "NOT_FOUND", 404)
@@ -135,11 +140,12 @@ class AnalyticsController:
     def config(self, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Obtiene configuración de reportes."""
         from repositories import config_reportes_repository
+
         return config_reportes_repository.obtener_o_crear(self.db, _marca(x_marca_id))
 
-    def actualizar_config(self, body: ConfigReportesRequest,
-                          x_marca_id: Optional[str], current_user: dict) -> dict:
+    def actualizar_config(self, body: ConfigReportesRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
         """Actualiza configuración de reportes."""
         from repositories import config_reportes_repository
+
         data = {k: v for k, v in body.model_dump().items() if v is not None}
         return config_reportes_repository.actualizar(self.db, _marca(x_marca_id), data)

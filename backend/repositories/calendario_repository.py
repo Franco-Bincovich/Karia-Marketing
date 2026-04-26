@@ -13,10 +13,14 @@ logger = logging.getLogger(__name__)
 
 def _s(c: CalendarioEditorialMkt) -> dict:
     return {
-        "id": str(c.id), "marca_id": str(c.marca_id), "cliente_id": str(c.cliente_id),
+        "id": str(c.id),
+        "marca_id": str(c.marca_id),
+        "cliente_id": str(c.cliente_id),
         "contenido_id": str(c.contenido_id) if c.contenido_id else None,
-        "titulo": c.titulo, "descripcion": c.descripcion,
-        "red_social": c.red_social, "formato": c.formato,
+        "titulo": c.titulo,
+        "descripcion": c.descripcion,
+        "red_social": c.red_social,
+        "formato": c.formato,
         "fecha_programada": c.fecha_programada.isoformat() if c.fecha_programada else None,
         "estado": c.estado,
         "created_at": c.created_at.isoformat() if c.created_at else None,
@@ -35,6 +39,7 @@ def crear_evento(db: Session, evento: dict) -> dict:
 def listar(db: Session, marca_id: UUID, mes: int, anio: int) -> list[dict]:
     """Lista eventos de una marca filtrados por mes y año."""
     from sqlalchemy import extract
+
     rows = (
         db.query(CalendarioEditorialMkt)
         .filter(
@@ -50,10 +55,14 @@ def listar(db: Session, marca_id: UUID, mes: int, anio: int) -> list[dict]:
 
 def obtener(db: Session, evento_id: UUID, marca_id: UUID) -> Optional[CalendarioEditorialMkt]:
     """Retorna el objeto ORM de un evento verificando que pertenezca a la marca."""
-    return db.query(CalendarioEditorialMkt).filter(
-        CalendarioEditorialMkt.id == evento_id,
-        CalendarioEditorialMkt.marca_id == marca_id,
-    ).first()
+    return (
+        db.query(CalendarioEditorialMkt)
+        .filter(
+            CalendarioEditorialMkt.id == evento_id,
+            CalendarioEditorialMkt.marca_id == marca_id,
+        )
+        .first()
+    )
 
 
 def actualizar_estado(db: Session, evento_id: UUID, estado: str) -> Optional[dict]:
@@ -82,6 +91,7 @@ def listar_programados_pendientes(db: Session) -> list[dict]:
     Usado por el scheduler para publicar automáticamente.
     """
     from datetime import datetime, timezone
+
     ahora = datetime.now(timezone.utc)
     rows = (
         db.query(CalendarioEditorialMkt)

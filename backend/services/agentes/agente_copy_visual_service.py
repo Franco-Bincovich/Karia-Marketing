@@ -6,7 +6,6 @@ import os
 import re
 import textwrap
 from pathlib import Path
-from typing import Optional
 
 import requests
 from PIL import Image, ImageDraw, ImageFont
@@ -24,8 +23,7 @@ def _get_font(size: int) -> ImageFont.FreeTypeFont:
             return ImageFont.truetype(_BARLOW_PATH, size)
         except (OSError, IOError):
             pass
-    for path in ["/System/Library/Fonts/Helvetica.ttc",
-                 "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]:
+    for path in ["/System/Library/Fonts/Helvetica.ttc", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]:
         try:
             return ImageFont.truetype(path, size)
         except (OSError, IOError):
@@ -35,7 +33,7 @@ def _get_font(size: int) -> ImageFont.FreeTypeFont:
 
 def _hex_to_rgb(h: str) -> tuple:
     h = h.lstrip("#")
-    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def _resolve_palette(colores_hex: list) -> dict:
@@ -120,8 +118,7 @@ def aplicar_texto(
     # NEXO logo
     font_logo = _get_font(int(width * 0.022))
     logo_bbox = draw.textbbox((0, 0), "NEXO", font=font_logo)
-    draw.text((width - (logo_bbox[2] - logo_bbox[0]) - width * 0.04,
-               height - height * 0.05), "NEXO", fill=_LOGO_COLOR, font=font_logo)
+    draw.text((width - (logo_bbox[2] - logo_bbox[0]) - width * 0.04, height - height * 0.05), "NEXO", fill=_LOGO_COLOR, font=font_logo)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG", quality=95)

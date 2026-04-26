@@ -49,20 +49,28 @@ class ClientesRepository:
         ahora = datetime.now(timezone.utc)
         desde = ahora + timedelta(days=dias - 0.5)
         hasta = ahora + timedelta(days=dias + 0.5)
-        return self.db.query(ClienteMkt).filter(
-            ClienteMkt.activo == True,  # noqa: E712
-            ClienteMkt.notificacion_enviada == False,  # noqa: E712
-            ClienteMkt.fecha_vencimiento >= desde,
-            ClienteMkt.fecha_vencimiento <= hasta,
-        ).all()
+        return (
+            self.db.query(ClienteMkt)
+            .filter(
+                ClienteMkt.activo == True,  # noqa: E712
+                ClienteMkt.notificacion_enviada == False,  # noqa: E712
+                ClienteMkt.fecha_vencimiento >= desde,
+                ClienteMkt.fecha_vencimiento <= hasta,
+            )
+            .all()
+        )
 
     def list_vencidos(self) -> List[ClienteMkt]:
         """Clientes activos cuyo vencimiento ya pasó."""
         ahora = datetime.now(timezone.utc)
-        return self.db.query(ClienteMkt).filter(
-            ClienteMkt.activo == True,  # noqa: E712
-            ClienteMkt.fecha_vencimiento <= ahora,
-        ).all()
+        return (
+            self.db.query(ClienteMkt)
+            .filter(
+                ClienteMkt.activo == True,  # noqa: E712
+                ClienteMkt.fecha_vencimiento <= ahora,
+            )
+            .all()
+        )
 
     def get_marca_by_id(self, marca_id: UUID) -> Optional[MarcaMkt]:
         """Obtiene una marca por ID."""
@@ -70,10 +78,14 @@ class ClientesRepository:
 
     def list_marcas_by_cliente(self, cliente_id: UUID) -> List[MarcaMkt]:
         """Lista todas las marcas activas de un cliente."""
-        return self.db.query(MarcaMkt).filter(
-            MarcaMkt.cliente_id == cliente_id,
-            MarcaMkt.activa == True,  # noqa: E712
-        ).all()
+        return (
+            self.db.query(MarcaMkt)
+            .filter(
+                MarcaMkt.cliente_id == cliente_id,
+                MarcaMkt.activa == True,  # noqa: E712
+            )
+            .all()
+        )
 
     def create_marca(self, data: dict) -> MarcaMkt:
         """Crea una nueva marca."""
@@ -91,3 +103,8 @@ class ClientesRepository:
             setattr(marca, key, value)
         self.db.flush()
         return marca
+
+
+def listar_marcas_activas(db) -> list:
+    """Lista todas las marcas activas del sistema (para automatizaciones)."""
+    return db.query(MarcaMkt).filter(MarcaMkt.activa == True).all()  # noqa: E712

@@ -67,8 +67,13 @@ class CalendarioController:
         """Programa publicación manual con fecha/hora exacta."""
         marca_id = _marca(x_marca_id)
         return svc.programar_manual(
-            self.db, marca_id, body.red_social, body.copy_text,
-            body.fecha_hora, formato=body.formato, imagen_url=body.imagen_url,
+            self.db,
+            marca_id,
+            body.red_social,
+            body.copy_text,
+            body.fecha_hora,
+            formato=body.formato,
+            imagen_url=body.imagen_url,
             imagenes_urls=body.imagenes_urls,
         )
 

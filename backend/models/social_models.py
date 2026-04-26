@@ -1,9 +1,10 @@
 """Modelos SQLAlchemy para el módulo de Calendario y Social Media."""
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from datetime import datetime, timezone
+from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -41,6 +42,7 @@ class PublicacionesMkt(Base):
     calendario_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("calendario_editorial_mkt.id", ondelete="SET NULL"))
     contenido_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("contenido_mkt.id", ondelete="SET NULL"))
     red_social: Mapped[str] = mapped_column(Text, nullable=False)
+    formato: Mapped[Optional[str]] = mapped_column(Text, default="post")
     post_id_externo: Mapped[Optional[str]] = mapped_column(Text)
     url_publicacion: Mapped[Optional[str]] = mapped_column(Text)
     copy_publicado: Mapped[Optional[str]] = mapped_column(Text)

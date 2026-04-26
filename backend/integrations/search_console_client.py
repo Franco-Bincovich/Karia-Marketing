@@ -1,4 +1,5 @@
 """Cliente Google Search Console API para métricas orgánicas."""
+
 from __future__ import annotations
 
 import logging
@@ -12,13 +13,13 @@ def _is_mock(credentials: Optional[str] = None) -> bool:
     return not credentials or credentials == "mock"
 
 
-def obtener_metricas(site_url: str, fecha_inicio: str, fecha_fin: str,
-                     credentials: Optional[str] = None) -> dict:
+def obtener_metricas(site_url: str, fecha_inicio: str, fecha_fin: str, credentials: Optional[str] = None) -> dict:
     """Retorna clicks, impresiones, CTR por keyword desde Search Console."""
     if _is_mock(credentials):
         logger.debug("[search_console] obtener_metricas — modo mock")
         return {
-            "site_url": site_url, "periodo": f"{fecha_inicio} a {fecha_fin}",
+            "site_url": site_url,
+            "periodo": f"{fecha_inicio} a {fecha_fin}",
             "keywords": [
                 {"keyword": "ejemplo keyword", "clicks": 120, "impresiones": 3400, "ctr": 0.0353, "posicion": 8.2},
                 {"keyword": "otro término", "clicks": 85, "impresiones": 2100, "ctr": 0.0405, "posicion": 12.5},
@@ -31,14 +32,10 @@ def obtener_metricas(site_url: str, fecha_inicio: str, fecha_fin: str,
     raise NotImplementedError("Search Console API requiere configuración OAuth de producción")
 
 
-def obtener_posiciones(site_url: str, keywords: list,
-                       credentials: Optional[str] = None) -> list:
+def obtener_posiciones(site_url: str, keywords: list, credentials: Optional[str] = None) -> list:
     """Retorna posición actual por keyword desde Search Console."""
     if _is_mock(credentials):
         logger.debug("[search_console] obtener_posiciones — modo mock")
-        return [
-            {"keyword": kw, "posicion": (i + 1) * 4 + 2, "clicks": 50, "impresiones": 1200, "mock": True}
-            for i, kw in enumerate(keywords)
-        ]
+        return [{"keyword": kw, "posicion": (i + 1) * 4 + 2, "clicks": 50, "impresiones": 1200, "mock": True} for i, kw in enumerate(keywords)]
 
     raise NotImplementedError("Search Console API requiere configuración OAuth de producción")

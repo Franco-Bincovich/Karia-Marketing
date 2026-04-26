@@ -53,10 +53,14 @@ class AuthRepository:
 
     def invalidate_sesion(self, token_hash: str) -> bool:
         """Invalida una sesión por su token hash."""
-        sesion = self.db.query(SesionMkt).filter(
-            SesionMkt.token_hash == token_hash,
-            SesionMkt.activa == True,  # noqa: E712
-        ).first()
+        sesion = (
+            self.db.query(SesionMkt)
+            .filter(
+                SesionMkt.token_hash == token_hash,
+                SesionMkt.activa == True,  # noqa: E712
+            )
+            .first()
+        )
         if not sesion:
             return False
         sesion.activa = False
@@ -65,11 +69,15 @@ class AuthRepository:
 
     def get_sesion_activa(self, token_hash: str) -> Optional[SesionMkt]:
         """Obtiene una sesión activa y no expirada."""
-        return self.db.query(SesionMkt).filter(
-            SesionMkt.token_hash == token_hash,
-            SesionMkt.activa == True,  # noqa: E712
-            SesionMkt.expires_at > datetime.now(timezone.utc),
-        ).first()
+        return (
+            self.db.query(SesionMkt)
+            .filter(
+                SesionMkt.token_hash == token_hash,
+                SesionMkt.activa == True,  # noqa: E712
+                SesionMkt.expires_at > datetime.now(timezone.utc),
+            )
+            .first()
+        )
 
     def assign_marca(self, usuario_id: UUID, marca_id: UUID) -> UsuarioMarcaMkt:
         """Asigna una marca a un usuario."""

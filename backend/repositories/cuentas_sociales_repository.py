@@ -14,8 +14,10 @@ logger = logging.getLogger(__name__)
 def _s(c: CuentasSocialesMkt) -> dict:
     """Serializa sin exponer el access_token_encrypted."""
     return {
-        "id": str(c.id), "marca_id": str(c.marca_id),
-        "red_social": c.red_social, "nombre_cuenta": c.nombre_cuenta,
+        "id": str(c.id),
+        "marca_id": str(c.marca_id),
+        "red_social": c.red_social,
+        "nombre_cuenta": c.nombre_cuenta,
         "account_id_externo": c.account_id_externo,
         "token_expires_at": c.token_expires_at.isoformat() if c.token_expires_at else None,
         "activa": c.activa,
@@ -33,10 +35,14 @@ def crear_o_actualizar(db: Session, cuenta: dict) -> dict:
     marca_id = cuenta["marca_id"]
     red_social = cuenta["red_social"]
 
-    obj = db.query(CuentasSocialesMkt).filter(
-        CuentasSocialesMkt.marca_id == marca_id,
-        CuentasSocialesMkt.red_social == red_social,
-    ).first()
+    obj = (
+        db.query(CuentasSocialesMkt)
+        .filter(
+            CuentasSocialesMkt.marca_id == marca_id,
+            CuentasSocialesMkt.red_social == red_social,
+        )
+        .first()
+    )
 
     if obj:
         for k, v in cuenta.items():
@@ -59,19 +65,27 @@ def listar(db: Session, marca_id: UUID) -> list[dict]:
 
 def obtener_por_red(db: Session, marca_id: UUID, red_social: str) -> Optional[CuentasSocialesMkt]:
     """Retorna el objeto ORM completo (con token encriptado) para uso interno."""
-    return db.query(CuentasSocialesMkt).filter(
-        CuentasSocialesMkt.marca_id == marca_id,
-        CuentasSocialesMkt.red_social == red_social,
-        CuentasSocialesMkt.activa == True,  # noqa: E712
-    ).first()
+    return (
+        db.query(CuentasSocialesMkt)
+        .filter(
+            CuentasSocialesMkt.marca_id == marca_id,
+            CuentasSocialesMkt.red_social == red_social,
+            CuentasSocialesMkt.activa == True,  # noqa: E712
+        )
+        .first()
+    )
 
 
 def desactivar(db: Session, cuenta_id: UUID, marca_id: UUID) -> bool:
     """Desactiva una cuenta social. Retorna True si existía."""
-    obj = db.query(CuentasSocialesMkt).filter(
-        CuentasSocialesMkt.id == cuenta_id,
-        CuentasSocialesMkt.marca_id == marca_id,
-    ).first()
+    obj = (
+        db.query(CuentasSocialesMkt)
+        .filter(
+            CuentasSocialesMkt.id == cuenta_id,
+            CuentasSocialesMkt.marca_id == marca_id,
+        )
+        .first()
+    )
     if not obj:
         return False
     obj.activa = False

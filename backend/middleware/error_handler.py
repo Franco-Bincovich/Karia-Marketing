@@ -1,8 +1,8 @@
 """Handler global de errores con formato estándar de respuesta."""
 
+import jwt
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-import jwt
 
 
 class AppError(Exception):

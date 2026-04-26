@@ -47,6 +47,7 @@ def listar(
 ):
     """Lista reportes anteriores."""
     from repositories import reportes_repository
+
     items = reportes_repository.listar(db, _marca(x_marca_id))
     return {"data": items, "count": len(items)}
 
@@ -60,6 +61,7 @@ def obtener(
 ):
     """Reporte específico completo."""
     from repositories import reportes_repository
+
     reportes = reportes_repository.listar(db, _marca(x_marca_id))
     reporte = next((r for r in reportes if r["id"] == str(reporte_id)), None)
     if not reporte:

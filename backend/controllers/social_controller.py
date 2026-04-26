@@ -73,8 +73,11 @@ class SocialController:
         return {"data": items, "count": len(items)}
 
     def conectar_cuenta(
-        self, red_social: str, body: ConectarCuentaRequest,
-        x_marca_id: Optional[str], current_user: dict,
+        self,
+        red_social: str,
+        body: ConectarCuentaRequest,
+        x_marca_id: Optional[str],
+        current_user: dict,
     ) -> dict:
         """Conecta o actualiza una cuenta social para la marca."""
         marca_id = _marca(x_marca_id)
@@ -106,8 +109,13 @@ class SocialController:
         marca_id = _marca(x_marca_id)
         actor_id = UUID(current_user["sub"])
         return zernio_service.publicar_ahora(
-            self.db, marca_id, body.red_social, body.copy_text,
-            imagen_url=body.imagen_url, contenido_id=body.contenido_id, actor_id=actor_id,
+            self.db,
+            marca_id,
+            body.red_social,
+            body.copy_text,
+            imagen_url=body.imagen_url,
+            contenido_id=body.contenido_id,
+            actor_id=actor_id,
         )
 
     def programar(self, body: ProgramarRequest, x_marca_id: Optional[str], current_user: dict) -> dict:
@@ -115,8 +123,14 @@ class SocialController:
         marca_id = _marca(x_marca_id)
         actor_id = UUID(current_user["sub"])
         return zernio_service.programar_publicacion(
-            self.db, marca_id, body.red_social, body.copy_text, body.programado_para,
-            imagen_url=body.imagen_url, contenido_id=body.contenido_id, actor_id=actor_id,
+            self.db,
+            marca_id,
+            body.red_social,
+            body.copy_text,
+            body.programado_para,
+            imagen_url=body.imagen_url,
+            contenido_id=body.contenido_id,
+            actor_id=actor_id,
         )
 
     # --- Publicaciones y monitoreo ---

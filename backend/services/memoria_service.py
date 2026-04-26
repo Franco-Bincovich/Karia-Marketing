@@ -1,4 +1,5 @@
 """Servicio de Memoria de Marca — formatea memoria según el agente."""
+
 from __future__ import annotations
 
 import json
@@ -12,18 +13,20 @@ from repositories import memoria_marca_repository as memoria_repo
 logger = logging.getLogger(__name__)
 
 _CAMPOS_POR_AGENTE = {
-    "contenido": ["nombre_marca", "tono_voz", "palabras_clave", "palabras_prohibidas",
-                   "ejemplos_contenido_aprobado", "productos_servicios", "publico_objetivo"],
-    "comunidad": ["nombre_marca", "tono_voz", "preguntas_frecuentes",
-                   "politica_respuestas", "productos_servicios", "palabras_prohibidas"],
-    "ads": ["nombre_marca", "productos_servicios", "icp_descripcion", "icp_cargo",
-            "icp_industria", "diferenciadores", "objetivos_periodo"],
-    "seo": ["nombre_marca", "palabras_clave", "productos_servicios",
-            "competidores", "sitio_web", "industria"],
-    "social_media": ["nombre_marca", "tono_voz", "palabras_prohibidas",
-                      "ejemplos_contenido_aprobado", "colores_marca"],
-    "prospeccion": ["nombre_marca", "icp_descripcion", "icp_cargo", "icp_industria",
-                    "icp_tamano_empresa", "productos_servicios", "diferenciadores"],
+    "contenido": [
+        "nombre_marca",
+        "tono_voz",
+        "palabras_clave",
+        "palabras_prohibidas",
+        "ejemplos_contenido_aprobado",
+        "productos_servicios",
+        "publico_objetivo",
+    ],
+    "comunidad": ["nombre_marca", "tono_voz", "preguntas_frecuentes", "politica_respuestas", "productos_servicios", "palabras_prohibidas"],
+    "ads": ["nombre_marca", "productos_servicios", "icp_descripcion", "icp_cargo", "icp_industria", "diferenciadores", "objetivos_periodo"],
+    "seo": ["nombre_marca", "palabras_clave", "productos_servicios", "competidores", "sitio_web", "industria"],
+    "social_media": ["nombre_marca", "tono_voz", "palabras_prohibidas", "ejemplos_contenido_aprobado", "colores_marca"],
+    "prospeccion": ["nombre_marca", "icp_descripcion", "icp_cargo", "icp_industria", "icp_tamano_empresa", "productos_servicios", "diferenciadores"],
 }
 
 
@@ -46,8 +49,7 @@ def obtener_para_agente(db: Session, marca_id: UUID, agente: str) -> str:
     return ". ".join(partes) if partes else ""
 
 
-def actualizar_desde_aprendizaje(db: Session, marca_id: UUID, tipo: str,
-                                  datos: dict) -> dict:
+def actualizar_desde_aprendizaje(db: Session, marca_id: UUID, tipo: str, datos: dict) -> dict:
     """Actualiza memoria de marca basándose en feedback del motor de aprendizaje."""
     memoria = memoria_repo.obtener_o_crear(db, marca_id)
     actualizacion = {}

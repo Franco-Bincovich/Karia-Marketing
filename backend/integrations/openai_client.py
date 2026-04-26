@@ -2,7 +2,6 @@
 Cliente OpenAI para generación de imágenes con GPT Image 1.5 (gpt-image-1).
 """
 
-import base64
 import logging
 from typing import Optional
 

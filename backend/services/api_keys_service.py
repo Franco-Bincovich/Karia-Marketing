@@ -39,21 +39,25 @@ def listar(db: Session, cliente_id: UUID) -> list[dict]:
         db_entry = db_map.get(servicio)
 
         if is_env:
-            resultado.append({
-                "servicio": servicio,
-                "configurada": _env_configurada(servicio),
-                "origen": "env",
-                "editable": False,
-                "updated_at": None,
-            })
+            resultado.append(
+                {
+                    "servicio": servicio,
+                    "configurada": _env_configurada(servicio),
+                    "origen": "env",
+                    "editable": False,
+                    "updated_at": None,
+                }
+            )
         else:
-            resultado.append({
-                "servicio": servicio,
-                "configurada": db_entry.configurada if db_entry else _env_configurada(servicio),
-                "origen": "db" if db_entry and db_entry.configurada else ("env" if _env_configurada(servicio) else "ninguno"),
-                "editable": True,
-                "updated_at": db_entry.updated_at.isoformat() if db_entry and db_entry.updated_at else None,
-            })
+            resultado.append(
+                {
+                    "servicio": servicio,
+                    "configurada": db_entry.configurada if db_entry else _env_configurada(servicio),
+                    "origen": "db" if db_entry and db_entry.configurada else ("env" if _env_configurada(servicio) else "ninguno"),
+                    "editable": True,
+                    "updated_at": db_entry.updated_at.isoformat() if db_entry and db_entry.updated_at else None,
+                }
+            )
 
     return resultado
 
@@ -67,9 +71,14 @@ def guardar(db: Session, cliente_id: UUID, servicio: str, api_key: str) -> dict:
 
     encrypted = encrypt_token(api_key)
 
-    obj = db.query(ApiKeyConfigMkt).filter(
-        ApiKeyConfigMkt.cliente_id == cliente_id, ApiKeyConfigMkt.servicio == servicio,
-    ).first()
+    obj = (
+        db.query(ApiKeyConfigMkt)
+        .filter(
+            ApiKeyConfigMkt.cliente_id == cliente_id,
+            ApiKeyConfigMkt.servicio == servicio,
+        )
+        .first()
+    )
 
     if obj:
         obj.api_key_encrypted = encrypted
@@ -89,9 +98,14 @@ def eliminar(db: Session, cliente_id: UUID, servicio: str) -> dict:
     if servicio in ENV_SERVICIOS:
         raise AppError(f"La key de {servicio} se gestiona vía sistema", "ENV_MANAGED", 403)
 
-    obj = db.query(ApiKeyConfigMkt).filter(
-        ApiKeyConfigMkt.cliente_id == cliente_id, ApiKeyConfigMkt.servicio == servicio,
-    ).first()
+    obj = (
+        db.query(ApiKeyConfigMkt)
+        .filter(
+            ApiKeyConfigMkt.cliente_id == cliente_id,
+            ApiKeyConfigMkt.servicio == servicio,
+        )
+        .first()
+    )
 
     if obj:
         db.delete(obj)
